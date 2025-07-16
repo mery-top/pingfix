@@ -13,8 +13,8 @@ func SetupRouter() *mux.Router{
 	r:= mux.NewRouter()
 	r.Use(middleware.CORS)
 
-	r.HandleFunc("/auth/google", auth.BeginAuth).Methods("GET")
-	r.HandleFunc("/auth/google/callback", auth.Callback).Methods("GET")
+	r.HandleFunc("/auth/{provider}", auth.BeginAuth).Methods("GET")
+	r.HandleFunc("/auth/{provider}/callback", auth.Callback).Methods("GET")
 	r.HandleFunc("/logout", auth.Logout).Methods("GET")
 
 	r.HandleFunc("/api/public", func(w http.ResponseWriter, r *http.Request) {
