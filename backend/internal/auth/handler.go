@@ -5,6 +5,7 @@ import(
 	"net/http"
 	"github.com/markbates/goth/gothic"
 	"backend/database/migrate"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func BeginAuth(w http.ResponseWriter, r *http.Request){
@@ -18,7 +19,10 @@ func Callback(w http.ResponseWriter, r *http.Request){
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	migrate.Migrate(user.Name, user.Email)
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
+
+	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 	
 	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
 
@@ -28,3 +32,4 @@ func Logout(w http.ResponseWriter, r *http.Request){
 	gothic.Logout(w,r)
 	w.Write([]byte("Successfully Logged Out"))
 }
+

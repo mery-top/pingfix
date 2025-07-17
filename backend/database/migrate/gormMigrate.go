@@ -5,14 +5,14 @@ import(
 	"backend/models"
 )
 
-func Migrate(name, email string){
+func Migrate(name, email, hashedPassword string){
 	db.DBConnect()
 	db.DB.AutoMigrate(&models.User{})
 
 	newUser := models.User{
 		Name:     name,
 		Email:    email,
-		Password: "123456",
+		Password: hashedPassword,
 	}
 	
 	db.DB.Create(&newUser)
