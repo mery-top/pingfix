@@ -81,3 +81,9 @@ func GLogout(w http.ResponseWriter, r *http.Request){
 	w.Write([]byte("Successfully Logged Out"))
 }
 
+func Logout(w http.ResponseWriter, r *http.Request){
+	session, _:= Store.Get(r, "session")
+	delete(session.Values, "user_id")
+	session.Save(r,w)
+	w.Write([]byte("Logged OUT"))
+}
