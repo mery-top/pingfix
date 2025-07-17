@@ -4,6 +4,7 @@ import(
 	"log"
 	"net/http"
 	"github.com/markbates/goth/gothic"
+	"backend/database/migrate"
 )
 
 func BeginAuth(w http.ResponseWriter, r *http.Request){
@@ -11,12 +12,14 @@ func BeginAuth(w http.ResponseWriter, r *http.Request){
 }
 
 func Callback(w http.ResponseWriter, r *http.Request){
-	_, err:=gothic.CompleteUserAuth(w, r)
+	user, err:=gothic.CompleteUserAuth(w, r)
 	if err!= nil{
 		log.Fatal(err)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
+	migrate.Migrate(user.Name, user.Email)
+	
 	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
 
 }
