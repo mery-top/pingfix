@@ -5,12 +5,12 @@ import(
 	"github.com/gorilla/sessions"
 )
 
-var store = sessions.NewCookieStore([]byte("secret"))
+var Store = sessions.NewCookieStore([]byte("secret"))
 
 func SessionInit(){
-	store.MaxAge(86000 * 30)
-	store.Options.Path = "/"
-	store.Options.HttpOnly = true
-	store.Options.SameSite = http.SameSiteNoneMode
-	store.Options.Secure = false
+	Store.MaxAge(86000 * 30)
+	Store.Options.Path = "/"
+	Store.Options.HttpOnly = true
+	Store.Options.SameSite = http.SameSiteNoneMode
+	Store.Options.Secure = false
 }

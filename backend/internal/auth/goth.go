@@ -10,7 +10,7 @@ import(
 
 func InitProviders(){
 	SessionInit()
-	gothic.Store = store
+	gothic.Store = Store
 	goth.UseProviders(
 		google.New(
 			config.Get("GOOGLE_CLIENT_ID"),

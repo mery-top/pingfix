@@ -28,6 +28,12 @@ func Callback(w http.ResponseWriter, r *http.Request){
 
 }
 
+// func Register(w http.ResponseWriter, r *http.Request){
+// 	var body struct{
+		
+// 	}
+// }
+
 func Logout(w http.ResponseWriter, r *http.Request){
 	gothic.Logout(w,r)
 	w.Write([]byte("Successfully Logged Out"))
