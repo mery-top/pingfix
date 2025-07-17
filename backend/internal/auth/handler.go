@@ -1,7 +1,7 @@
 package auth
 
 import(
-	"fmt"
+	"log"
 	"net/http"
 	"github.com/markbates/goth/gothic"
 )
@@ -11,12 +11,14 @@ func BeginAuth(w http.ResponseWriter, r *http.Request){
 }
 
 func Callback(w http.ResponseWriter, r *http.Request){
-	user, err:=gothic.CompleteUserAuth(w, r)
+	_, err:=gothic.CompleteUserAuth(w, r)
 	if err!= nil{
+		log.Fatal(err)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	fmt.Fprintf(w, "Welcome %s: %s", user.Name, user.Email)
+	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
+
 }
 
 func Logout(w http.ResponseWriter, r *http.Request){

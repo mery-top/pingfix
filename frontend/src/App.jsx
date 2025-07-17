@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard'
 
 function App() {
   const LoginWithGoogle = () =>{
-    window.location.href = "http://localhost:8080/auth/google"
+    window.location.href = "/auth/google"
   }
 
   return (
@@ -15,7 +15,7 @@ function App() {
     </button>
   </div>
   <Routes>
-
+    <Route path="/dashboard" element={<Dashboard/>}></Route>
   </Routes>
     </>
   )

@@ -1,6 +1,7 @@
 package auth
 
 import(
+	"net/http"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
 	"github.com/gorilla/sessions"
@@ -8,10 +9,16 @@ import(
 	"backend/config"
 )
 
-var Store = sessions.NewCookieStore([]byte("secret"))
+var store = sessions.NewCookieStore([]byte("secret"))
 
 func InitProviders(){
-	gothic.Store = Store
+	store.MaxAge(86000 * 30)
+	store.Options.Path = "/"
+	store.Options.HttpOnly = true
+	store.Options.SameSite = http.SameSiteNoneMode
+	store.Options.Secure = false
+
+	gothic.Store = store
 	goth.UseProviders(
 		google.New(
 			config.Get("GOOGLE_CLIENT_ID"),
