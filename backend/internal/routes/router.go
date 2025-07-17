@@ -20,7 +20,6 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/public", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Public Route is Working"))
 	}).Methods("GET")
-
+	
 	return r
-
 }

@@ -1,16 +1,19 @@
 package main
 
-import(
+import (
+	"backend/config"
+	"backend/internal/middleware"
+	"backend/internal/routes"
 	"log"
 	"net/http"
-	"backend/config"
-	"backend/internal/routes"
 )
 
 func main(){
 	config.LoadEnv()
 
-	r:= routes.SetupRouter()
+	router:= routes.SetupRouter()
+	csrfRouter:= middleware.CSRF(router)
+	
 	log.Println("Server started at 8080")
-	log.Fatal(http.ListenAndServe(":8080",r))
+	log.Fatal(http.ListenAndServe(":8080",csrfRouter))
 }
