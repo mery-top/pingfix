@@ -68,13 +68,15 @@ func Login(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
+	csrfToken:= csrf.Token(r)
 
 	session, _ := db.Store.Get(r,"session")
 	session.Values["user_id"] = user.ID
 	session.Values["authenticated"] = true
+	session.Values["csrf"] = csrfToken
 	session.Save(r,w)
 
-	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+	w.Header().Set("X-CSRF-Token",csrfToken )
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
 }
@@ -94,6 +96,14 @@ func Logout(w http.ResponseWriter, r *http.Request){
 func SecureHandler(w http.ResponseWriter, r *http.Request){
 	session, _:= db.Store.Get(r, "session")
 	if auth, ok:= session.Values["authenticated"].(bool); !ok || !auth{
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	csrfToken:= r.Header.Get("X-CSRF-Token")
+	expectedToken, _:= session.Values["csrf"].(string)
+
+	if csrfToken != expectedToken{
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
