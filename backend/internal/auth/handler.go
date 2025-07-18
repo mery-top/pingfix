@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-
+	"github.com/gorilla/csrf"
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -71,12 +71,13 @@ func Login(w http.ResponseWriter, r *http.Request){
 
 	session, _ := db.Store.Get(r,"session")
 	session.Values["user_id"] = user.ID
+	session.Values["authenticated"] = true
 	session.Save(r,w)
 
+	w.Header().Set("X-CSRF-Token", csrf.Token(r))
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
 }
-
-
 
 func GLogout(w http.ResponseWriter, r *http.Request){
 	gothic.Logout(w,r)
@@ -88,4 +89,13 @@ func Logout(w http.ResponseWriter, r *http.Request){
 	delete(session.Values, "user_id")
 	session.Save(r,w)
 	w.Write([]byte("Logged OUT"))
+}
+
+func SecureHandler(w http.ResponseWriter, r *http.Request){
+	session, _:= db.Store.Get(r, "session")
+	if auth, ok:= session.Values["authenticated"].(bool); !ok || !auth{
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	w.Write([]byte("Secure Content Accessed"))
 }
