@@ -13,7 +13,6 @@ function Login() {
     try{
         const response = await LoginAPI(email, password)
         setMessage("Login Successful")
-        navigate("Secure")
 
     }catch(error){
         console.error("Login Error", error)
