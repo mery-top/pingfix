@@ -3,7 +3,7 @@ export async function LoginAPI(email, password){
         method: "POST",
         credentials: "include",
         headers: {
-            "Content-Type": "http://localhost:8080/api/login"
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({email, password})
     });
