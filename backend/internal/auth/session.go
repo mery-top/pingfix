@@ -2,13 +2,14 @@ package auth
 
 import(
 	"net/http"
-	"github.com/gorilla/sessions"
+	"backend/database/db"
 )
 
-var Store = sessions.NewCookieStore([]byte("secret"))
 
 func SessionInit(){
-	Store.MaxAge(86000 * 30)
+	db.StoreInit()
+	var Store = db.Store
+	Store.Options.MaxAge= 86000 * 30
 	Store.Options.Path = "/"
 	Store.Options.HttpOnly = true
 	Store.Options.SameSite = http.SameSiteNoneMode

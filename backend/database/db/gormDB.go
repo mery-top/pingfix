@@ -10,7 +10,7 @@ import (
 
 var DB *gorm.DB
 
-func DBConnect(){
+func DBInit(){
 	dsn:= "host=localhost user=myuser password=mypassword dbname=pingfix port=5433 sslmode=disable"
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn),&gorm.Config{})

@@ -1,6 +1,7 @@
 package auth
 
 import(
+	"backend/database/db"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
 	"github.com/markbates/goth/gothic"
@@ -10,7 +11,7 @@ import(
 
 func InitProviders(){
 	SessionInit()
-	gothic.Store = Store
+	gothic.Store = db.Store
 	goth.UseProviders(
 		google.New(
 			config.Get("GOOGLE_CLIENT_ID"),
