@@ -1,5 +1,5 @@
 export async function RegisterAPI(name,email, password){
-    const response = await fetch("/api/register", {
+    const response = await fetch("http://localhost:8080/api/register", {
         method: "POST",
         credentials: "include",
         headers: {
