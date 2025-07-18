@@ -1,5 +1,5 @@
 export async function RegisterAPI(name,email, password){
-    const response = await fetch("http://localhost:8080/api/register", {
+    const response = await fetch("/api/register", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -8,5 +8,5 @@ export async function RegisterAPI(name,email, password){
         body: JSON.stringify({name, email, password})
     });
 
-    return res.json()
+    return response.json()
 }

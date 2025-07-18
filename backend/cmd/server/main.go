@@ -12,7 +12,8 @@ func main(){
 	config.LoadEnv()
 
 	router:= routes.SetupRouter()
-	csrfRouter:= middleware.CSRF(router)
+	corsRouter:= middleware.CORS(router)
+	csrfRouter:= middleware.CSRF(corsRouter)
 	
 	log.Println("Server started at 8080")
 	log.Fatal(http.ListenAndServe(":8080",csrfRouter))

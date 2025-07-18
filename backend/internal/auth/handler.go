@@ -48,7 +48,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 
 	w.WriteHeader(http.StatusCreated)
-	http.Redirect(w, r, "http://localhost:5173/login", http.StatusSeeOther)
+	w.Write([]byte("Registered"))
 }
 
 func Login(w http.ResponseWriter, r *http.Request){

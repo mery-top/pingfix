@@ -5,13 +5,11 @@ import(
 
 	"github.com/gorilla/mux"
 	"backend/internal/auth"
-	"backend/internal/middleware"
 )
 
 func SetupRouter() *mux.Router{
 	auth.InitProviders()
 	r:= mux.NewRouter()
-	r.Use(middleware.CORS)
 
 	r.HandleFunc("/auth/{provider}", auth.BeginAuth).Methods("GET")
 	r.HandleFunc("/auth/{provider}/callback", auth.Callback).Methods("GET", "POST")
