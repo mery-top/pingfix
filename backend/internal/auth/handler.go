@@ -22,7 +22,7 @@ func BeginAuth(w http.ResponseWriter, r *http.Request){
 func Callback(w http.ResponseWriter, r *http.Request){
 	user, err:=gothic.CompleteUserAuth(w, r)
 	if err!= nil{
-		log.Fatal(err)
+		log.Println("Google auth error:", err)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -41,6 +41,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 		Email string `json:"email"`
 		Password string `json:"password"`
 	}
+	log.Println("Register endpoint hit")
 
 	json.NewDecoder(r.Body).Decode(&user)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -90,7 +91,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 func GLogin(w http.ResponseWriter, r *http.Request){
 	LogUser, err:=gothic.CompleteUserAuth(w, r)
 	if err!= nil{
-		log.Fatal(err)
+		log.Println("Google auth error:", err)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}

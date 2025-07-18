@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend/config"
+	"backend/database/db"
 	"backend/internal/middleware"
 	"backend/internal/routes"
 	"log"
@@ -10,7 +11,7 @@ import (
 
 func main(){
 	config.LoadEnv()
-
+	db.StoreInit()
 	router:= routes.SetupRouter()
 	corsRouter:= middleware.CORS(router)
 	csrfRouter:= middleware.CSRF(corsRouter)
