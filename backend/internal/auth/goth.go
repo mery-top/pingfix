@@ -10,7 +10,6 @@ import(
 
 
 func InitProviders(){
-	SessionInit()
 	gothic.Store = db.Store
 	goth.UseProviders(
 		google.New(
