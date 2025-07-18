@@ -14,8 +14,8 @@ func main(){
 	db.StoreInit()
 	router:= routes.SetupRouter()
 	corsRouter:= middleware.CORS(router)
-	csrfRouter:= middleware.CSRF(corsRouter)
+	// csrfRouter:= middleware.CSRF(corsRouter)
 	
 	log.Println("Server started at 8080")
-	log.Fatal(http.ListenAndServe(":8080",csrfRouter))
+	log.Fatal(http.ListenAndServe(":8080",corsRouter))
 }

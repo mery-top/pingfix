@@ -20,7 +20,7 @@ func StoreInit(){
 		Path:     "/",
 		MaxAge:   86400 * 7,
 		HttpOnly: true,
-		Secure:   false, // must be false for localhost
+		Secure:   false, 
 		SameSite: http.SameSiteNoneMode,
 	}
 }

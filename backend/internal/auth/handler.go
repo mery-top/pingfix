@@ -42,6 +42,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 		Password string `json:"password"`
 	}
 	log.Println("Register endpoint hit")
+	log.Println("Cookies:", r.Cookies())
 
 	json.NewDecoder(r.Body).Decode(&user)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -49,7 +50,6 @@ func Register(w http.ResponseWriter, r *http.Request){
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Registered"))
 }
 
 func Login(w http.ResponseWriter, r *http.Request){
