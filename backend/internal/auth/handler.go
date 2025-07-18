@@ -48,6 +48,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 
 	w.WriteHeader(http.StatusCreated)
+	http.Redirect(w, r, "http://localhost:5173/login", http.StatusSeeOther)
 }
 
 func Login(w http.ResponseWriter, r *http.Request){
@@ -82,6 +83,8 @@ func Login(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("X-CSRF-Token",csrfToken )
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
+
+	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
 }
 
 func GLogin(w http.ResponseWriter, r *http.Request){
@@ -114,6 +117,8 @@ func GLogin(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("X-CSRF-Token",csrfToken )
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
+
+	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
 
 }
 func GLogout(w http.ResponseWriter, r *http.Request){
