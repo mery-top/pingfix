@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Route, Routes, Link } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
+import Login from './pages/Login'
+import Secure from './pages/Secure'
 
 function App() {
   const LoginWithGoogle = () =>{
@@ -16,6 +18,8 @@ function App() {
   </div>
   <Routes>
     <Route path="/dashboard" element={<Dashboard/>}></Route>
+    <Route path="/login" element={<Login/>}></Route>
+    <Route path="/secure" element={<Secure/>}></Route>
   </Routes>
     </>
   )
