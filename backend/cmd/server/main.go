@@ -11,6 +11,7 @@ import (
 
 func main(){
 	config.LoadEnv()
+	db.DBInit()
 	db.StoreInit()
 	router:= routes.SetupRouter()
 	corsRouter:= middleware.CORS(router)
