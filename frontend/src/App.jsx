@@ -6,17 +6,9 @@ import Secure from './pages/Secure'
 import Register from './pages/Register'
 
 function App() {
-  const LoginWithGoogle = () =>{
-    window.location.href = "/auth/google"
-  }
-
   return (
     <>
-  <div>
-    <button onClick={LoginWithGoogle}>
-      Login
-    </button>
-  </div>
+ 
   <Routes>
     <Route path="/dashboard" element={<Dashboard/>}></Route>
     <Route path="/login" element={<Login/>}></Route>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { RegisterAPI } from '../api/AuthAPI'
+import { LoginWithGoogle, RegisterAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
 
 function Register() {
@@ -35,6 +35,7 @@ function Register() {
         onChange={e => setPassword(e.target.value)}
          /><br/>
          <button onClick={handleRegister}>Register</button>
+         <button onClick={LoginWithGoogle}>SignUp with Google</button>
     </>
   )
 }

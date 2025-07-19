@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { DataAPI, LoginAPI } from '../api/AuthAPI'
+import { LoginAPI, LoginWithGoogle } from '../api/AuthAPI'
 
 import { useNavigate } from 'react-router-dom'
 
@@ -12,9 +12,6 @@ function Login() {
   const HandleLogin = async () =>{
     try{
         const response = await LoginAPI(email, password)
-        if (!response.ok){
-          setMessage("Login Failed")
-        }
         setMessage("Login Successful")
         navigate("/dashboard")
 
@@ -27,7 +24,7 @@ function Login() {
   return (
     <>
     <div>
-        <h2>Login</h2>
+        <h2>Login with Email</h2>
         <input type="email"
         placeholder='Email'
         value={email}
@@ -40,6 +37,7 @@ function Login() {
          /><br/>
          <button onClick={HandleLogin}>Login</button>
          <p>{message}</p>
+         <button onClick={LoginWithGoogle}>Login with Google</button>
     </div>
     </>
   )
