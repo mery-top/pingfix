@@ -16,7 +16,6 @@ func CSRF(next http.Handler) http.Handler{
 		csrf.Path("/"),
 
 	)
-
 	return csrfMiddleware(next)
 }
 

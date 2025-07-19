@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { DataAPI } from '../api/DataAPI'
-import { LoginAPI } from '../api/LoginAPI'
+import { DataAPI, LoginAPI } from '../api/AuthAPI'
+
 import { useNavigate } from 'react-router-dom'
 
 function Login() {
@@ -12,6 +12,9 @@ function Login() {
   const HandleLogin = async () =>{
     try{
         const response = await LoginAPI(email, password)
+        if (!response.ok){
+          setMessage("Login Failed")
+        }
         setMessage("Login Successful")
         navigate("/dashboard")
 

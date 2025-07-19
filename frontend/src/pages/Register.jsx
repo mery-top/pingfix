@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { RegisterAPI } from '../api/RegisterAPI'
+import { RegisterAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
 
 function Register() {
