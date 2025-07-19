@@ -7,9 +7,5 @@ export async function LoginAPI(email, password){
         },
         body: JSON.stringify({email, password})
     });
-
-    const csrfToken = res.headers.get("X-CSRF-Token")
-    localStorage.setItem("csrfToken", csrfToken)
-    return res.json()
 }
 

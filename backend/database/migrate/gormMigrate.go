@@ -6,7 +6,6 @@ import(
 )
 
 func Migrate(name, email, hashedPassword string){
-	db.DBInit()
 	db.DB.AutoMigrate(&models.User{})
 
 	newUser := models.User{

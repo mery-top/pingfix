@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/csrf"
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -30,8 +29,7 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
 
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
-	
-	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
+	w.Write([]byte("Sign IN SUCCESS"))
 
 }
 
@@ -42,7 +40,6 @@ func Register(w http.ResponseWriter, r *http.Request){
 		Password string `json:"password"`
 	}
 	log.Println("Register endpoint hit")
-	log.Println("Cookies:", r.Cookies())
 
 	json.NewDecoder(r.Body).Decode(&user)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -73,19 +70,19 @@ func Login(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
-	csrfToken:= csrf.Token(r)
+	// csrfToken:= csrf.Token(r)
 
 	session, _ := db.Store.Get(r,"session")
 	session.Values["user_id"] = user.ID
 	session.Values["authenticated"] = true
-	session.Values["csrf"] = csrfToken
+	// session.Values["csrf"] = csrfToken
 	session.Save(r,w)
 
-	w.Header().Set("X-CSRF-Token",csrfToken )
-	w.WriteHeader(http.StatusOK)
+	// w.Header().Set("X-CSRF-Token",csrfToken )
+	// w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
 
-	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
+	
 }
 
 func GLogin(w http.ResponseWriter, r *http.Request){
@@ -107,19 +104,17 @@ func GLogin(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
-	csrfToken:= csrf.Token(r)
+	// csrfToken:= csrf.Token(r)
 
 	session, _ := db.Store.Get(r,"session")
 	session.Values["user_id"] = user.ID
 	session.Values["authenticated"] = true
-	session.Values["csrf"] = csrfToken
+	// session.Values["csrf"] = csrfToken
 	session.Save(r,w)
 
-	w.Header().Set("X-CSRF-Token",csrfToken )
-	w.WriteHeader(http.StatusOK)
+	// w.Header().Set("X-CSRF-Token",csrfToken )
+	// w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
-
-	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
 
 }
 func GLogout(w http.ResponseWriter, r *http.Request){
@@ -129,6 +124,8 @@ func GLogout(w http.ResponseWriter, r *http.Request){
 
 func Logout(w http.ResponseWriter, r *http.Request){
 	session, _:= db.Store.Get(r, "session")
+	session.Options.MaxAge = -1
+	
 	delete(session.Values, "user_id")
 	session.Save(r,w)
 	w.Write([]byte("Logged OUT"))
