@@ -46,7 +46,7 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	session.Values["authenticated"] = true
 	
 	session.Save(r,w)
-
+	http.Redirect(w,r, "http://localhost:5173/dashboard",http.StatusTemporaryRedirect)
 	w.Write([]byte("Logged IN SUCCESS"))
 
 }
@@ -132,4 +132,19 @@ func SecureHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 	w.Write([]byte("Secure Content Accessed"))
+}
+
+func CheckAuthStatus(w http.ResponseWriter, r *http.Request){
+	session, _:= db.Store.Get(r, "session")
+	auth, ok:= session.Values["authenticated"].(bool)
+
+	if auth && ok{
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Authenticated"))
+	}else{
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+
 }
