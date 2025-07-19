@@ -20,16 +20,34 @@ func BeginAuth(w http.ResponseWriter, r *http.Request){
 
 func Callback(w http.ResponseWriter, r *http.Request){
 	user, err:=gothic.CompleteUserAuth(w, r)
+
 	if err!= nil{
 		log.Println("Google auth error:", err)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
+	var LogUser models.User
+	result:= db.DB.First(&LogUser, "email=?", user.Email)
+	if result.Error !=nil{
+		if errors.Is(result.Error, gorm.ErrRecordNotFound){
+			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
+			migrate.Migrate(LogUser.Name, LogUser.Email, string(hashedPassword))
+			w.Write([]byte("Sign IN SUCCESS"))
+			return
+		}else{
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
+            return
+		}
+	}
 
-	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
-	w.Write([]byte("Sign IN SUCCESS"))
+	session, _ := db.Store.Get(r,"session")
+	session.Values["user_id"] = LogUser.ID
+	session.Values["authenticated"] = true
+	
+	session.Save(r,w)
+
+	w.Write([]byte("Logged IN SUCCESS"))
 
 }
 
@@ -85,38 +103,6 @@ func Login(w http.ResponseWriter, r *http.Request){
 	
 }
 
-func GLogin(w http.ResponseWriter, r *http.Request){
-	LogUser, err:=gothic.CompleteUserAuth(w, r)
-	if err!= nil{
-		log.Println("Google auth error:", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-	var user models.User
-	result:= db.DB.First(&user, "email = ?", LogUser.Email)
-	if result.Error !=nil{
-		if errors.Is(result.Error, gorm.ErrRecordNotFound){
-			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
-			migrate.Migrate(LogUser.Name, LogUser.Email, string(hashedPassword))
-		}else{
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-            return
-		}
-	}
-
-	// csrfToken:= csrf.Token(r)
-
-	session, _ := db.Store.Get(r,"session")
-	session.Values["user_id"] = user.ID
-	session.Values["authenticated"] = true
-	// session.Values["csrf"] = csrfToken
-	session.Save(r,w)
-
-	// w.Header().Set("X-CSRF-Token",csrfToken )
-	// w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logged IN SUCCESS"))
-
-}
 func GLogout(w http.ResponseWriter, r *http.Request){
 	gothic.Logout(w,r)
 	w.Write([]byte("Successfully Logged Out"))
