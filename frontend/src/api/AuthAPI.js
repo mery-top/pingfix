@@ -30,3 +30,11 @@ export async function RegisterAPI(name,email, password){
 export function LoginWithGoogle(){
     window.location.href = "/auth/google"
 }
+
+export async function CheckStatusAPI(){
+    const response = await fetch("/auth/status",{
+        credentials: "include"
+    });
+
+    return response.json()
+}
