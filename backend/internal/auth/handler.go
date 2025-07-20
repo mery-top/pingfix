@@ -84,15 +84,16 @@ func Register(w http.ResponseWriter, r *http.Request){
 	}
 
 	err:= utils.SendOTP(w,r, user.Email)
-	if(err!=nil){
+	if err!=nil{
 		http.Error(w, "Error Sending OTP", http.StatusInternalServerError)
 		return
 	}
 
-	
-
-
-
+	otpError:= utils.VerifyOTP(w,r)
+	if otpError!=nil{
+		http.Error(w, "Error Verifying OTP", http.StatusInternalServerError)
+		return
+	}
 	
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 	
