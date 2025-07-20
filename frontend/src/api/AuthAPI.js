@@ -7,6 +7,8 @@ export async function LoginAPI(email, password){
         },
         body: JSON.stringify({email, password})
     });
+
+    return response
 }
 
 export async function LogoutAPI(){
@@ -25,6 +27,8 @@ export async function RegisterAPI(name,email, password){
         },
         body: JSON.stringify({name, email, password})
     });
+
+    return response
 }
 
 export function LoginWithGoogle(){

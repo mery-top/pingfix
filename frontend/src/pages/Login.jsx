@@ -11,13 +11,17 @@ function Login() {
 
   const HandleLogin = async () =>{
     try{
-        const response = await LoginAPI(email, password)
-        setMessage("Login Successful")
-        navigate("/dashboard")
+        const res = await LoginAPI(email, password)
+        if(res.status === 200){
+              setAuthenticated("Login Success")
+              navigate("/dashboard")
+        }else{
+              setAuthenticated("Enter Correct Details, Login Failed")
+        }
 
     }catch(error){
         console.error("Login Error", error)
-        setMessage("Login Failed")
+        setMessage("Enter Correct Details, Login Failed")
     }
   }
 

@@ -6,12 +6,20 @@ function Register() {
   const[email, setEmail] = useState("")
   const[password, setPassword]= useState("")
   const[name, setName] = useState("")
+  const[message, setMessage] = useState("")
   const navigate = useNavigate()
+
   const handleRegister = async () =>{
     try{
-        const response = await RegisterAPI(name, email, password)
-        navigate("/login")
+      const res = await LoginAPI(email, password)
+      if(res.status === 201){
+            setMessage("Registered Success")
+            navigate("/login")
+      }else{
+            setMessage("Enter Correct Details, Register Failed")
+      }
     }catch(error){
+        setMessage("Enter Valid Details")
         console.error("Register error", error)
     }
   }
