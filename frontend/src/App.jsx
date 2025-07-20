@@ -6,6 +6,7 @@ import Secure from './pages/Secure'
 import Register from './pages/Register'
 import ProtectedRoute from './wrapper/ProtectedRoute'
 import Home from './pages/Home'
+import PublicRoute from './wrapper/PublicRoute'
 
 function App() {
   return (
@@ -14,8 +15,8 @@ function App() {
  
   <Routes>
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>}></Route>
-    <Route path="/login" element={<Login/>}></Route>
-    <Route path="/register" element={<Register/>}></Route>
+    <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}></Route>
+    <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}></Route>
     <Route path="/secure" element={<Secure/>}></Route>
     <Route path="/" element={<Home/>}></Route>
   </Routes>
