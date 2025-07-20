@@ -82,6 +82,17 @@ func Register(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid credentials", http.StatusConflict)
 		return
 	}
+
+	err:= utils.SendOTP(w,r, user.Email)
+	if(err!=nil){
+		http.Error(w, "Error Sending OTP", http.StatusInternalServerError)
+		return
+	}
+
+	
+
+
+
 	
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 	
