@@ -8,7 +8,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
-
+	"fmt"
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -90,7 +90,10 @@ func Login(w http.ResponseWriter, r *http.Request){
 	}
 	// csrfToken:= csrf.Token(r)
 
-	session, _ := db.Store.Get(r,"session")
+	session, err := db.Store.Get(r,"session")
+	if err!=nil{
+		fmt.Println(err)
+	}
 	session.Values["user_id"] = user.ID
 	session.Values["authenticated"] = true
 	// session.Values["csrf"] = csrfToken
@@ -117,25 +120,30 @@ func Logout(w http.ResponseWriter, r *http.Request){
 	w.Write([]byte("Logged OUT"))
 }
 
-func SecureHandler(w http.ResponseWriter, r *http.Request){
-	session, _:= db.Store.Get(r, "session")
-	if auth, ok:= session.Values["authenticated"].(bool); !ok || !auth{
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+// func SecureHandler(w http.ResponseWriter, r *http.Request){
+// 	session, _:= db.Store.Get(r, "session")
+// 	if auth, ok:= session.Values["authenticated"].(bool); !ok || !auth{
+// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+// 		return
+// 	}
 
-	csrfToken:= r.Header.Get("X-CSRF-Token")
-	expectedToken, _:= session.Values["csrf"].(string)
+// 	csrfToken:= r.Header.Get("X-CSRF-Token")
+// 	expectedToken, _:= session.Values["csrf"].(string)
 
-	if csrfToken != expectedToken{
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-	w.Write([]byte("Secure Content Accessed"))
-}
+// 	if csrfToken != expectedToken{
+// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+// 		return
+// 	}
+// 	w.Write([]byte("Secure Content Accessed"))
+// }
 
 func CheckAuthStatus(w http.ResponseWriter, r *http.Request){
-	session, _:= db.Store.Get(r, "session")
+	fmt.Println("Check Status Endpoint Hit")
+	session, err:= db.Store.Get(r, "session")
+	if(err!=nil){
+		log.Fatal("Session Error", err)
+		return
+	}
 	auth, ok:= session.Values["authenticated"].(bool)
 
 	if auth && ok{

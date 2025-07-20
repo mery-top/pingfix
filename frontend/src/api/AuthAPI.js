@@ -32,9 +32,8 @@ export function LoginWithGoogle(){
 }
 
 export async function CheckStatusAPI(){
-    const response = await fetch("/auth/status",{
+    const response = await fetch("/api/status",{
         credentials: "include"
     });
-
-    return response.json()
+    return response
 }
