@@ -1,26 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { CheckStatusAPI } from '../api/AuthAPI'
 import { Navigate } from "react-router-dom";
 
 function ProtectedRoute({children}) {
-  try{
-    const[isAuthenticated, setAuthenticated] = useState(null)
-    const HandleStatus = async ()=>{
-        const res = await CheckStatusAPI()
-        if(res.status === 200){
-            setAuthenticated(true)
-        }else{
-            setAuthenticated(false)
-        }
+  const[isAuthenticated, setAuthenticated] = useState(null)
+    useEffect(()=>{
+      const HandleStatus = async ()=>{
+      try{
+          const res = await CheckStatusAPI()
+          if(res.status === 200){
+              setAuthenticated(true)
+          }else{
+              setAuthenticated(false)
+          }
+      }catch(error){
+        console.log(error)
+      }
     }
 
-  }catch(error){
-    setAuthenticated(false)
-    console.log(error)
-  }
-  
+    HandleStatus()
+    },[])
+
+    if (isAuthenticated == null){
+      return <div>Loading...</div>
+    }
+
   return (
-    isAuthenticated? children: <Navigate to="/"/>
+    isAuthenticated? children: <Navigate to="/login"/>
   )
 }
 
