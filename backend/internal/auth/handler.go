@@ -4,6 +4,7 @@ import (
 	"backend/database/db"
 	"backend/database/migrate"
 	"backend/models"
+	"backend/utils"
 	"encoding/json"
 	"errors"
 	"log"
@@ -59,11 +60,31 @@ func Register(w http.ResponseWriter, r *http.Request){
 	}
 	log.Println("Register endpoint hit")
 
+
 	json.NewDecoder(r.Body).Decode(&user)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
-	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
+	if !utils.ValidEmail(user.Email){
+		http.Error(w, "Invalid Email", http.StatusUnauthorized)
+		return
+	}
 
+	if !utils.ValidName(user.Name){
+		http.Error(w, "Invalid Name", http.StatusUnauthorized)
+		return
+	}
+
+	var existingUser models.User
+
+	result:= db.DB.First(&existingUser, "email = ?", user.Email)
+
+	if result.Error ==nil{
+		http.Error(w, "Invalid credentials", http.StatusConflict)
+		return
+	}
+	
+	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
+	
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -76,6 +97,12 @@ func Login(w http.ResponseWriter, r *http.Request){
 	json.NewDecoder(r.Body).Decode(&body)
 
 	var user models.User
+
+	if !utils.ValidEmail(body.Email){
+		http.Error(w, "Invalid Email", http.StatusUnauthorized)
+		return
+	}
+
 	result:= db.DB.First(&user, "email = ?", body.Email)
 
 	if result.Error!=nil{
@@ -100,7 +127,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 	session.Save(r,w)
 
 	// w.Header().Set("X-CSRF-Token",csrfToken )
-	// w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logged IN SUCCESS"))
 
 	
