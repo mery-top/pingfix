@@ -57,17 +57,26 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) error{
 }
 
 
-func SendOTP( w http.ResponseWriter, r *http.Request, email string) error{
+func SendOTP( w http.ResponseWriter, r *http.Request) error{
 	//OTP
+	var body struct{
+		Email string `json:"email"`
+	}
+
+	if err:=json.NewDecoder(r.Body).Decode(&body); err!=nil{
+		http.Error(w, "Invalid Reuqest", http.StatusBadRequest)
+		return err
+	}
+
 	otp:= GenerateOTP()
 	otpStore, err := db.Store.Get(r,"otp")
 	if err!=nil{
 		fmt.Println(err)
 	}
-	otpStore.Values[email] = otp
+	otpStore.Values[body.Email] = otp
 	otpStore.Save(r,w)
 
-	otp_err:= SendEmail(email, "Your OTP Code", "Your OTP is"+otp)
+	otp_err:= SendEmail(body.Email, "Your OTP Code", "Your OTP is"+otp)
 
 	if otp_err != nil {
 		log.Println("Error sending OTP:", err)
