@@ -42,7 +42,7 @@ export async function CheckStatusAPI(){
     return response
 }
 
-export async function SendOTPAPI(){
+export async function SendOTPAPI(email){
     const response = await fetch("/api/send-otp",{
         method: "POST",
         credentials: "include",
@@ -54,5 +54,16 @@ export async function SendOTPAPI(){
     return response
 }
 
+export async function VerifyOTPAPI(email, otp){
+    const response = await fetch("/api/verify-otp",{
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({email,otp})
+    });
+    return response
+}
 
 
