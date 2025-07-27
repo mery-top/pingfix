@@ -12,7 +12,7 @@ function Register() {
 
   const handleRegister = async () =>{
     try{
-      const res = await LoginAPI(email, password)
+      const res = await RegisterAPI(name,email, password)
       if(res.status === 201){
             setMessage("Registered Success")
             navigate("/login")
