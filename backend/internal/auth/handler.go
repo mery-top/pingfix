@@ -33,9 +33,7 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	if result.Error !=nil{
 		if errors.Is(result.Error, gorm.ErrRecordNotFound){
 			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
-			migrate.Migrate(LogUser.Name, LogUser.Email, string(hashedPassword))
-			w.Write([]byte("Sign IN SUCCESS"))
-			return
+			migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 		}else{
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
             return
