@@ -12,7 +12,6 @@ function App() {
   return (
     <>
     
- 
   <Routes>
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>}></Route>
     <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}></Route>
