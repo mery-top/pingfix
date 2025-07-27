@@ -83,18 +83,18 @@ func Register(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	otpError:=utils.SendOTP(w,r)
-	if otpError!=nil{
-		http.Error(w, "Error Sending OTP", http.StatusBadRequest)
-		return
-	}
+	// otpError:=utils.SendOTP(w,r)
+	// if otpError!=nil{
+	// 	http.Error(w, "Error Sending OTP", http.StatusBadRequest)
+	// 	return
+	// }
 
-	votpError:= utils.VerifyOTP(w,r)
-	if votpError!=nil{
-		fmt.Println("Wrong OTP\n")
-		http.Error(w, "Error Sending OTP", http.StatusBadRequest)
-		return
-	}
+	// votpError:= utils.VerifyOTP(w,r)
+	// if votpError!=nil{
+	// 	fmt.Println("Wrong OTP\n")
+	// 	http.Error(w, "Error Sending OTP", http.StatusBadRequest)
+	// 	return
+	// }
 
 	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
 	

@@ -19,7 +19,7 @@ func GenerateOTP() string{
 }
 
 
-func VerifyOTP(w http.ResponseWriter, r *http.Request) error{
+func VerifyOTP(w http.ResponseWriter, r *http.Request){
 	var req struct{
 		Email string `json:"email"`
 		OTP   string `json:"otp"`
@@ -27,25 +27,25 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) error{
 
 	if err:= json.NewDecoder(r.Body).Decode(&req); err!=nil{
 		http.Error(w,"Invalid Request" ,http.StatusBadRequest)
-		return err
+		return 
 	}
 
 	otpStore, err:= db.Store.Get(r, "otp")
 	if err!=nil{
 		http.Error(w, "Session Error", http.StatusInternalServerError)
-		return err
+		return 
 	}
 
 	storedOTP, ok:= otpStore.Values[req.Email]
 
 	if !ok{
 		http.Error(w, "Invalid Session", http.StatusUnauthorized)
-		return err
+		return 
 	}
 
 	if storedOTP != req.OTP{
 		http.Error(w, "Invalid OTP", http.StatusUnauthorized)
-		return err
+		return 
 	}
 
 	delete(otpStore.Values, req.Email)
@@ -53,11 +53,11 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request) error{
 
 	w.WriteHeader(http.StatusOK)
 
-	return nil
+	return 
 }
 
 
-func SendOTP( w http.ResponseWriter, r *http.Request) error{
+func SendOTP( w http.ResponseWriter, r *http.Request){
 	//OTP
 	var body struct{
 		Email string `json:"email"`
@@ -65,7 +65,7 @@ func SendOTP( w http.ResponseWriter, r *http.Request) error{
 
 	if err:=json.NewDecoder(r.Body).Decode(&body); err!=nil{
 		http.Error(w, "Invalid Reuqest", http.StatusBadRequest)
-		return err
+		return 
 	}
 
 	otp:= GenerateOTP()
@@ -81,8 +81,14 @@ func SendOTP( w http.ResponseWriter, r *http.Request) error{
 	if otp_err != nil {
 		log.Println("Error sending OTP:", err)
 		http.Error(w, "Failed to send OTP", http.StatusInternalServerError)
-		return otp_err
+		return 
 	}
 
-	return nil
+	return 
 }
+
+/*
+The idea here is to combine the sendOTP into register and make it as one endpoint 
+and verifyOTP at another endpoint
+
+*/
