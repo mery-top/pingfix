@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react'
 import { LogoutAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
+import { GetCurrentUserAPI } from '../api/UserAPI'
 
 function Dashboard() {
   const navigate = useNavigate()
-  const [name, setName] = useState("")
+  const [user, setUser] = useState({name:"", email:""})
 
-  useEffect(() => {
-    const email = localStorage.getItem("email");
-    setName(email || "");
-  }, []);
-  
+  useEffect(()=>{
+    async function fetchUser(){
+      const res = await GetCurrentUserAPI()
+      if(res.ok){
+        const data = await res.json()
+        setUser({name: data.name, email:data.email})
+      }else{
+        console.error("User not Authenticated")
+      }
+    }
+    fetchUser()
+  },[])
+
   const LogoutHandler = async () =>{
     try{
       const res = await LogoutAPI()
@@ -19,9 +28,12 @@ function Dashboard() {
       console.log(error)
     }
   }
+
+
   return (
     <div>Dashboard
-      <p>{name}</p>
+      <p>Welcome, {user.name}</p>
+      <p> {user.email}</p>
       <button onClick={LogoutHandler}>
         Logout
       </button>

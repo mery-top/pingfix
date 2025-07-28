@@ -1,10 +1,10 @@
 package user
 
-
-import(
+import (
 	"backend/database/db"
 	"backend/models"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -17,10 +17,10 @@ func GetCurrentUser(w http.ResponseWriter, r *http.Request){
 	}
 	userID:= session.Values["user_id"].(uint)
 	var user models.User
+	fmt.Println(userID)
 	db.DB.First(&user, userID)
 	json.NewEncoder(w).Encode(map[string]string{
 		"name": user.Name,
 		"email": user.Email,
 	})
-
 }

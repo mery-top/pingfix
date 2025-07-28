@@ -169,17 +169,6 @@ func Logout(w http.ResponseWriter, r *http.Request){
 func CheckAuthStatus(w http.ResponseWriter, r *http.Request){
 	fmt.Println("Check Status Endpoint Hit")
 	session, err:= db.Store.Get(r, "session")
-	var body struct{
-		Email string `json:"email"`
-		Password string `json:"password"`
-	}
-
-	errr:=json.NewDecoder(r.Body).Decode(&body)
-	if errr!=nil{
-		fmt.Println("Error parsing JSON")
-	}
-
-	fmt.Printf("Parsed body: %+v\n", body)
 	if(err!=nil){
 		log.Fatal("Session Error", err)
 		return
