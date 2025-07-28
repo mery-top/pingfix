@@ -5,6 +5,7 @@ import (
 
 	"backend/internal/auth"
 	"backend/internal/middleware"
+	"backend/internal/user"
 	"backend/utils"
 
 	"github.com/gorilla/mux"
@@ -24,6 +25,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/status", auth.CheckAuthStatus).Methods("GET")
 	r.HandleFunc("/api/send-otp", utils.SendOTP).Methods("POST")
 	r.HandleFunc("/api/verify-otp", utils.VerifyOTP).Methods("POST")
+	r.HandleFunc("/api/user", user.GetCurrentUser).Methods("GET")
 	// r.HandleFunc("/api/secure", auth.SecureHandler).Methods("POST")
 	// r.HandleFunc("/api/csrf-token", middleware.GetCSRFToken).Methods("GET")
 	r.HandleFunc("/api/public", func(w http.ResponseWriter, r *http.Request) {
