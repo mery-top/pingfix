@@ -14,8 +14,6 @@ function Login() {
     try{
         const res = await LoginAPI(email, password)
         if(res.status === 200){
-          localStorage.setItem("email", res.data.email)
-              console.log(res.data)
               setAuthenticated("Login Success")
               navigate("/dashboard")
         }else{
@@ -27,6 +25,7 @@ function Login() {
         setMessage("Enter Correct Details, Login Failed")
     }
   }
+
 
   return (
     <>

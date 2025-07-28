@@ -8,8 +8,7 @@ export async function LoginAPI(email, password){
         body: JSON.stringify({email, password})
     });
 
-    const data = await response.json()
-    return {status: response.status, data}
+    return response
 }
 
 export async function LogoutAPI(){

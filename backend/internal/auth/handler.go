@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	"fmt"
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
@@ -45,7 +46,7 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	
 	session.Save(r,w)
 	http.Redirect(w,r, "http://localhost:5173/dashboard",http.StatusTemporaryRedirect)
-	w.Write([]byte("Logged IN SUCCESS"))
+	w.WriteHeader(http.StatusOK)
 
 }
 
@@ -97,6 +98,8 @@ func Login(w http.ResponseWriter, r *http.Request){
 		fmt.Println("Error parsing JSON")
 	}
 
+	fmt.Printf("Parsed body: %+v\n", body)
+
 	var user models.User
 
 	if !utils.ValidEmail(body.Email){
@@ -104,21 +107,21 @@ func Login(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid Email", http.StatusUnauthorized)
 		return
 	}
-
-	result:= db.DB.First(&user, "email = ?", body.Email)
+	email := strings.TrimSpace(body.Email)
+    password := strings.TrimSpace(body.Password)
+	result:= db.DB.First(&user, "email = ?", email)
 
 	if result.Error!=nil{
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	err:= bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+	err:= bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err!=nil{
 		fmt.Println("PASSWORD NOT MATCH")
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
-	// csrfToken:= csrf.Token(r)
 
 	session, err := db.Store.Get(r,"session")
 	if err!=nil{
@@ -126,10 +129,8 @@ func Login(w http.ResponseWriter, r *http.Request){
 	}
 	session.Values["user_id"] = user.ID
 	session.Values["authenticated"] = true
-	// session.Values["csrf"] = csrfToken
 	session.Save(r,w)
 
-	// w.Header().Set("X-CSRF-Token",csrfToken )
 	w.WriteHeader(http.StatusOK)
 	
 }
@@ -168,11 +169,23 @@ func Logout(w http.ResponseWriter, r *http.Request){
 func CheckAuthStatus(w http.ResponseWriter, r *http.Request){
 	fmt.Println("Check Status Endpoint Hit")
 	session, err:= db.Store.Get(r, "session")
+	var body struct{
+		Email string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	errr:=json.NewDecoder(r.Body).Decode(&body)
+	if errr!=nil{
+		fmt.Println("Error parsing JSON")
+	}
+
+	fmt.Printf("Parsed body: %+v\n", body)
 	if(err!=nil){
 		log.Fatal("Session Error", err)
 		return
 	}
 	auth, ok:= session.Values["authenticated"].(bool)
+	fmt.Println("Session authenticated:", auth, "ok:", ok)
 
 	if auth && ok{
 		w.WriteHeader(http.StatusOK)
