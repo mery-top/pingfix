@@ -11,6 +11,21 @@ function Login() {
   const navigate = useNavigate()
 
   const HandleLogin = async () =>{
+    if (!email.trim()) {
+      setMessage("Email is required");
+      return;
+    }
+  
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage("Invalid email format");
+      return;
+    }
+  
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters long");
+      return;
+    }
     try{
         const res = await LoginAPI(email, password)
         if(res.status === 200){
