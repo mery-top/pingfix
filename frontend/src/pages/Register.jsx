@@ -77,8 +77,8 @@ function Register() {
         value={otp}
         onChange={e => setOTP(e.target.value)}
          /><br/>
-         <button onClick={handleSendOTP}>SendOTP</button>
-         <button onClick={handleVerifyOTP}>VerifyOTP</button>
+         <button onClick={handleSendOTP}>SendOTP {message}</button>
+         <button onClick={handleVerifyOTP}>VerifyOTP {message}</button>
          <button onClick={handleRegister}>Register</button>
          <button onClick={LoginWithGoogle}>SignUp with Google</button>
     </>

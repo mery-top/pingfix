@@ -4,7 +4,13 @@ import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
   const navigate = useNavigate()
+  const [name, setName] = useState("")
 
+  useEffect(() => {
+    const email = localStorage.getItem("email");
+    setName(email || "");
+  }, []);
+  
   const LogoutHandler = async () =>{
     try{
       const res = await LogoutAPI()
@@ -15,6 +21,7 @@ function Dashboard() {
   }
   return (
     <div>Dashboard
+      <p>{name}</p>
       <button onClick={LogoutHandler}>
         Logout
       </button>

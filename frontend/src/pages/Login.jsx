@@ -7,12 +7,15 @@ function Login() {
   const[email, setEmail] = useState("")
   const[password, setPassword]= useState("")
   const[message, setMessage] = useState("")
+  const[isAuthenticated, setAuthenticated] = useState("")
   const navigate = useNavigate()
 
   const HandleLogin = async () =>{
     try{
         const res = await LoginAPI(email, password)
         if(res.status === 200){
+          localStorage.setItem("email", res.data.email)
+              console.log(res.data)
               setAuthenticated("Login Success")
               navigate("/dashboard")
         }else{

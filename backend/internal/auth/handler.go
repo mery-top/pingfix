@@ -2,7 +2,6 @@ package auth
 
 import (
 	"backend/database/db"
-	"backend/database/migrate"
 	"backend/models"
 	"backend/utils"
 	"encoding/json"
@@ -33,7 +32,7 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	if result.Error !=nil{
 		if errors.Is(result.Error, gorm.ErrRecordNotFound){
 			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
-			migrate.Migrate(user.Name, user.Email, string(hashedPassword))
+			db.CreateUser(user.Name, user.Email, string(hashedPassword))
 		}else{
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
             return
@@ -81,35 +80,27 @@ func Register(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// otpError:=utils.SendOTP(w,r)
-	// if otpError!=nil{
-	// 	http.Error(w, "Error Sending OTP", http.StatusBadRequest)
-	// 	return
-	// }
-
-	// votpError:= utils.VerifyOTP(w,r)
-	// if votpError!=nil{
-	// 	fmt.Println("Wrong OTP\n")
-	// 	http.Error(w, "Error Sending OTP", http.StatusBadRequest)
-	// 	return
-	// }
-
-	migrate.Migrate(user.Name, user.Email, string(hashedPassword))
+	db.CreateUser(user.Name, user.Email, string(hashedPassword))
 	
 	w.WriteHeader(http.StatusCreated)
 }
 
 func Login(w http.ResponseWriter, r *http.Request){
+	fmt.Println("Login Endpoint hit")
 	var body struct{
 		Email string `json:"email"`
 		Password string `json:"password"`
 	}
 
-	json.NewDecoder(r.Body).Decode(&body)
+	errr:=json.NewDecoder(r.Body).Decode(&body)
+	if errr!=nil{
+		fmt.Println("Error parsing JSON")
+	}
 
 	var user models.User
 
 	if !utils.ValidEmail(body.Email){
+		fmt.Println("Email Missmatch")
 		http.Error(w, "Invalid Email", http.StatusUnauthorized)
 		return
 	}
@@ -123,6 +114,7 @@ func Login(w http.ResponseWriter, r *http.Request){
 
 	err:= bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if err!=nil{
+		fmt.Println("PASSWORD NOT MATCH")
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
@@ -139,8 +131,6 @@ func Login(w http.ResponseWriter, r *http.Request){
 
 	// w.Header().Set("X-CSRF-Token",csrfToken )
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logged IN SUCCESS"))
-
 	
 }
 
