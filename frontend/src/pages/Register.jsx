@@ -10,20 +10,49 @@ function Register() {
   const[message, setMessage] = useState("")
   const navigate = useNavigate()
 
-  const handleRegister = async () =>{
-    try{
-      const res = await RegisterAPI(name,email, password)
-      if(res.status === 201){
-            setMessage("Registered Success")
-            navigate("/login")
-      }else{
-            setMessage("Enter Correct Details, Register Failed")
-      }
-    }catch(error){
-        setMessage("Enter Valid Details")
-        console.error("Register error", error)
+  const handleRegister = async () => {
+    if (!name.trim()) {
+      setMessage("Name is required");
+      return;
     }
-  }
+  
+    if (!/^[A-Za-z\s]+$/.test(name)) {
+      setMessage("Name can only contain letters and spaces");
+      return;
+    }
+  
+    if (!email.trim()) {
+      setMessage("Email is required");
+      return;
+    }
+  
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage("Invalid email format");
+      return;
+    }
+  
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters long");
+      return;
+    }
+  
+    try {
+      const res = await RegisterAPI(name, email, password);
+      const message = await res.text();
+  
+      if (res.status === 201) {
+        setMessage("Registered Successfully");
+        navigate("/login");
+      } else {
+        setMessage(message || "Registration failed");
+      }
+    } catch (error) {
+      console.error("Register error", error);
+      setMessage("Something went wrong");
+    }
+  };
+  
 
   const handleSendOTP = async() =>{
     try{
@@ -77,10 +106,11 @@ function Register() {
         value={otp}
         onChange={e => setOTP(e.target.value)}
          /><br/>
-         <button onClick={handleSendOTP}>SendOTP {message}</button>
-         <button onClick={handleVerifyOTP}>VerifyOTP {message}</button>
+         <button onClick={handleSendOTP}>SendOTP</button>
+         <button onClick={handleVerifyOTP}>VerifyOTP </button>
          <button onClick={handleRegister}>Register</button>
          <button onClick={LoginWithGoogle}>SignUp with Google</button>
+         <p>{message}</p>
     </>
   )
 }

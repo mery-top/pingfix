@@ -62,22 +62,12 @@ func Register(w http.ResponseWriter, r *http.Request){
 	json.NewDecoder(r.Body).Decode(&user)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
-	if !utils.ValidEmail(user.Email){
-		http.Error(w, "Invalid Email", http.StatusUnauthorized)
-		return
-	}
-
-	if !utils.ValidName(user.Name){
-		http.Error(w, "Invalid Name", http.StatusUnauthorized)
-		return
-	}
-
 	var existingUser models.User
 
 	result:= db.DB.First(&existingUser, "email = ?", user.Email)
 
 	if result.Error ==nil{
-		http.Error(w, "Invalid credentials", http.StatusConflict)
+		http.Error(w, "User Already Exists", http.StatusConflict)
 		return
 	}
 
@@ -149,22 +139,6 @@ func Logout(w http.ResponseWriter, r *http.Request){
 	w.Write([]byte("Logged OUT"))
 }
 
-// func SecureHandler(w http.ResponseWriter, r *http.Request){
-// 	session, _:= db.Store.Get(r, "session")
-// 	if auth, ok:= session.Values["authenticated"].(bool); !ok || !auth{
-// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	csrfToken:= r.Header.Get("X-CSRF-Token")
-// 	expectedToken, _:= session.Values["csrf"].(string)
-
-// 	if csrfToken != expectedToken{
-// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 		return
-// 	}
-// 	w.Write([]byte("Secure Content Accessed"))
-// }
 
 func CheckAuthStatus(w http.ResponseWriter, r *http.Request){
 	fmt.Println("Check Status Endpoint Hit")
