@@ -6,7 +6,6 @@ import Register from './pages/Register'
 import ProtectedRoute from './wrapper/ProtectedRoute'
 import Home from './pages/Home'
 import PublicRoute from './wrapper/PublicRoute'
-import AuthSuccess from './pages/AuthSuccess'
 
 function App() {
   return (
