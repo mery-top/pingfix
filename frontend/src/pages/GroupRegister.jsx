@@ -8,7 +8,18 @@ function GroupRegister() {
     const [location, setLocation] = useState("");
     const [handle, setHandle] = useState("");
 
-    //send data to backend as a payload on changing e 
+    const handleSubmit = (e) =>{
+        console.log({
+            groupName,
+            groupDes,
+            authEmail,
+            otp,
+            location,
+            handle,
+          });
+    }
+
+    // //send data to backend as a payload on changing e 
   return (
     <>
     <h2>Register a Group</h2>

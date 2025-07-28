@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { LogoutAPI } from '../api/AuthAPI'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { GetCurrentUserAPI } from '../api/UserAPI'
 
 function Dashboard() {
@@ -29,6 +29,10 @@ function Dashboard() {
     }
   }
 
+  const goToGroups = () => {
+    navigate('/group-register')
+  }
+
 
   return (
     <div>Dashboard
@@ -37,6 +41,7 @@ function Dashboard() {
       <button onClick={LogoutHandler}>
         Logout
       </button>
+      <button onClick={goToGroups}>Go to Groups</button>
     </div>
   )
 }
