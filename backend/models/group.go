@@ -6,7 +6,13 @@ type Group struct{
 	Name string `gorm:"not null"`
 	Description string
 	Handle string `gorm:"uniqueIndex;not null"`
-	Location string
+	Country string
+	State string
+	City string
 	AuthorityEmail string
-	CreatorID uint
+	CreatorID uint `gorm:"not null"`
+	Creator User `gorm:"foreignKey:CreatorID"`
+	Subscribers    []User `gorm:"many2many:group_data"`
 }
+
+
