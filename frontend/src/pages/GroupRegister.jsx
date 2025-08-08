@@ -1,24 +1,25 @@
 import React, { useState } from 'react'
 import { GroupRegisterAPI } from '../api/GroupAPI';
 import { SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI';
+import { useNavigate } from 'react-router-dom'
 
 function GroupRegister() {
     const [groupName, setGroupName] = useState("");
     const [groupDes, setGroupDes] = useState("");
     const [authEmail, setAuthEmail] = useState("");
     const [otp, setOTP] = useState("");
-    const [location, setLocation] = useState("");
-    const [handle, setHandle] = useState("");
+    const [groupLocation, setLocation] = useState("");
+    const [groupHandle, setHandle] = useState("");
     const[message, setMessage] = useState("")
+    const navigate = useNavigate()
 
-    const handleSubmit = async(e) =>{
-      e.preventDefault();
+    const handleGroupRegister = async() =>{
 
       const payload = {
         name: groupName,
         description: groupDes,
-        handle: handle,
-        location: location,
+        handle: groupHandle,
+        location: groupLocation,
         authorityEmail: authEmail,
       };
 
@@ -28,7 +29,9 @@ function GroupRegister() {
         
             if (res.status === 201) {
               setMessage("Registered Successfully");
-              // navigate("/login");
+              navigate("/login");
+            }if (res.status === 409) {
+              setMessage("Handle already exists. Try another one.");
             } else {
               setMessage(message || "Registration failed");
             }
@@ -68,7 +71,6 @@ function GroupRegister() {
   return (
     <>
     <h2>Register a Group</h2>
-      <form onSubmit={handleSubmit}>
         <label>Group Name:</label><br />
         <input
           type="text"
@@ -89,6 +91,8 @@ function GroupRegister() {
           value={authEmail}
           onChange={(e) => setAuthEmail(e.target.value)}
         /><br /><br />
+        <button onClick={handleSendOTP}>SendOTP</button>
+        <p>{message}</p>
 
         <label>OTP:</label><br />
         <input
@@ -96,26 +100,26 @@ function GroupRegister() {
           value={otp}
           onChange={(e) => setOTP(e.target.value)}
         /><br /><br />
+        <p>{message}</p>
 
-        <button onClick={handleSendOTP}>SendOTP</button>
-        <button onClick={handleVerifyOTP}>SendOTP</button>
+        <button onClick={handleVerifyOTP}>VerifyOTP</button>
 
         <label>Location:</label><br />
         <input
           type="text"
-          value={location}
+          value={groupLocation}
           onChange={(e) => setLocation(e.target.value)}
         /><br /><br />
 
         <label>Handle (e.g., @mygroup):</label><br />
         <input
           type="text"
-          value={handle}
+          value={groupHandle}
           onChange={(e) => setHandle(e.target.value)}
         /><br /><br />
 
-        <button type="submit" onClick={handleSubmit}>Register Group</button>
-      </form>
+        <button type="submit" onClick={handleGroupRegister}>Register Group</button>
+        <p>{message}</p>
     </>
   )
 }
