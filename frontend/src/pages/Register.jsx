@@ -101,7 +101,7 @@ function Register() {
         value={password}
         onChange={e => setPassword(e.target.value)}
          /><br/>
-         <input type="number"
+         <input type="text"
         placeholder='OTP'
         value={otp}
         onChange={e => setOTP(e.target.value)}

@@ -9,7 +9,6 @@ type User struct{
 	Name     string `gorm:"not null"`
 	Email    string `gorm:"unique"`
 	Password string
-	OTP string
 	Groups   []Group `gorm:"many2many:group_data"`
 }
 

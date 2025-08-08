@@ -99,11 +99,7 @@ function GroupRegister() {
         <p>{message}</p>
 
         <label>OTP:</label><br />
-        <input
-          type="number"
-          value={otp}
-          onChange={(e) => setOTP(e.target.value)}
-        />
+        <SecureInput value={otp} onChange={setOTP} />
         <p>{message}</p>
 
         <button onClick={handleVerifyOTP}>VerifyOTP</button>
