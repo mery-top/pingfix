@@ -123,7 +123,7 @@ func JoinGroup(w http.ResponseWriter, r *http.Request){
 	if err:= tx.Create(&models.GroupData{
 		UserID: userID,
 		GroupID: req.GroupID,
-	}); err!=nil{
+	}).Error; err!=nil{
 		tx.Rollback()
 		http.Error(w, "Failed to Create Join Group", http.StatusInternalServerError)
 		return
