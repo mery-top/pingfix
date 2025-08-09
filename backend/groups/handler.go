@@ -104,6 +104,43 @@ func SearchGroups(w http.ResponseWriter, r *http.Request){
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func JoinGroup(w http.ResponseWriter, r *http.Request){
+	var req struct{
+		GroupID uint `json:"groupID"`
+	}
+	if err:= json.NewDecoder(r.Body).Decode(&req); err!=nil{
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := db.Store.Get(r, "session")
+	userID := session.Values["user_id"].(uint)
+
+	tx:= db.DB.Begin()
+
+	if err:= tx.Create(&models.GroupData{
+		UserID: userID,
+		GroupID: req.GroupID,
+	}); err!=nil{
+		tx.Rollback()
+		http.Error(w, "Failed to Create Join Group", http.StatusInternalServerError)
+		return
+	}
+
+	if err:= tx.Model(&models.Group{}).Where("id = ?", req.GroupID).UpdateColumn("subscriber_count", gorm.Expr("subscriber_count + ?", 1)).Error; err!=nil{
+		tx.Rollback()
+		http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		http.Error(w, "Transaction commit failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 
 }
 
