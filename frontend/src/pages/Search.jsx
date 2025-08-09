@@ -82,6 +82,7 @@ function Search() {
             {groups.map((group) => (
                 <li key={group.ID}>
                     <strong>{group.Name}</strong> ({group.Handle}) - {group.Country}
+                    {group.Description}
                     <button>JOIN</button>
                 </li>
             ))}
