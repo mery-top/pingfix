@@ -10,3 +10,11 @@ export async function GroupRegisterAPI(payload){
 
     return response
 }
+
+export async function SearchGroupAPI(params){
+    const response = await fetch(`/groups/search?${params.toString()}`,{
+        credentials: "include"
+    });
+    return response
+}
+
