@@ -41,10 +41,14 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	}
 
 	session, _ := db.Store.Get(r,"session")
-	session.Values["user_id"] = LogUser.ID
-	session.Values["authenticated"] = true
-	
-	session.Save(r,w)
+	session.Options.MaxAge = -1
+	session.Save(r, w)
+
+	newSession, _ := db.Store.New(r, "session")
+	newSession.Values["authenticated"] = true
+	newSession.Values["user_id"] = LogUser.ID
+	newSession.Save(r, w)
+
 	http.Redirect(w,r, "http://localhost:5173/dashboard",http.StatusTemporaryRedirect)
 	w.WriteHeader(http.StatusOK)
 
@@ -88,8 +92,6 @@ func Login(w http.ResponseWriter, r *http.Request){
 		fmt.Println("Error parsing JSON")
 	}
 
-	fmt.Printf("Parsed body: %+v\n", body)
-
 	var user models.User
 
 	if !utils.ValidEmail(body.Email){
@@ -113,13 +115,14 @@ func Login(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	session, err := db.Store.Get(r,"session")
-	if err!=nil{
-		fmt.Println(err)
-	}
-	session.Values["user_id"] = user.ID
-	session.Values["authenticated"] = true
-	session.Save(r,w)
+	session, _ := db.Store.Get(r,"session")
+	session.Options.MaxAge = -1
+	session.Save(r, w)
+
+	newSession, _ := db.Store.New(r, "session")
+	newSession.Values["authenticated"] = true
+	newSession.Values["user_id"] = user.ID
+	newSession.Save(r, w)
 
 	w.WriteHeader(http.StatusOK)
 	
