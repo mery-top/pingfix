@@ -109,7 +109,7 @@ function Register() {
          <button onClick={handleSendOTP}>SendOTP</button>
          <button onClick={handleVerifyOTP}>VerifyOTP </button>
          <button onClick={handleRegister}>Register</button>
-         <button onClick={LoginWithGoogle}>SignUp with Google</button>
+         <button onClick={LoginWithGoogle}>SignIn with Google</button>
          <p>{message}</p>
     </>
   )

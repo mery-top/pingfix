@@ -58,7 +58,7 @@ function Login() {
          /><br/>
          <button onClick={HandleLogin}>Login</button>
          <p>{message}</p>
-         <button onClick={LoginWithGoogle}>Login with Google</button>
+         <button onClick={LoginWithGoogle}>Sign In with Google</button>
     </div>
     </>
   )
