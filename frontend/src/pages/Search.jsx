@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import SecureInput from '../wrapper/SecureInput';
-import { SearchGroupAPI } from '../api/GroupAPI';
+import { JoinGroupAPI, SearchGroupAPI } from '../api/GroupAPI';
 import countries from '../assets/countries.json'
 
 function Search() {
@@ -10,6 +10,7 @@ function Search() {
     const [groupCity, setCity] = useState("");
     const [groupHandle, setHandle] = useState("");
     const [pagination, setPagination] = useState({})
+    const [message, setMessage] = useState("")
     const [page, setPage] = useState(1)
 
     const fetchGroups = async() =>{
@@ -32,7 +33,19 @@ function Search() {
         fetchGroups()
     },[page])
 
-    
+    const handleJoinGroup = async(id)=>{
+      try{
+        const res = await JoinGroupAPI(id)
+        if(res.status === 200){
+          setMessage("Joined Group")
+        }else{
+              setMessage("Fail to Join")
+        }
+      }catch(error){
+          setMessage("Fail to Join")
+          console.error("Fail to Join error", error)
+      }
+    }
 
   return (
     <>
@@ -82,8 +95,10 @@ function Search() {
             {groups.map((group) => (
                 <li key={group.ID}>
                     <strong>{group.Name}</strong> ({group.Handle}) - {group.Country}
-                    {group.Description}
-                    <button>JOIN</button>
+                    {group.Description} <br></br>
+                    {group.SubscriberCount}
+                    <button onClick={() =>handleJoinGroup(group.ID)}>JOIN</button>
+                    <p>{message}</p>
                 </li>
             ))}
         </ul>
