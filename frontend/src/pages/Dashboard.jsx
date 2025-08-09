@@ -42,6 +42,7 @@ function Dashboard() {
         Logout
       </button>
       <button onClick={goToGroups}>Go to Groups</button>
+      <button>Search for Groups</button>
     </div>
   )
 }
