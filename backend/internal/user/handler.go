@@ -4,7 +4,6 @@ import (
 	"backend/database/db"
 	"backend/models"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
