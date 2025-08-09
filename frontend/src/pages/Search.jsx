@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import SecureInput from '../wrapper/SecureInput';
 import { SearchGroupAPI } from '../api/GroupAPI';
+import countries from '../assets/countries.json'
 
 function Search() {
     const [groups, setGroups] = useState([])
@@ -30,6 +31,8 @@ function Search() {
     useEffect(() =>{
         fetchGroups()
     },[page])
+
+    
 
   return (
     <>

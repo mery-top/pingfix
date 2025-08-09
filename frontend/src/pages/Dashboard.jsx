@@ -30,9 +30,12 @@ function Dashboard() {
   }
 
   const goToGroups = () => {
-    navigate('/group-register')
+    navigate('/group/register')
   }
 
+  const goToSearch = () => {
+    navigate('/group/search')
+  }
 
   return (
     <div>Dashboard
@@ -42,7 +45,7 @@ function Dashboard() {
         Logout
       </button>
       <button onClick={goToGroups}>Go to Groups</button>
-      <button>Search for Groups</button>
+      <button onClick={goToSearch}>Search for Groups</button>
     </div>
   )
 }
