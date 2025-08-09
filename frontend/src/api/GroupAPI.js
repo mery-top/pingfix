@@ -20,3 +20,15 @@ export async function SearchGroupAPI(params){
     return response
 }
 
+export async function JoinGroupAPI(groupID){
+    const response = await fetch("/api/group/join", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({groupID})
+    });
+
+    return response
+}
