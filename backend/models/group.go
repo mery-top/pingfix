@@ -1,5 +1,9 @@
 package models
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+
+)
 
 type Group struct{
 	gorm.Model
@@ -13,6 +17,11 @@ type Group struct{
 	CreatorID uint `gorm:"not null"`
 	Creator User `gorm:"foreignKey:CreatorID"`
 	Subscribers    []User `gorm:"many2many:group_data"`
+	SubscriberCount int `gorm:"default:0"`
 }
 
-
+type GroupData struct {
+    GroupID uint `gorm:"primaryKey"`
+    UserID  uint `gorm:"primaryKey"`
+    JoinedAt time.Time
+}
