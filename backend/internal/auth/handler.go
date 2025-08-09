@@ -15,6 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
+
 func BeginAuth(w http.ResponseWriter, r *http.Request){
 	gothic.BeginAuthHandler(w,r)
 }
@@ -30,28 +31,44 @@ func Callback(w http.ResponseWriter, r *http.Request){
 
 	var LogUser models.User
 	result:= db.DB.First(&LogUser, "email=?", user.Email)
+
+	//signup
 	if result.Error !=nil{
 		if errors.Is(result.Error, gorm.ErrRecordNotFound){
 			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
 			db.CreateUser(user.Name, user.Email, string(hashedPassword))
+
+			session, _ := db.Store.Get(r,"session")
+			session.Options.MaxAge = -1
+			session.Save(r, w)
+
+			newSession, _ := db.Store.New(r, "session")
+			newSession.Values["authenticated"] = true
+			newSession.Values["user_id"] = LogUser.ID
+			newSession.Save(r, w)
+
+			http.Redirect(w,r, "http://localhost:5173/dashboard",http.StatusTemporaryRedirect)
+			return
 		}else{
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
             return
 		}
+		//login
+	}else if result.Error ==nil{
+		session, _ := db.Store.Get(r,"session")
+		session.Options.MaxAge = -1
+		session.Save(r, w)
+
+		newSession, _ := db.Store.New(r, "session")
+		newSession.Values["authenticated"] = true
+		newSession.Values["user_id"] = LogUser.ID
+		newSession.Save(r, w)
+
+		http.Redirect(w,r, "http://localhost:5173/dashboard",http.StatusTemporaryRedirect)
+		return
 	}
 
-	session, _ := db.Store.Get(r,"session")
-	session.Options.MaxAge = -1
-	session.Save(r, w)
-
-	newSession, _ := db.Store.New(r, "session")
-	newSession.Values["authenticated"] = true
-	newSession.Values["user_id"] = LogUser.ID
-	newSession.Save(r, w)
-
-	http.Redirect(w,r, "http://localhost:5173/dashboard",http.StatusTemporaryRedirect)
-	w.WriteHeader(http.StatusOK)
-
+	http.Redirect(w,r, "http://localhost:5173/home",http.StatusTemporaryRedirect)
 }
 
 func Register(w http.ResponseWriter, r *http.Request){
