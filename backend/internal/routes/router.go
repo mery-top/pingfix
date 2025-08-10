@@ -29,6 +29,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/user", user.GetCurrentUser).Methods("GET")
 	r.HandleFunc("/api/group/register", groups.GroupRegister).Methods("POST")
 	r.HandleFunc("/api/group/search", groups.SearchGroups).Methods("GET")
+	r.HandleFunc("/api/group/mygroups", groups.MyGroups).Methods("GET")
 	r.HandleFunc("/api/group/join", groups.JoinGroup).Methods("POST")
 	// r.HandleFunc("/api/secure", auth.SecureHandler).Methods("POST")
 	// r.HandleFunc("/api/csrf-token", middleware.GetCSRFToken).Methods("GET")
