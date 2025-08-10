@@ -32,3 +32,13 @@ export async function JoinGroupAPI(groupID){
 
     return response
 }
+
+
+export async function MyGroupsAPI(params){
+    const queryString = params.toString();
+    const url = queryString ? `/api/group/mygroups?${queryString}` : `/api/group/mygroups`;
+    const response = await fetch(url, {
+        credentials: "include"
+    });
+    return response
+}
