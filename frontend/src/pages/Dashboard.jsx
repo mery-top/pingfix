@@ -37,6 +37,10 @@ function Dashboard() {
     navigate('/group/search')
   }
 
+  const goToMyGroups = () => {
+    navigate('/group/mygroups')
+  }
+
   return (
     <div>Dashboard
       <p>Welcome, {user.name}</p>
@@ -44,8 +48,9 @@ function Dashboard() {
       <button onClick={LogoutHandler}>
         Logout
       </button>
-      <button onClick={goToGroups}>Go to Groups</button>
+      <button onClick={goToGroups}>Create Groups</button>
       <button onClick={goToSearch}>Search for Groups</button>
+      <button onClick={goToMyGroups}>My Groups</button>
     </div>
   )
 }
