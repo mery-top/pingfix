@@ -8,6 +8,7 @@ import Home from './pages/Home'
 import PublicRoute from './wrapper/PublicRoute'
 import GroupRegister from './pages/GroupRegister'
 import Search from './pages/Search'
+import MyGroups from './pages/MyGroups'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>}></Route>
     <Route path="/group/register" element={<ProtectedRoute><GroupRegister/></ProtectedRoute>}></Route>
     <Route path="/group/search" element={<ProtectedRoute><Search/></ProtectedRoute>}></Route>
+    <Route path="/group/mygroups" element={<ProtectedRoute><MyGroups/></ProtectedRoute>}></Route>
     <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}></Route>
     <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}></Route>
     <Route path="/" element={<Home/>}></Route>
