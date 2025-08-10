@@ -11,7 +11,7 @@ function Search() {
     const [groupHandle, setHandle] = useState("");
     const [pagination, setPagination] = useState({})
     const [message, setMessage] = useState("")
-    const [page, setPage] = useState(1)
+    const [pages, setPage] = useState(1)
 
     const fetchGroups = async() =>{
         const params = new URLSearchParams({
@@ -19,7 +19,7 @@ function Search() {
             country: selectedCountry, 
             state: selectedState, 
             city: groupCity,
-            page: page, 
+            page: pages, 
             limit:5
         })
 
@@ -31,7 +31,7 @@ function Search() {
 
     useEffect(() =>{
         fetchGroups()
-    },[page])
+    },[pages])
 
     const handleJoinGroup = async(id)=>{
       try{
@@ -105,10 +105,10 @@ function Search() {
 
         <div>
             {pagination.page > 1 && (
-            <button onClick={() => setPage(page - 1)}>Previous</button>
+            <button onClick={() => setPage(pages - 1)}>Previous</button>
             )}
             {pagination.page < pagination.pages && (
-            <button onClick={() => setPage(page + 1)}>Next</button>
+            <button onClick={() => setPage(pages + 1)}>Next</button>
             )}
         </div>
     </>
