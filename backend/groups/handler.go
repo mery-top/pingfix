@@ -4,6 +4,7 @@ import (
 	"backend/database/db"
 	"backend/models"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -146,6 +147,8 @@ func JoinGroup(w http.ResponseWriter, r *http.Request){
 
 func MyGroups(w http.ResponseWriter, r *http.Request){
 
+	fmt.Println("MyGroups Endpoint")
+
 	page, _:= strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _:= strconv.Atoi(r.URL.Query().Get("limit"))
 
@@ -168,15 +171,19 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var createdGroups []map[string]interface{}
+	createdGroups :=[]map[string]interface{}{}
+	fmt.Println("Reached Created Groups")
 	if err:= db.DB.Model(&models.Group{}).Where("creator_id = ?", userID).Select("id", "name", "description", "handle", "country", "state", "city", "subscriber_count").Limit(limit).Offset(offset).Find(&createdGroups).Error; err!=nil{
+		fmt.Println(err)
 		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
         return
 	}
 
 	
-	var joinedGroups []map[string]interface{}
-	if err:= db.DB.Table("groups").Joins("JOIN group_data gd on groups.id == gd.group_id").Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).Select("groups.id", "groups.name", "groups.description", "groups.handle", "groups.country", "groups.state", "groups.city", "groups.subscriber_count").Limit(limit).Offset(offset).Find(&joinedGroups).Error; err!=nil{
+	joinedGroups := []map[string]interface{}{}
+	fmt.Println("Reached Joined Groups")
+	if err:= db.DB.Table("groups").Joins("JOIN group_data gd on groups.id = gd.group_id").Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).Select("groups.id", "groups.name", "groups.description", "groups.handle", "groups.country", "groups.state", "groups.city", "groups.subscriber_count").Limit(limit).Offset(offset).Find(&joinedGroups).Error; err!=nil{
+		fmt.Println(err)
 		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
         return
 	}
@@ -210,6 +217,5 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return 
 	}
-
 }
 
