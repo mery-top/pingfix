@@ -14,11 +14,12 @@ func CreateUser(name, email, hashedPassword string){
 	DB.Create(&newUser)
 }
 
-func CreateGroup(name, description, handle,country, state, city , authorityEmail string, userID int){
+func CreateGroup(name, description, handle,groupType, country, state, city , authorityEmail string, userID int){
 	newGroup:= models.Group{
 		Name: name,
 		Description: description,
 		Handle: handle,
+		Type: groupType,
 		Country: country,
 		State: state,
 		City: city,
