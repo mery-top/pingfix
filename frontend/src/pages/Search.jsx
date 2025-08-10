@@ -95,7 +95,7 @@ function Search() {
             {groups.map((group) => (
                 <li key={group.ID}>
                     <strong>{group.Name}</strong> ({group.Handle}) - {group.Country}
-                    {group.Description} <br></br>
+                    {group.Description} <br></br> {group.Type}
                     {group.SubscriberCount}
                     <button onClick={() =>handleJoinGroup(group.ID)}>JOIN</button>
                     <p>{message}</p>
