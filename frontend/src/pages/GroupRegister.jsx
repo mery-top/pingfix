@@ -20,10 +20,12 @@ function GroupRegister() {
 
     const handleGroupRegister = async() =>{
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(authEmail)) {
-        setMessage("Invalid email format");
-        return;
+      if (requiresAuthorityEmail(groupType)) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(authEmail)) {
+            setMessage("Invalid email format");
+            return;
+        }
       }
 
       const payload = {
@@ -101,12 +103,12 @@ function GroupRegister() {
         <label htmlFor="">Group Type:</label>
         <select name="" value={groupType} onChange={(e)=> setGroupType(e.target.value)}>
               <option value="">Select Type</option>
-                <option value="Organization">Organization</option>
                 <option value="Public">Public</option>
-                <option value="NGO">NGO</option>
                 <option value="Local">Local</option>
+                <option value="Organization">Organization</option>
+                <option value="NGO">NGO</option>
         </select>
-
+    <br />
         {requiresAuthorityEmail(groupType) && (
           <div>
             <label>Authorized Email:</label><br />
