@@ -14,6 +14,7 @@ function GroupRegister() {
     const [selectedState, setSelectedState] = useState("");
     const [groupCity, setCity] = useState("");
     const [groupHandle, setHandle] = useState("");
+    const [groupType, setGroupType] = useState("");
     const[message, setMessage] = useState("")
     const navigate = useNavigate()
 
@@ -29,6 +30,7 @@ function GroupRegister() {
         name: groupName,
         description: groupDes,
         handle: groupHandle,
+        type: groupType,
         country: selectedCountry,
         state: selectedState,
         city: groupCity,
@@ -80,6 +82,12 @@ function GroupRegister() {
           console.error("Register error", error)
       }
     }
+
+    const requiresAuthorityEmail = (type)=>{
+      return ["Organization", "NGO"].includes(type)
+    }
+
+
   return (
     <>
     <h2>Register a Group</h2>
@@ -89,20 +97,35 @@ function GroupRegister() {
         <label>Group Description:</label><br />
         <SecureInput value={groupDes} onChange={setGroupDes} allowSpace={true} maxLength={2000}/>
         <p>{groupDes.length}/2000 characters</p>
-        <label>Authorized Email:</label><br />
-        <input
-          type="email"
-          value={authEmail}
-          onChange={(e) => setAuthEmail(e.target.value)}
-        />
-        <button onClick={handleSendOTP}>SendOTP</button>
-        <p>{message}</p>
 
-        <label>OTP:</label><br />
-        <SecureInput value={otp} onChange={setOTP} />
-        <p>{message}</p>
+        <label htmlFor="">Group Type:</label>
+        <select name="" value={groupType} onChange={(e)=> setGroupType(e.target.value)}>
+              <option value="">Select Type</option>
+                <option value="Organization">Organization</option>
+                <option value="Public">Public</option>
+                <option value="NGO">NGO</option>
+                <option value="Local">Local</option>
+        </select>
 
-        <button onClick={handleVerifyOTP}>VerifyOTP</button>
+        {requiresAuthorityEmail(groupType) && (
+          <div>
+            <label>Authorized Email:</label><br />
+            <input
+              type="email"
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+            />
+            <button onClick={handleSendOTP}>SendOTP</button>
+            <p>{message}</p>
+
+            <label>OTP:</label><br />
+            <SecureInput value={otp} onChange={setOTP} />
+            <p>{message}</p>
+
+            <button onClick={handleVerifyOTP}>VerifyOTP</button>
+          </div>
+        )}
+        
         <label>Country:</label><br />
         <select
           value={selectedCountry}
