@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MyGroupsAPI } from '../api/GroupAPI'
 
@@ -17,13 +17,22 @@ function MyGroups() {
             limit: 5,
         })
 
-        const res = await MyGroupsAPI(params)
-        const data = res.json()
-        setJoinedGroups(data.groups)
-        setCreatedGroups(data.created)
-        setTotalJoined(data.total_joined)
-        setTotalCreated(data.total_created)
-        setPagination(data.pagination)
+        try{
+            const res = await MyGroupsAPI(params)
+            if (!res.ok) {
+                const text = await res.text()  
+                throw new Error(text)
+            }
+
+            const data = await res.json()
+            setJoinedGroups(data.groups)
+            setCreatedGroups(data.created)
+            setTotalJoined(data.pagination.total_joined)
+            setTotalCreated(data.pagination.total_created)
+            setPagination(data.pagination)
+        }catch(error){
+            console.log(error)
+        }
     }
 
     useEffect(() =>{
@@ -36,22 +45,22 @@ function MyGroups() {
     <h1>Joined Groups: {totalJoined}</h1>
     <ul>
         {joinedGroups.map((group)=>(
-            <li key={group.ID}>
-                 <strong>{group.Name}</strong> ({group.Handle}) - {group.Country}
-                    {group.Description} <br></br>
-                    {group.SubscriberCount}
-            </li>
+            <li key={group.id}>
+            <strong>{group.name}</strong> ({group.handle}) - {group.country}
+            {group.description} <br />
+            {group.subscriber_count}
+        </li>
         ))}
     </ul>
 
     <h1>Created Groups: {totalCreated}</h1>
     <ul>
         {createdGroups.map((group)=>(
-            <li key={group.ID}>
-                 <strong>{group.Name}</strong> ({group.Handle}) - {group.Country}
-                    {group.Description} <br></br>
-                    {group.SubscriberCount}
-            </li>
+            <li key={group.id}>
+            <strong>{group.name}</strong> ({group.handle}) - {group.country}
+            {group.description} <br />
+            {group.subscriber_count}
+        </li>
         ))}
     </ul>
 
