@@ -10,6 +10,7 @@ type Group struct{
 	Name string `gorm:"not null"`
 	Description string
 	Handle string `gorm:"uniqueIndex;not null"`
+	Type string
 	Country string
 	State string
 	City string
