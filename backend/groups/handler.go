@@ -144,3 +144,72 @@ func JoinGroup(w http.ResponseWriter, r *http.Request){
 
 }
 
+func MyGroups(w http.ResponseWriter, r *http.Request){
+
+	page, _:= strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _:= strconv.Atoi(r.URL.Query().Get("limit"))
+
+	if page <= 0{
+		page = 1
+	}
+
+	if limit <=0{
+		limit = 10
+	}
+
+	offset:= (page -1) * limit
+
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+
+	if !ok{
+		http.Error(w, "Status Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var createdGroups []map[string]interface{}
+	if err:= db.DB.Model(&models.Group{}).Where("creator_id = ?", userID).Select("id", "name", "description", "handle", "country", "state", "city", "subscriber_count").Limit(limit).Offset(offset).Find(&createdGroups).Error; err!=nil{
+		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
+        return
+	}
+
+	
+	var joinedGroups []map[string]interface{}
+	if err:= db.DB.Table("groups").Joins("JOIN group_data gd on groups.id == gd.group_id").Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).Select("groups.id", "groups.name", "groups.description", "groups.handle", "groups.country", "groups.state", "groups.city", "groups.subscriber_count").Limit(limit).Offset(offset).Find(&joinedGroups).Error; err!=nil{
+		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
+        return
+	}
+
+
+	var totalCreated int64
+    db.DB.Model(&models.Group{}).Where("creator_id = ?", userID).Count(&totalCreated)
+
+    var totalJoined int64
+    db.DB.Table("groups").
+        Joins("JOIN group_data gd ON gd.group_id = groups.id").
+        Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).
+        Count(&totalJoined)
+
+	total:= totalCreated + totalJoined
+
+	response:= map[string]interface{}{
+		"pagination": map[string]interface{}{
+            "page":           page,
+			"limit": 			limit,
+            "total_created":  totalCreated,
+            "total_joined":   totalJoined,
+			"pages": (total + int64(limit) - 1) / int64(limit),
+        },
+		"groups": joinedGroups,
+		"created": createdGroups,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err:= json.NewEncoder(w).Encode(response); err!=nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return 
+	}
+
+}
+
