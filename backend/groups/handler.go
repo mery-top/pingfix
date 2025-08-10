@@ -17,6 +17,7 @@ func GroupRegister(w http.ResponseWriter, r *http.Request){
 		Name string `json:"name"`
 		Description string `json:"description"`
 		Handle string `json:"handle"`
+		Type string `json:"type"`
 		Country string `json:"country"`
 		State string `json:"state"`
 		City string `json:"city"`
@@ -41,7 +42,7 @@ func GroupRegister(w http.ResponseWriter, r *http.Request){
 	session, _:= db.Store.Get(r, "session")
 	group.CreatorID = session.Values["user_id"].(uint)
 
-	db.CreateGroup(group.Name, group.Description, group.Handle, group.Country, group.State, group.City, group.AuthorityEmail, int(group.CreatorID))
+	db.CreateGroup(group.Name, group.Description, group.Handle, group.Type, group.Country, group.State, group.City, group.AuthorityEmail, int(group.CreatorID))
 
 	w.WriteHeader(http.StatusCreated)
 }
