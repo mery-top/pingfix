@@ -53,7 +53,7 @@ function MyGroups() {
         ))}
     </ul>
 
-    <h1>Created Groups: {totalCreated}</h1>
+    <h1>Created & Joined Groups: {totalCreated}</h1>
     <ul>
         {createdGroups.map((group)=>(
             <li key={group.id}>
