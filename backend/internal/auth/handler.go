@@ -2,14 +2,16 @@ package auth
 
 import (
 	"backend/database/db"
+	dbhandler "backend/database/handlers"
 	"backend/models"
 	"backend/utils"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
-	"fmt"
+
 	"github.com/markbates/goth/gothic"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -36,7 +38,7 @@ func Callback(w http.ResponseWriter, r *http.Request){
 	if result.Error !=nil{
 		if errors.Is(result.Error, gorm.ErrRecordNotFound){
 			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
-			db.CreateUser(user.Name, user.Email, string(hashedPassword))
+			dbhandler.CreateUser(user.Name, user.Email, string(hashedPassword))
 
 			session, _ := db.Store.Get(r,"session")
 			session.Options.MaxAge = -1
@@ -92,7 +94,7 @@ func Register(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	db.CreateUser(user.Name, user.Email, string(hashedPassword))
+	dbhandler.CreateUser(user.Name, user.Email, string(hashedPassword))
 	
 	w.WriteHeader(http.StatusCreated)
 }
