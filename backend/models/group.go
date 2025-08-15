@@ -19,6 +19,7 @@ type Group struct{
 	Creator User `gorm:"foreignKey:CreatorID"`
 	Subscribers    []User `gorm:"many2many:group_data"`
 	SubscriberCount int `gorm:"default:0"`
+	isJoined bool `gorm:"-" json:"isJoined"`
 }
 
 type GroupData struct {
