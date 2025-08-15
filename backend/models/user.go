@@ -11,12 +11,3 @@ type User struct{
 	Password string
 	Groups   []Group `gorm:"many2many:group_data"`
 }
-
-
-type Post struct{
-	gorm.Model
-	Title string
-	Content string
-	GroupID uint
-	UserID uint
-}
