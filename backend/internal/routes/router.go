@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"backend/groups"
+	"backend/handlers/groups"
 	"backend/internal/auth"
 	"backend/internal/middleware"
 	"backend/internal/user"
