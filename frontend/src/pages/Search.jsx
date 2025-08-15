@@ -97,7 +97,11 @@ function Search() {
                     <strong>{group.Name}</strong> ({group.Handle}) - {group.Country}
                     {group.Description} <br></br> {group.Type}
                     {group.SubscriberCount}
-                    <button onClick={() =>handleJoinGroup(group.ID)}>JOIN</button>
+                    {group.isJoined ? (
+                            <button disabled>✅ Joined</button>
+                        ) : (
+                            <button onClick={() => handleJoinGroup(group.ID)}>JOIN</button>
+                      )}
                     <p>{message}</p>
                 </li>
             ))}
