@@ -67,8 +67,26 @@ func SearchGroups(w http.ResponseWriter, r *http.Request){
 
 	offset:= (page -1) * limit
 
-	var groups []models.Group
-	query:= db.DB.Model(&models.Group{})
+	var groups []struct {
+        ID              uint   `json:"ID"`
+        Name            string `json:"Name"`
+        Handle          string `json:"Handle"`
+        Country         string `json:"Country"`
+        State           string `json:"State"`
+        City            string `json:"City"`
+        Description     string `json:"Description"`
+        Type            string `json:"Type"`
+        SubscriberCount int    `json:"SubscriberCount"`
+        IsJoined        bool   `json:"isJoined"`
+    }
+
+	session, _ := db.Store.Get(r, "session")
+	userID := session.Values["user_id"].(uint)
+
+	query:= db.DB.Table("groups").
+			Select(`groups.id, groups.name, groups.handle, groups.country, groups.state, groups.city, groups.description, groups.type, groups.subscriber_count,
+			CASE WHEN gd.user_id is NOT NULL THEN true ELSE false END AS is_joined `).
+			Joins("LEFT JOIN group_data as gd ON gd.group_id = groups.id AND gd.user_id = ?", userID)
 
 	if handle != "" {
 		query = query.Where("handle LIKE ?", "%"+handle+"%")
@@ -174,7 +192,8 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 
 	createdGroups :=[]map[string]interface{}{}
 	fmt.Println("Reached Created Groups")
-	if err:= db.DB.Model(&models.Group{}).Where("creator_id = ?", userID).Select("id", "name", "description", "handle", "country", "state", "city", "subscriber_count").Limit(limit).Offset(offset).Find(&createdGroups).Error; err!=nil{
+	if err:= db.DB.Table("groups").Where("creator_id = ?", userID).Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
+                true AS is_joined`).Limit(limit).Offset(offset).Find(&createdGroups).Error; err!=nil{
 		fmt.Println(err)
 		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
         return
@@ -183,7 +202,12 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 	
 	joinedGroups := []map[string]interface{}{}
 	fmt.Println("Reached Joined Groups")
-	if err:= db.DB.Table("groups").Joins("JOIN group_data gd on groups.id = gd.group_id").Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).Select("groups.id", "groups.name", "groups.description", "groups.handle", "groups.country", "groups.state", "groups.city", "groups.subscriber_count").Limit(limit).Offset(offset).Find(&joinedGroups).Error; err!=nil{
+	if err:= db.DB.Table("groups").
+			Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
+                CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined`).
+			Joins("JOIN group_data gd on groups.id = gd.group_id").
+			Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).
+			Limit(limit).Offset(offset).Find(&joinedGroups).Error; err!=nil{
 		fmt.Println(err)
 		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
         return
@@ -219,4 +243,3 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 		return 
 	}
 }
-
