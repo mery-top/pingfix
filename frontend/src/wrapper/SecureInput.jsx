@@ -2,10 +2,24 @@ import React from 'react'
 
 function SecureInput({value, onChange, allowSpace= false, maxLength = 150}) {
      const sanitizedInput = (value) =>{
-        let sanitized =    value
-                        .replace(/<script.*?>.*?<\/script>/gi, '')      // remove <script>...</script>
-                        .replace(/<[^>]+>/g, '')                        // remove all HTML tags
-                        .replace(/on\w+="[^"]*"/g, '')                  // remove inline JS events like onclick=""  
+      let sanitized = value
+                     // Remove <script>...</script>
+                     .replace(/<script.*?>.*?<\/script>/gi, '')
+                     .normalize("NFKC") 
+                     
+                     // Remove all HTML tags
+                     .replace(/<[^>]+>/g, '')
+                     // Remove inline JS events like onclick=""
+                     .replace(/on\w+="[^"]*"/gi, '')
+                     .replace(/on\w+='[^']*'/gi, '')
+                     // Remove javascript: URIs
+                     .replace(/javascript:[^'"]*/gi, '')
+                     // Remove SQL meta-characters that could be injection points
+                     .replace(/(['";`])/g, '')
+                     .replace(/(--|#|\/\*|\*\/)/g, '')
+                     // Remove URL-encoded dangerous characters (%27 = ', %22 = ")
+                     .replace(/(%27|%22|%2D%2D|%3B)/gi, '')
+
         if (allowSpace) {
             sanitized = sanitized.replace(/[^a-zA-Z0-9_@.\s-]/g, '');
         } else {
