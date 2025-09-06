@@ -66,65 +66,38 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
     }
 
     // Fetch posts from groups created by this user
-    createdPosts := []map[string]interface{}{}
+    posts := []map[string]interface{}{}
     if err := db.DB.Table("posts").
         Select(`posts.id, posts.content, posts.created_at, 
                 groups.id as group_id, groups.name as group_name, groups.handle as group_handle,
-                users.id as user_id, users.username as username`).
+                users.id as user_id, users.name as username`).
         Joins("JOIN groups ON posts.group_id = groups.id").
         Joins("JOIN users ON posts.user_id = users.id").
         Where("groups.creator_id = ?", userID).
+        Order("posts.created_at DESC").
         Limit(limit).Offset(offset).
-        Find(&createdPosts).Error; err != nil {
+        Find(&posts).Error; err != nil {
         fmt.Println(err)
-        http.Error(w, "Error fetching created posts", http.StatusInternalServerError)
+        http.Error(w, "Error fetching posts", http.StatusInternalServerError)
         return
     }
 
-    // Fetch posts from groups joined by this user (not created by them)
-    joinedPosts := []map[string]interface{}{}
-    if err := db.DB.Table("posts").
-        Select(`posts.id, posts.content, posts.created_at, 
-                groups.id as group_id, groups.name as group_name, groups.handle as group_handle,
-                users.id as user_id, users.username as username`).
-        Joins("JOIN groups ON posts.group_id = groups.id").
-        Joins("JOIN users ON posts.user_id = users.id").
-        Joins("JOIN group_data gd ON groups.id = gd.group_id").
-        Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).
-        Limit(limit).Offset(offset).
-        Find(&joinedPosts).Error; err != nil {
-        fmt.Println(err)
-        http.Error(w, "Error fetching joined posts", http.StatusInternalServerError)
-        return
-    }
-
-    // Count totals
-    var totalCreated int64
+    // Count total posts
+    var total int64
     db.DB.Table("posts").
         Joins("JOIN groups ON posts.group_id = groups.id").
         Where("groups.creator_id = ?", userID).
-        Count(&totalCreated)
-
-    var totalJoined int64
-    db.DB.Table("posts").
-        Joins("JOIN groups ON posts.group_id = groups.id").
-        Joins("JOIN group_data gd ON groups.id = gd.group_id").
-        Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).
-        Count(&totalJoined)
-
-    total := totalCreated + totalJoined
+        Count(&total)
 
     // Response
     response := map[string]interface{}{
         "pagination": map[string]interface{}{
-            "page":          page,
-            "limit":         limit,
-            "total_created": totalCreated,
-            "total_joined":  totalJoined,
-            "pages":         (total + int64(limit) - 1) / int64(limit),
+            "page":  page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + int64(limit) - 1) / int64(limit),
         },
-        "created": createdPosts,
-        "joined":  joinedPosts,
+        "posts": posts,
     }
 
     w.Header().Set("Content-Type", "application/json")
@@ -133,5 +106,6 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
         return
     }
 }
+
 
 
