@@ -5,9 +5,9 @@ import (
 
 	"backend/handlers/groups"
 	"backend/handlers/posts"
+	"backend/handlers/user"
 	"backend/internal/auth"
 	"backend/internal/middleware"
-	"backend/internal/user"
 	"backend/utils"
 
 	"github.com/gorilla/mux"
