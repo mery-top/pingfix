@@ -164,7 +164,10 @@ func JoinGroup(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusOK)
 
 }
-
+/*--------------------------------------------------
+NEED TO APPLY UNION HERE
+----------------------------------------------------
+*/
 func MyGroups(w http.ResponseWriter, r *http.Request){
 
 	fmt.Println("MyGroups Endpoint")
