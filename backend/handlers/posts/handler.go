@@ -17,7 +17,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 	}
 
 	var req struct{
-		GroupID uint `json:"groupID"`
+		GroupID []uint `json:"groupID"`
 		Content string `json:"content"`
 
 	}
@@ -27,7 +27,15 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	dbhandler.CreatePost(int(req.GroupID), int(userID), req.Content)
+	if len(req.GroupID) == 0 {
+        http.Error(w, "No groups selected", http.StatusBadRequest)
+        return
+    }
+
+	for _, groupID := range req.GroupID {
+        dbhandler.CreatePost(int(groupID), int(userID), req.Content)
+    }
+
 
 	w.WriteHeader(http.StatusCreated)
 }
