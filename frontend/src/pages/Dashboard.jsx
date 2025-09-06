@@ -42,7 +42,11 @@ function Dashboard() {
   }
 
   const goToCreatePosts = () =>{
-    navigate('/group/posts/createpost')
+    navigate('/post/createpost')
+  }
+
+  const goToMyPosts = () =>{
+    navigate('/post/mypost')
   }
 
   return (
@@ -56,6 +60,7 @@ function Dashboard() {
       <button onClick={goToSearch}>Search for Groups</button>
       <button onClick={goToMyGroups}>My Groups</button>
       <button onClick={goToCreatePosts}>Create Posts</button>
+      <button onClick={goToMyPosts}>My Posts</button>
     </div>
   )
 }
