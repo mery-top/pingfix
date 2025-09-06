@@ -41,6 +41,8 @@ function CreatePost() {
   
       if (res.status === 201) {
         setMessage("Create Post Successfully");
+        setSelectedGroups([]);   // clear groups
+        setContent("");
         
       } else {
         setMessage(message || "Post Creation failed");
