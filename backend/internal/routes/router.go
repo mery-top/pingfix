@@ -33,6 +33,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/group/mygroups", groups.MyGroups).Methods("GET")
 	r.HandleFunc("/api/group/join", groups.JoinGroup).Methods("POST")
 	r.HandleFunc("/api/post/create", posts.CreatePost).Methods("POST")
+	r.HandleFunc("/api/post/myposts", posts.MyPosts).Methods("GET")
 	// r.HandleFunc("/api/secure", auth.SecureHandler).Methods("POST")
 	// r.HandleFunc("/api/csrf-token", middleware.GetCSRFToken).Methods("GET")
 	r.HandleFunc("/api/public", func(w http.ResponseWriter, r *http.Request) {
