@@ -12,3 +12,12 @@ export async function CreatePostAPI(groupID, content){
     });
     return response
 }
+
+export async function MyPostsAPI(params){
+    const queryString = params.toString();
+    const url = queryString ? `/api/post/myposts?${queryString}` : `/api/post/myposts`;
+    const response = await fetch(url, {
+        credentials: "include"
+    });
+    return response
+}
