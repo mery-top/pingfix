@@ -1,5 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+/* Titles */
 *{
-    background-color: aliceblue;
+    background-color: #350E25;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
 }
+
+.slogan{
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+}
+
+.slogan .comm{
+    color: #F47D34;
+    font-size: 22px;
+    font-style: italic;
+    font-weight: 500;
+}
+
+
+@media (max-width: 480px) {
+    .slogan{
+        font-size: 10px;
+    }
+  }
+
