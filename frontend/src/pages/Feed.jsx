@@ -50,6 +50,8 @@ function Feed() {
     fetchPosts();
   }, [page]);
 
+  
+
   return (
     <div style={{ maxWidth: "600px", margin: "auto" }}>
       <h2>Dashboard Feed</h2>
@@ -73,10 +75,37 @@ function Feed() {
 
 function PostCard({ post }) {
   const realPost = post.post;
+  const [upvotes, setUpvotes] = useState(post.upvotes);
+  const [downvotes, setDownvotes] = useState(post.downvotes);
+  const [commentsCount, setCommentsCount] = useState(post.comments);
+  const [commentText, setCommentText] = useState("");
+  const [commentList, setCommentList] = useState(realPost.Comments || []);
 
   const handleShare = () => {
     navigator.clipboard.writeText(post.share_url);
     alert("Share link copied!");
+  };
+
+  const handleVote = async (type) => {
+    await VotePost(realPost.ID, type);
+    if (type === 1) setUpvotes(upvotes + 1);
+    else setDownvotes(downvotes + 1);
+  };
+
+  const handleAddComment = async () => {
+    if (!commentText) return;
+    const newComment = await AddComment(realPost.ID, commentText);
+    setCommentList([newComment, ...commentList]);
+    setCommentsCount(commentsCount + 1);
+    setCommentText("");
+  };
+
+  const handleDeleteComment = async (id) => {
+    const ok = await DeleteComment(id);
+    if (ok) {
+      setCommentList(commentList.filter(c => c.ID !== id));
+      setCommentsCount(commentsCount - 1);
+    }
   };
 
   return (
@@ -87,7 +116,6 @@ function PostCard({ post }) {
       marginBottom: "20px",
       background: "white"
     }}>
-
       <p>
         <strong>{realPost.User?.Name}</strong> in{" "}
         <span style={{ color: "gray" }}>{realPost.Group?.Name}</span>
@@ -125,24 +153,43 @@ function PostCard({ post }) {
       <hr style={{ margin: "10px 0" }} />
 
       {/* ACTION BAR */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
-          👍 {post.upvotes}
-          <span style={{ margin: "0 10px" }}></span>
-          👎 {post.downvotes}
+          <button onClick={() => handleVote(1)}>👍</button> {upvotes}
+          <button onClick={() => handleVote(-1)} style={{ marginLeft: "8px" }}>👎</button> {downvotes}
         </div>
 
-        <div>
-          💬 {post.comments} comments
-        </div>
+        <div>💬 {commentsCount} comments</div>
 
-        <button onClick={handleShare}>
-          🔗 Share
-        </button>
+        <button onClick={handleShare}>🔗 Share</button>
+      </div>
+
+      {/* COMMENT SECTION */}
+      <div style={{ marginTop: "10px" }}>
+        <input
+          type="text"
+          placeholder="Write a comment..."
+          value={commentText}
+          onChange={e => setCommentText(e.target.value)}
+          style={{ width: "80%" }}
+        />
+        <button onClick={handleAddComment}>Post</button>
+
+        <div style={{ marginTop: "10px" }}>
+          {commentList.map(c => (
+            <div key={c.ID} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
+              <strong>{c.User?.Name}</strong>: {c.Content}
+              {c.UserID === realPost.UserID && (
+                <button
+                  onClick={() => handleDeleteComment(c.ID)}
+                  style={{ marginLeft: "10px", color: "red" }}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <small style={{ color: "gray", display: "block", marginTop: "10px" }}>
