@@ -20,8 +20,44 @@ type PostLink struct {
 	PostID uint   `gorm:"not null"`
 	URL    string `gorm:"not null"`
 }
+
+type PostVote struct {
+	gorm.Model
+	PostID uint `gorm:"not null"`
+	UserID uint `gorm:"not null"`
+
+	// 1 = upvote, -1 = downvote
+	VoteType int `gorm:"not null"`
+
+	Post Post `gorm:"foreignKey:PostID"`
+	User User `gorm:"foreignKey:UserID"`
+
+	// Prevent duplicate voting
+	// One user can vote once per post
+}
+
+type Comment struct {
+	gorm.Model
+	PostID uint   `gorm:"not null"`
+	UserID uint   `gorm:"not null"`
+	Content string `gorm:"type:text;not null"`
+
+	Post Post `gorm:"foreignKey:PostID"`
+	User User `gorm:"foreignKey:UserID"`
+}
+
+type PostShare struct {
+	gorm.Model
+	PostID uint `gorm:"uniqueIndex:idx_user_share"`
+	UserID uint `gorm:"uniqueIndex:idx_user_share"`
+
+	Post Post `gorm:"foreignKey:PostID"`
+	User User `gorm:"foreignKey:UserID"`
+}
+
 type Post struct {
 	gorm.Model
+
 	GroupID uint   `gorm:"not null"`
 	Group   Group  `gorm:"foreignKey:GroupID"`
 
@@ -33,4 +69,8 @@ type Post struct {
 	Tags   []Tag        `gorm:"many2many:post_tags"`
 	Images []PostImage  `gorm:"constraint:OnDelete:CASCADE"`
 	Links  []PostLink   `gorm:"constraint:OnDelete:CASCADE"`
+
+	Votes    []PostVote   `gorm:"constraint:OnDelete:CASCADE"`
+	Comments []Comment    `gorm:"constraint:OnDelete:CASCADE"`
+	Shares   []PostShare  `gorm:"constraint:OnDelete:CASCADE"`
 }
