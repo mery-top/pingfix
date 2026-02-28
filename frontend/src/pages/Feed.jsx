@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FeedAPI } from "../api/FeedAPI";
-import { VotePost, AddComment, DeleteComment } from "../api/PostAPI";
+import { VotePost, AddComment, DeleteComment , EditComment} from "../api/PostAPI";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
