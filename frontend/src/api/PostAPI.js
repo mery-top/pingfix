@@ -1,11 +1,8 @@
-export async function CreatePostAPI(data) {
+export async function CreatePostAPI(formData){
     const response = await fetch("/api/post/create", {
         method: "POST",
         credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+        body: formData, // NO Content-Type header!
     });
     return response;
 }
