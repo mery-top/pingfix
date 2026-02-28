@@ -37,6 +37,36 @@ function MyGroups() {
         })
       }
 
+      const confirmLeave = async () => {
+        setLoading(true)
+      
+        try {
+          const res = await LeaveGroupAPI(modal.group.id)
+      
+          if (!res.ok) {
+            const text = await res.text()
+            throw new Error(text)
+          }
+      
+          fetchGroups()
+      
+          setModal({
+            isOpen: true,
+            type: "success",
+            message: "You left the group successfully."
+          })
+      
+        } catch (error) {
+          setModal({
+            isOpen: true,
+            type: "info",
+            message: error.message
+          })
+        }
+      
+        setLoading(false)
+      }
+
     const handleLeave = async (groupID) => {
         const confirmLeave = window.confirm("Are you sure you want to leave this group?")
         if (!confirmLeave) return
