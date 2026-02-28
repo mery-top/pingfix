@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FeedAPI } from "../api/FeedAPI";
-import { VotePost, AddComment, DeleteComment , EditComment} from "../api/PostAPI";
+import { VotePost, AddComment, DeleteComment , EditComment, GetComments} from "../api/PostAPI";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
@@ -83,6 +83,7 @@ function PostCard({ post }) {
   const [commentList, setCommentList] = useState(realPost.Comments || []);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  const [showComments, setShowComments] = useState(false);
   
   const toggleComments = async () => {
     if (!showComments) {
