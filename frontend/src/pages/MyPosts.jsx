@@ -37,14 +37,59 @@ function MyPosts() {
     <div>MyPosts</div>
 
     <ul>
-        {posts.map((post) => (
-          <li key={post.id} style={{ marginBottom: '1rem' }}>
-            <p><strong>{post.username}</strong> in <em>{post.group_name}</em></p>
-            <p>{post.content}</p>
-            <small>Posted on {new Date(post.created_at).toLocaleString()}</small>
-          </li>
+  {posts.map((post) => (
+    <li key={post.ID} style={{ marginBottom: "2rem" }}>
+      
+      <p>
+        <strong>{post.User?.Name}</strong> in{" "}
+        <em>{post.Group?.Name}</em>
+      </p>
+
+      <p>{post.Content}</p>
+
+      {/*  Tags */}
+      <div>
+        {post.Tags?.map((tag) => (
+          <span key={tag.ID} style={{
+            marginRight: "8px",
+            padding: "4px 8px",
+            background: "#eee",
+            borderRadius: "5px"
+          }}>
+            #{tag.Name}
+          </span>
         ))}
-      </ul>
+      </div>
+
+      {/*  Images */}
+      <div>
+        {post.Images?.map((img) => (
+          <img
+            key={img.ID}
+            src={`http://localhost:8080/${img.URL}`}
+            alt="post"
+            style={{ width: "200px", marginTop: "10px" }}
+          />
+        ))}
+      </div>
+
+      {/*  Links */}
+      <div>
+        {post.Links?.map((link) => (
+          <div key={link.ID}>
+            <a href={link.URL} target="_blank" rel="noopener noreferrer">
+              {link.URL}
+            </a>
+          </div>
+        ))}
+      </div>
+
+      <small>
+        Posted on {new Date(post.CreatedAt).toLocaleString()}
+      </small>
+    </li>
+  ))}
+</ul>
 
 
     <div>
