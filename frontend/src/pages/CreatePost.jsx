@@ -10,7 +10,7 @@ function CreatePost() {
   // -------------------- STATE --------------------
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [content, setContent] = useState("");
-  const [imagesInput, setImagesInput] = useState("");
+  const [images, setImages] = useState([]);
   const [linksInput, setLinksInput] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [message, setMessage] = useState("");
@@ -45,49 +45,50 @@ function CreatePost() {
   // -------------------- CREATE POST --------------------
   const handleCreatePost = async () => {
     try {
-
+  
       const groupIDs = selectedGroups.map(group => group.value);
-
-      // Convert comma separated inputs to arrays
-      const images = imagesInput
-        ? imagesInput.split(",").map(item => item.trim()).filter(Boolean)
-        : [];
-
-      const links = linksInput
-        ? linksInput.split(",").map(item => item.trim()).filter(Boolean)
-        : [];
-
-      const tags = tagsInput
-        ? tagsInput.split(",").map(item => item.trim()).filter(Boolean)
-        : [];
-
-      const payload = {
-        group_ids: groupIDs,
-        content: content,
-        images: images,
-        links: links,
-        tags: tags,
-      };
-
-      const res = await CreatePostAPI(payload);
-      const responseMessage = await res.text();
-
+  
+      const formData = new FormData();
+  
+      // Append group IDs
+      groupIDs.forEach(id => {
+        formData.append("groupID", id);
+      });
+  
+      formData.append("content", content);
+  
+      // Append images (files)
+      images.forEach(file => {
+        formData.append("images", file);
+      });
+  
+      // Append links
+      linksInput.split(",").map(l => l.trim()).filter(Boolean)
+        .forEach(link => formData.append("links", link));
+  
+      // Append tags
+      tagsInput.split(",").map(t => t.trim()).filter(Boolean)
+        .forEach(tag => formData.append("tags", tag));
+  
+      const res = await CreatePostAPI(formData);
+      const msg = await res.text();
+  
       if (res.status === 201) {
         setMessage("Create Post Successfully");
-        setSelectedGroups([]);   // clear groups
+        setSelectedGroups([]);
         setContent("");
-        setImagesInput("");
+        setImages([]);
         setLinksInput("");
         setTagsInput("");
       } else {
-        setMessage(responseMessage || "Post Creation failed");
+        setMessage(msg || "Post Creation failed");
       }
-
+  
     } catch (error) {
       console.error("Create Post error", error);
       setMessage("Something went wrong");
     }
-  }
+  };
 
   // -------------------- UI --------------------
   return (
@@ -119,13 +120,12 @@ function CreatePost() {
 
       <br />
 
-      <label>Images (comma separated URLs):</label><br />
+      <label>Upload Images:</label><br />
       <input
-        type="text"
-        value={imagesInput}
-        onChange={(e) => setImagesInput(e.target.value)}
-        placeholder="https://image1.jpg, https://image2.jpg"
-        style={{ width: "100%" }}
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={(e) => setImages(Array.from(e.target.files))}
       />
 
       <br /><br />
