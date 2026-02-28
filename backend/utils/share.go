@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 )
 
-func generateShareToken() string {
+func GenerateShareToken() string {
 	b := make([]byte, 9)
 	rand.Read(b)
 	return base64.URLEncoding.EncodeToString(b)
