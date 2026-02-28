@@ -11,6 +11,7 @@ import Search from './pages/Search'
 import MyGroups from './pages/MyGroups'
 import CreatePost from './pages/CreatePost'
 import MyPosts from './pages/MyPosts'
+import GroupDetails from './pages/GroupDetails'
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
   <Routes>
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>}></Route>
     <Route path="/group/register" element={<ProtectedRoute><GroupRegister/></ProtectedRoute>}></Route>
+    <Route path="/group/:id" element={<ProtectedRoute><GroupDetails/></ProtectedRoute>}></Route>
     <Route path="/group/search" element={<ProtectedRoute><Search/></ProtectedRoute>}></Route>
     <Route path="/group/mygroups" element={<ProtectedRoute><MyGroups/></ProtectedRoute>}></Route>
     <Route path="/post/createpost" element={<ProtectedRoute><CreatePost/></ProtectedRoute>}></Route>
