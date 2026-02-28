@@ -135,6 +135,23 @@ function PostCard({ post, onVote }) {
     setCommentText("");
   };
 
+  //----------------- View Group -----------------
+  const handleViewGroup = async (groupID) => {
+    try {
+      const res = await ViewGroupAPI(groupID);
+      if (!res.ok) throw new Error("Failed to fetch group details");
+      const data = await res.json();
+  
+      console.log("Group Data:", data);
+  
+      // e.g., navigate to a Group Details page with the data
+      // router.push({ pathname: "/group-details", state: { groupData: data } });
+      setGroupDetails(data); // if using local state
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // ---------------- Delete Comment ----------------
   const handleDeleteComment = async (id) => {
     const ok = await DeleteComment(id);
@@ -143,6 +160,7 @@ function PostCard({ post, onVote }) {
       setCommentsCount(prev => prev - 1);
     }
   };
+
 
   // ---------------- Edit Comment ----------------
   const handleEditComment = async (id) => {
@@ -196,6 +214,9 @@ function PostCard({ post, onVote }) {
       <p>
         <strong>{realPost.User?.Name}</strong> in <span style={{ color: "gray" }}>{realPost.Group?.Name}</span>
       </p>
+      <button onClick={() => handleViewGroup(post.post.GroupID)}>
+        View Group
+      </button>
 
       <p>{realPost.Content}</p>
 
