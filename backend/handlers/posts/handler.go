@@ -3,10 +3,13 @@ package posts
 import (
 	"backend/database/db"
 	dbhandler "backend/database/handlers"
+    models "backend/models"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"fmt"
+    "io"
+    "os"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request){
@@ -18,107 +21,126 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var req struct {
-        GroupID []uint   `json:"groupID"`
-        Content string   `json:"content"`
-        Images  []string `json:"images"`
-        Links   []string `json:"links"`
-        Tags    []string `json:"tags"`
-    }
-
-	if err:= json.NewDecoder(r.Body).Decode(&req); err!=nil{
-		http.Error(w, "Invalid Request Payload", http.StatusBadRequest)
+	err := r.ParseMultipartForm(10 << 20) // 10MB
+	if err != nil {
+		http.Error(w, "Cannot parse form", http.StatusBadRequest)
 		return
 	}
 
-	if len(req.GroupID) == 0 {
-        http.Error(w, "No groups selected", http.StatusBadRequest)
-        return
-    }
+	groupIDs := r.Form["groupID"]
+	content := r.FormValue("content")
+	links := r.Form["links"]
+	tags := r.Form["tags"]
 
-	for _, groupID := range req.GroupID {
-        err := dbhandler.CreatePost(
-            groupID,
-            userID,
-            req.Content,
-            req.Images,
-            req.Links,
-            req.Tags,
-        )
-    
-        if err != nil {
-            http.Error(w, "Failed to create post", http.StatusInternalServerError)
-            return
-        }
-    }
+	if len(groupIDs) == 0 {
+		http.Error(w, "No groups selected", http.StatusBadRequest)
+		return
+	}
 
+	// Handle uploaded files
+	files := r.MultipartForm.File["images"]
+	imagePaths := []string{}
+
+	for _, fileHeader := range files {
+
+		file, err := fileHeader.Open()
+		if err != nil {
+			continue
+		}
+		defer file.Close()
+
+		filePath := "./uploads/" + fileHeader.Filename
+		dst, err := os.Create(filePath)
+		if err != nil {
+			continue
+		}
+		defer dst.Close()
+
+		io.Copy(dst, file)
+
+		imagePaths = append(imagePaths, filePath)
+	}
+
+	for _, idStr := range groupIDs {
+		groupID, _ := strconv.Atoi(idStr)
+
+		err := dbhandler.CreatePost(
+			uint(groupID),
+			userID,
+			content,
+			imagePaths,
+			links,
+			tags,
+		)
+
+		if err != nil {
+			http.Error(w, "Failed to create post", http.StatusInternalServerError)
+			return
+		}
+	}
 
 	w.WriteHeader(http.StatusCreated)
+
 }
 
 
 func MyPosts(w http.ResponseWriter, r *http.Request) {
-    fmt.Println("MyPosts Endpoint")
+	fmt.Println("MyPosts Endpoint")
 
-    // Parse pagination params
-    page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-    limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-    if page <= 0 {
-        page = 1
-    }
-    if limit <= 0 {
-        limit = 10
-    }
-    offset := (page - 1) * limit
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
 
-    // Get user session
-    session, _ := db.Store.Get(r, "session")
-    userID, ok := session.Values["user_id"].(uint)
-    if !ok {
-        http.Error(w, "Status Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Status Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    // Fetch posts from groups created by this user
-    posts := []map[string]interface{}{}
-    if err := db.DB.Table("posts").
-        Select(`posts.id, posts.content, posts.created_at, 
-                groups.id as group_id, groups.name as group_name, groups.handle as group_handle,
-                users.id as user_id, users.name as username`).
-        Joins("JOIN groups ON posts.group_id = groups.id").
-        Joins("JOIN users ON posts.user_id = users.id").
-        Where("groups.creator_id = ?", userID).
-        Order("posts.created_at DESC").
-        Limit(limit).Offset(offset).
-        Find(&posts).Error; err != nil {
-        fmt.Println(err)
-        http.Error(w, "Error fetching posts", http.StatusInternalServerError)
-        return
-    }
+	var posts []models.Post
 
-    // Count total posts
-    var total int64
-    db.DB.Table("posts").
-        Joins("JOIN groups ON posts.group_id = groups.id").
-        Where("groups.creator_id = ?", userID).
-        Count(&total)
+	query := db.DB.
+		Preload("User").
+		Preload("Group").
+		Preload("Images").
+		Preload("Links").
+		Preload("Tags").
+		Joins("JOIN groups ON posts.group_id = groups.id").
+		Where("groups.creator_id = ?", userID).
+		Order("posts.created_at DESC")
 
-    // Response
-    response := map[string]interface{}{
-        "pagination": map[string]interface{}{
-            "page":  page,
-            "limit": limit,
-            "total": total,
-            "pages": (total + int64(limit) - 1) / int64(limit),
-        },
-        "posts": posts,
-    }
+	// Count total
+	var total int64
+	query.Model(&models.Post{}).Count(&total)
 
-    w.Header().Set("Content-Type", "application/json")
-    if err := json.NewEncoder(w).Encode(response); err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	// Fetch paginated
+	if err := query.
+		Limit(limit).
+		Offset(offset).
+		Find(&posts).Error; err != nil {
+		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"pagination": map[string]interface{}{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+			"pages": (total + int64(limit) - 1) / int64(limit),
+		},
+		"posts": posts,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 
