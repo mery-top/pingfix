@@ -11,6 +11,24 @@ function MyGroups() {
     const [totalJoined, setTotalJoined] = useState(1)
     const [totalCreated, setTotalCreated] = useState(1)
 
+    const handleLeave = async (groupID) => {
+        const confirmLeave = window.confirm("Are you sure you want to leave this group?")
+        if (!confirmLeave) return
+      
+        try {
+          const res = await LeaveGroupAPI(groupID)
+      
+          if (!res.ok) {
+            const text = await res.text()
+            throw new Error(text)
+          }
+      
+          fetchGroups() // refresh list
+        } catch (error) {
+          console.log(error)
+        }
+      }
+
     const fetchGroups = async () =>{
         const params = new URLSearchParams({
             page: pages,
@@ -49,6 +67,19 @@ function MyGroups() {
             <strong>{group.name}</strong> ({group.handle}) - {group.country}
             {group.description} <br />
             {group.subscriber_count}
+            <button
+            onClick={() => handleLeave(group.id)}
+            style={{
+                background: "red",
+                color: "white",
+                padding: "6px 12px",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+            }}
+>
+  Leave
+</button>
         </li>
         ))}
     </ul>
@@ -60,6 +91,7 @@ function MyGroups() {
             <strong>{group.name}</strong> ({group.handle}) - {group.country}
             {group.description} <br />
             {group.subscriber_count}
+
         </li>
         ))}
     </ul>
