@@ -344,3 +344,58 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func EditComment(w http.ResponseWriter, r *http.Request) {
+    // Get session and user
+    session, _ := db.Store.Get(r, "session")
+    userID, ok := session.Values["user_id"].(uint)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    // Get comment ID from URL
+    vars := mux.Vars(r)
+    commentID, err := strconv.Atoi(vars["id"])
+    if err != nil {
+        http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+        return
+    }
+
+    // Decode new content from request body
+    var req struct {
+        Content string `json:"content"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, "Invalid request", http.StatusBadRequest)
+        return
+    }
+
+    if req.Content == "" {
+        http.Error(w, "Comment content cannot be empty", http.StatusBadRequest)
+        return
+    }
+
+    // Find the comment
+    var comment models.Comment
+    if err := db.DB.First(&comment, commentID).Error; err != nil {
+        http.Error(w, "Comment not found", http.StatusNotFound)
+        return
+    }
+
+    // Check ownership
+    if comment.UserID != userID {
+        http.Error(w, "Forbidden", http.StatusForbidden)
+        return
+    }
+
+    // Update comment
+    comment.Content = req.Content
+    if err := db.DB.Save(&comment).Error; err != nil {
+        http.Error(w, "Error updating comment", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(comment)
+}
