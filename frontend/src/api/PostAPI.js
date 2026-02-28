@@ -23,3 +23,31 @@ export async function DeletePostAPI(postID){
     })
     return response
 }
+
+export async function VotePost(post_id, vote_type) {
+    const res = await fetch("/api/post/vote", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ post_id, vote_type }),
+    });
+    return res.json();
+  }
+  
+  export async function AddComment(post_id, content) {
+    const res = await fetch("/api/post/comment", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ post_id, content }),
+    });
+    return res.json();
+  }
+  
+  export async function DeleteComment(comment_id) {
+    const res = await fetch(`/api/post/comment/${comment_id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return res.ok;
+  }
