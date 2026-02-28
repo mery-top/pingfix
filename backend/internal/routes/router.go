@@ -33,6 +33,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/group/search", groups.SearchGroups).Methods("GET")
 	r.HandleFunc("/api/group/mygroups", groups.MyGroups).Methods("GET")
 	r.HandleFunc("/api/group/join", groups.JoinGroup).Methods("POST")
+	r.HandleFunc("/api/group/leave", groups.LeaveGroup).Methods("POST")
 	r.HandleFunc("/api/post/create", posts.CreatePost).Methods("POST")
 	r.HandleFunc("/api/post/myposts", posts.MyPosts).Methods("GET")
 	r.HandleFunc("/api/post/feed", feed.Feed).Methods("GET")
