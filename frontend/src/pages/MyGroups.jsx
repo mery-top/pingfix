@@ -67,70 +67,70 @@ function MyGroups() {
         setLoading(false)
       }
 
-    const handleLeave = async (groupID) => {
-        const confirmLeave = window.confirm("Are you sure you want to leave this group?")
-        if (!confirmLeave) return
+      const confirmDeleteRequest = async () => {
+        setLoading(true)
       
         try {
-          const res = await LeaveGroupAPI(groupID)
+          const res = await RequestDeleteGroupAPI(modal.group.id)
       
           if (!res.ok) {
             const text = await res.text()
             throw new Error(text)
           }
       
-          fetchGroups() // refresh list
-        } catch (error) {
-          console.log(error)
-        }
-      }
-
-      const handleDeleteClick = async (groupID) => {
-        const confirmDelete = window.confirm(
-          "This will permanently delete the group and all posts. Continue?"
-        )
-        if (!confirmDelete) return
-      
-        try {
-          // Request OTP
-          const res = await RequestDeleteGroupAPI(groupID)
-      
-          if (!res.ok) {
-            const text = await res.text()
-            throw new Error(text)
-          }
-      
-          alert("OTP sent to your email")
-      
-          const otp = window.prompt("Enter OTP to confirm deletion:")
-          if (!otp) return
-      
-          // Call second function
-          await handleConfirmDelete(groupID, otp)
+          setModal({
+            isOpen: true,
+            type: "otp",
+            group: modal.group
+          })
       
         } catch (error) {
-          console.log(error)
-          alert(error.message)
+          setModal({
+            isOpen: true,
+            type: "info",
+            message: error.message
+          })
         }
+      
+        setLoading(false)
       }
 
-      const handleConfirmDelete = async (groupID, otp) => {
+      const confirmOTPDelete = async () => {
+        setLoading(true)
+      
         try {
-          const res = await ConfirmDeleteGroupAPI(groupID, otp)
+          const res = await ConfirmDeleteGroupAPI(
+            modal.group.id,
+            otpValue
+          )
       
           if (!res.ok) {
             const text = await res.text()
             throw new Error(text)
           }
       
-          alert("Group deleted successfully")
           fetchGroups()
       
+          setModal({
+            isOpen: true,
+            type: "success",
+            message: "Group deleted successfully."
+          })
+      
+          setOtpValue("")
+      
         } catch (error) {
-          console.log(error)
-          alert(error.message)
+          setModal({
+            isOpen: true,
+            type: "info",
+            message: error.message
+          })
         }
+      
+        setLoading(false)
       }
+
+
 
     const fetchGroups = async () =>{
         const params = new URLSearchParams({
@@ -203,6 +203,53 @@ function MyGroups() {
             <button onClick={() => setPage(pages + 1)}>Next</button>
         )}
     </div>
+
+    <Modal
+  isOpen={modal.isOpen}
+  title={
+    modal.type === "leave"
+      ? "Leave Group"
+      : modal.type === "delete"
+      ? "Delete Group"
+      : modal.type === "otp"
+      ? "OTP Verification"
+      : modal.type === "success"
+      ? "Success"
+      : "Message"
+  }
+  message={
+    modal.type === "leave"
+      ? `Are you sure you want to leave "${modal.group?.name}"?`
+      : modal.type === "delete"
+      ? `This will permanently delete "${modal.group?.name}".`
+      : modal.type === "otp"
+      ? "Enter the OTP sent to your email."
+      : modal.message
+  }
+  showInput={modal.type === "otp"}
+  inputValue={otpValue}
+  onInputChange={setOtpValue}
+  confirmText={
+    modal.type === "leave"
+      ? "Confirm"
+      : modal.type === "delete"
+      ? "Send OTP"
+      : modal.type === "otp"
+      ? "Confirm Delete"
+      : "OK"
+  }
+  loading={loading}
+  onConfirm={() => {
+    if (modal.type === "leave") confirmLeave()
+    if (modal.type === "delete") confirmDeleteRequest()
+    if (modal.type === "otp") confirmOTPDelete()
+    if (modal.type === "success" || modal.type === "info")
+      setModal({ isOpen: false })
+  }}
+  onClose={() =>
+    setModal({ isOpen: false, type: null, group: null })
+  }
+/>
     </>
 
   )
