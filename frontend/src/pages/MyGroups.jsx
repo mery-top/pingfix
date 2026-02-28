@@ -29,6 +29,14 @@ function MyGroups() {
         })
       }
 
+      const openDeleteModal = (group) => {
+        setModal({
+          isOpen: true,
+          type: "delete",
+          group
+        })
+      }
+
     const handleLeave = async (groupID) => {
         const confirmLeave = window.confirm("Are you sure you want to leave this group?")
         if (!confirmLeave) return
@@ -149,20 +157,9 @@ function MyGroups() {
             <br />
             Subscribers: {group.subscriber_count}
 
-            <button
-            onClick={() => handleDeleteClick(group.id)}
-            style={{
-                backgroundColor: "#000",
-                color: "#fff",
-                padding: "6px 12px",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                marginLeft: "10px"
-            }}
-            >
-            Delete Group
-            </button>
+            <button onClick={() => openDeleteModal(group)}>
+                Delete Group
+                </button>
         </li>
         ))}
     </ul>
