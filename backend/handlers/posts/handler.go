@@ -4,12 +4,14 @@ import (
 	"backend/database/db"
 	dbhandler "backend/database/handlers"
     models "backend/models"
+	utils "backend/utils"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"fmt"
     "io"
     "os"
+	"github.com/gorilla/mux"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request){
@@ -61,6 +63,8 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		imagePaths = append(imagePaths, filePath)
 	}
 
+	shareToken := utils.GenerateShareToken()
+
 	for _, idStr := range groupIDs {
 		groupID, _ := strconv.Atoi(idStr)
 
@@ -71,6 +75,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 			imagePaths,
 			links,
 			tags,
+			shareToken,
 		)
 
 		if err != nil {
@@ -129,6 +134,35 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var responsePosts []models.PostResponse
+
+	for _, post := range posts {
+
+		var upvotes int64
+		var downvotes int64
+		var commentCount int64
+
+		db.DB.Model(&models.PostVote{}).
+			Where("post_id = ? AND vote_type = 1", post.ID).
+			Count(&upvotes)
+
+		db.DB.Model(&models.PostVote{}).
+			Where("post_id = ? AND vote_type = -1", post.ID).
+			Count(&downvotes)
+
+		db.DB.Model(&models.Comment{}).
+			Where("post_id = ?", post.ID).
+			Count(&commentCount)
+
+		responsePosts = append(responsePosts, models.PostResponse{
+			Post:      post,
+			Upvotes:   upvotes,
+			Downvotes: downvotes,
+			Comments:  commentCount,
+			ShareURL:  "https://yourdomain.com/public/post/" + post.ShareToken,
+		})
+	}
+
 	response := map[string]interface{}{
 		"pagination": map[string]interface{}{
 			"page":  page,
@@ -136,7 +170,7 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 			"total": total,
 			"pages": (total + int64(limit) - 1) / int64(limit),
 		},
-		"posts": posts,
+		"posts": responsePosts,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -192,7 +226,8 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 
 
 func GetSharedPost(w http.ResponseWriter, r *http.Request) {
-	token := r.URL.Query().Get("token")
+	vars := mux.Vars(r)
+	token := vars["token"]
 
 	if token == "" {
 		http.Error(w, "Invalid token", http.StatusBadRequest)
