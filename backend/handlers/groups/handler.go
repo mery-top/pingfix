@@ -451,7 +451,6 @@ func ConfirmDeleteGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewGroup(w http.ResponseWriter, r *http.Request) {
-    // Get groupID from query
     groupIDStr := r.URL.Query().Get("groupID")
     if groupIDStr == "" {
         http.Error(w, "groupID is required", http.StatusBadRequest)
@@ -471,43 +470,45 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // Fetch group with creator info
+    // ---------------- Fetch Group with Creator ----------------
     var group models.Group
     if err := db.DB.Preload("Creator").First(&group, groupID).Error; err != nil {
         http.Error(w, "Group not found", http.StatusNotFound)
         return
     }
 
-    // Check if current user has joined
+    // ---------------- Check if Current User Joined ----------------
     var isJoined bool
     var gd models.GroupData
     if err := db.DB.Where("group_id = ? AND user_id = ?", groupID, userID).First(&gd).Error; err == nil {
         isJoined = true
     }
 
-    // Fetch subscribers (basic info)
+    // ---------------- Fetch Subscribers ----------------
     var subscribers []models.User
     if err := db.DB.Model(&group).Association("Subscribers").Find(&subscribers); err != nil {
         log.Println("Failed to fetch subscribers:", err)
     }
 
-    // Fetch posts with related data
+    // ---------------- Fetch Posts with All Preloads ----------------
     var posts []models.Post
-    if err := db.DB.Preload("Tags").
+    if err := db.DB.Preload("User").
+        Preload("Tags").
         Preload("Images").
         Preload("Links").
         Preload("Votes").
         Preload("Comments").
+        Preload("Comments.User").
         Where("group_id = ?", groupID).
         Order("created_at DESC").
         Find(&posts).Error; err != nil {
         log.Println("Failed to fetch posts:", err)
     }
 
-    // Prepare posts response
-    postResponses := []map[string]interface{}{}
-    for _, post := range posts {
-        var upvotes, downvotes int64
+    // ---------------- Prepare Post Responses ----------------
+    postResponses := make([]map[string]interface{}, len(posts))
+    for i, post := range posts {
+        upvotes, downvotes := int64(0), int64(0)
         for _, v := range post.Votes {
             if v.VoteType == 1 {
                 upvotes++
@@ -515,16 +516,50 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
                 downvotes++
             }
         }
-        postResponses = append(postResponses, map[string]interface{}{
-            "post":      post,
+
+        // Prepare comments
+        commentsResp := make([]map[string]interface{}, len(post.Comments))
+        for j, c := range post.Comments {
+            commentsResp[j] = map[string]interface{}{
+                "ID":      c.ID,
+                "Content": c.Content,
+                "UserID":  c.UserID,
+                "User": map[string]interface{}{
+                    "ID":   c.User.ID,
+                    "Name": c.User.Name,
+                },
+                "CreatedAt": c.CreatedAt,
+            }
+        }
+
+        postResponses[i] = map[string]interface{}{
+            "post": map[string]interface{}{
+                "ID":      post.ID,
+                "Content": post.Content,
+                "UserID":  post.UserID,
+                "User": map[string]interface{}{
+                    "ID":   post.User.ID,
+                    "Name": post.User.Name,
+                },
+                "GroupID": post.GroupID,
+                "Group": map[string]interface{}{
+                    "ID":   group.ID,
+                    "Name": group.Name,
+                },
+                "CreatedAt": post.CreatedAt,
+                "Tags":      post.Tags,
+                "Images":    post.Images,
+                "Links":     post.Links,
+            },
             "upvotes":   upvotes,
             "downvotes": downvotes,
             "comments":  len(post.Comments),
+            "commentsData": commentsResp,
             "share_url": fmt.Sprintf("/share/%s", post.ShareToken),
-        })
+        }
     }
 
-    // Response JSON
+    // ---------------- Response JSON ----------------
     response := map[string]interface{}{
         "group": map[string]interface{}{
             "id":               group.ID,
