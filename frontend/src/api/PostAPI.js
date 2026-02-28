@@ -51,3 +51,13 @@ export async function VotePost(post_id, vote_type) {
     });
     return res.ok;
   }
+
+export async function EditComment(comment_id, content) {
+    const res = await fetch(`/api/post/comment/edit/${comment_id}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    return res.json();
+  }
