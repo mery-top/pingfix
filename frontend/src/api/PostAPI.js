@@ -15,3 +15,11 @@ export async function MyPostsAPI(params){
     });
     return response
 }
+
+export async function DeletePostAPI(postID){
+    const response = await fetch(`/api/post/delete?id=${postID}`, {
+        method: "DELETE",
+        credentials: "include"
+    })
+    return response
+}
