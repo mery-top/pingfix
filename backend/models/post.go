@@ -66,3 +66,11 @@ type Post struct {
 	Comments []Comment    `gorm:"constraint:OnDelete:CASCADE"`
 	ShareToken string `gorm:"uniqueIndex"`
 }
+
+type PostResponse struct {
+	Post        Post   `json:"post"`   
+	Upvotes     int64  `json:"upvotes"`
+	Downvotes   int64  `json:"downvotes"`
+	Comments    int64  `json:"comments"`
+	ShareURL    string `json:"share_url"`
+}
