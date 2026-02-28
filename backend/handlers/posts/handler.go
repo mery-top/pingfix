@@ -37,7 +37,19 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
     }
 
 	for _, groupID := range req.GroupID {
-        dbhandler.CreatePost(int(groupID), int(userID), req.Content)
+        err := dbhandler.CreatePost(
+            groupID,
+            userID,
+            req.Content,
+            req.Images,
+            req.Links,
+            req.Tags,
+        )
+    
+        if err != nil {
+            http.Error(w, "Failed to create post", http.StatusInternalServerError)
+            return
+        }
     }
 
 
