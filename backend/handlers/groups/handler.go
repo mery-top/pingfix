@@ -11,6 +11,8 @@ import (
 	"strconv"
 
 	"gorm.io/gorm"
+
+	"backend/utils"
 )
 
 func GroupRegister(w http.ResponseWriter, r *http.Request){
@@ -308,4 +310,64 @@ func LeaveGroup(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Successfully left group"))
+}
+
+
+func RequestDeleteGroup(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("RequestDeleteGroup Endpoint")
+
+	var req struct {
+		GroupID uint `json:"groupID"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Fetch group
+	var group models.Group
+	if err := db.DB.First(&group, req.GroupID).Error; err != nil {
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Only creator allowed
+	if group.CreatorID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Get creator email
+	var user models.User
+	if err := db.DB.First(&user, userID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Generate OTP
+	otp := utils.GenerateOTP()
+
+	otpStore, _ := db.Store.Get(r, "otp")
+	otpStore.Values[user.Email+"_delete_"+fmt.Sprint(req.GroupID)] = otp
+	otpStore.Save(r, w)
+
+	// Send Email
+	err := utils.SendEmail(user.Email,
+		"Confirm Group Deletion",
+		"Your OTP to delete group '"+group.Name+"' is: "+otp)
+
+	if err != nil {
+		http.Error(w, "Failed to send OTP", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
