@@ -155,17 +155,33 @@ function PostCard({ post, onVote }) {
 
   // ---------------- Vote ----------------
   const handleVote = (type) => {
-    // 1️⃣ Update local state immediately
-    setUpvotes(prev => (type === 1 ? prev + 1 : prev));
-    setDownvotes(prev => (type === -1 ? prev + 1 : prev));
+    // type: 1 = upvote, -1 = downvote
   
-    // 2️⃣ Update Feed state immediately
-    if (onVote) onVote(realPost.ID, type);
+    // Optimistic update
+    if (userVote === type) {
+      // Undo vote
+      setUserVote(0);
+      if (type === 1) setUpvotes(prev => prev - 1);
+      else setDownvotes(prev => prev - 1);
   
-    // 3️⃣ Call API in background
+      if (onVote) onVote(realPost.ID, 0); // optional: update Feed state
+    } else {
+      // Remove previous vote if exists
+      if (userVote === 1) setUpvotes(prev => prev - 1);
+      if (userVote === -1) setDownvotes(prev => prev - 1);
+  
+      // Apply new vote
+      setUserVote(type);
+      if (type === 1) setUpvotes(prev => prev + 1);
+      else setDownvotes(prev => prev + 1);
+  
+      if (onVote) onVote(realPost.ID, type);
+    }
+  
+    // Send API call (optimistic)
     VotePost(realPost.ID, type).catch(err => {
       console.error("Vote failed:", err);
-      // Optional: rollback state if needed
+      // Optionally rollback userVote and counts
     });
   };
 
