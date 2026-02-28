@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback, memo } from "react";
+import React, {useEffect, useState, useRef, useCallback, memo } from "react";
 import { FeedAPI } from "../api/FeedAPI";
 import { VotePost, AddComment, DeleteComment, EditComment, GetComments } from "../api/PostAPI";
+import { useNavigate } from "react-router-dom";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
@@ -101,6 +102,9 @@ function PostCard({ post, onVote }) {
   const COMMENTS_LIMIT = 5;
   const [userVote, setUserVote] = useState(0); 
   // 1 = upvoted, -1 = downvoted, 0 = no vote
+
+  const navigate = useNavigate();
+
   // ---------------- Toggle Comments ----------------
   const toggleComments = async () => {
     if (!showComments && !commentsLoaded) {
@@ -135,21 +139,11 @@ function PostCard({ post, onVote }) {
     setCommentText("");
   };
 
-  //----------------- View Group -----------------
-  const handleViewGroup = async (groupID) => {
-    try {
-      const res = await ViewGroupAPI(groupID);
-      if (!res.ok) throw new Error("Failed to fetch group details");
-      const data = await res.json();
-  
-      console.log("Group Data:", data);
-  
-      // e.g., navigate to a Group Details page with the data
-      // router.push({ pathname: "/group-details", state: { groupData: data } });
-      setGroupDetails(data); // if using local state
-    } catch (err) {
-      console.error(err);
-    }
+
+  //-------------- View Group -------------
+  // ---------------- View Group -----------------
+  const handleViewGroup = (groupID) => {
+    navigate(`/group/${groupID}`);
   };
 
   // ---------------- Delete Comment ----------------
@@ -214,9 +208,9 @@ function PostCard({ post, onVote }) {
       <p>
         <strong>{realPost.User?.Name}</strong> in <span style={{ color: "gray" }}>{realPost.Group?.Name}</span>
       </p>
-      <button onClick={() => handleViewGroup(post.post.GroupID)}>
-        View Group
-      </button>
+      <button onClick={() => handleViewGroup(realPost.GroupID)}>
+      View Group
+    </button>
 
       <p>{realPost.Content}</p>
 
