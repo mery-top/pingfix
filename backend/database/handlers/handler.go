@@ -40,14 +40,17 @@ func CreatePost(
 	tags []string,
 ) error {
 
+	tx := db.DB.Begin()
+
 	post := models.Post{
 		GroupID: groupID,
 		UserID:  userID,
 		Content: content,
 	}
 
-	// Save post first
-	if err := db.DB.Create(&post).Error; err != nil {
+	// Create Post
+	if err := tx.Create(&post).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
 
@@ -57,7 +60,8 @@ func CreatePost(
 			PostID: post.ID,
 			URL:    img,
 		}
-		if err := db.DB.Create(&image).Error; err != nil {
+		if err := tx.Create(&image).Error; err != nil {
+			tx.Rollback()
 			return err
 		}
 	}
@@ -68,25 +72,29 @@ func CreatePost(
 			PostID: post.ID,
 			URL:    link,
 		}
-		if err := db.DB.Create(&postLink).Error; err != nil {
+		if err := tx.Create(&postLink).Error; err != nil {
+			tx.Rollback()
 			return err
 		}
 	}
 
-	// Handle Tags (Many-to-Many)
+	// Save Tags (Many-to-Many)
 	for _, tagName := range tags {
 		var tag models.Tag
 
-		// Create tag if not exists
-		if err := db.DB.FirstOrCreate(&tag, models.Tag{Name: tagName}).Error; err != nil {
+		// Create tag if it doesn't exist
+		if err := tx.FirstOrCreate(&tag, models.Tag{Name: tagName}).Error; err != nil {
+			tx.Rollback()
 			return err
 		}
 
 		// Attach tag to post
-		if err := db.DB.Model(&post).Association("Tags").Append(&tag); err != nil {
+		if err := tx.Model(&post).Association("Tags").Append(&tag); err != nil {
+			tx.Rollback()
 			return err
 		}
 	}
 
+	tx.Commit()
 	return nil
 }
