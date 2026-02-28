@@ -33,17 +33,21 @@ function Search() {
         fetchGroups()
     },[pages])
 
-    const handleJoinGroup = async(id)=>{
-      try{
+    const handleJoinGroup = async(id) => {
+      try {
         const res = await JoinGroupAPI(id)
         if(res.status === 200){
-          setMessage("Joined Group")
-        }else{
-              setMessage("Fail to Join")
+          // Update only the joined group
+          setGroups(prevGroups =>
+            prevGroups.map(g => g.ID === id ? { ...g, isJoined: true } : g)
+          );
+          setMessage(""); // optional, clear message
+        } else {
+          setMessage("Fail to Join");
         }
-      }catch(error){
-          setMessage("Fail to Join")
-          console.error("Fail to Join error", error)
+      } catch(error) {
+        setMessage("Fail to Join");
+        console.error("Fail to Join error", error);
       }
     }
 
@@ -98,10 +102,10 @@ function Search() {
                     {group.Description} <br></br> {group.Type}
                     {group.SubscriberCount}
                     {group.isJoined ? (
-                            <button disabled>✅ Joined</button>
-                        ) : (
-                            <button onClick={() => handleJoinGroup(group.ID)}>JOIN</button>
-                      )}
+                      <button disabled>✅ Joined</button>
+                    ) : (
+                      <button onClick={() => handleJoinGroup(group.ID)}>JOIN</button>
+                    )}
                     <p>{message}</p>
                 </li>
             ))}
