@@ -65,6 +65,37 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
+	var responsePosts []models.PostResponse
+
+	for _, post := range posts {
+
+		var upvotes int64
+		var downvotes int64
+		var commentCount int64
+
+		db.DB.Model(&models.PostVote{}).
+			Where("post_id = ? AND vote_type = 1", post.ID).
+			Count(&upvotes)
+
+		db.DB.Model(&models.PostVote{}).
+			Where("post_id = ? AND vote_type = -1", post.ID).
+			Count(&downvotes)
+
+		db.DB.Model(&models.Comment{}).
+			Where("post_id = ?", post.ID).
+			Count(&commentCount)
+
+		responsePosts = append(responsePosts, models.PostResponse{
+			Post:      post,
+			Upvotes:   upvotes,
+			Downvotes: downvotes,
+			Comments:  commentCount,
+			ShareURL:  "http://localhost:8080/public/post/" + post.ShareToken,
+		})
+	}
+
+
 	response := map[string]interface{}{
 		"pagination": map[string]interface{}{
 			"page":  page,
@@ -72,7 +103,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 			"total": total,
 			"pages": (total + int64(limit) - 1) / int64(limit),
 		},
-		"posts": posts,
+		"posts": responsePosts,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
