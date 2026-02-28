@@ -42,3 +42,15 @@ export async function MyGroupsAPI(params){
     });
     return response
 }
+
+export async function LeaveGroupAPI(groupID){
+    const response = await fetch("/api/group/leave", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ groupID })
+    })
+    return response
+}
