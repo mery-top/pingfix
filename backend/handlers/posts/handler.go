@@ -226,3 +226,49 @@ func GetSharedPost(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(post)
 }
 
+func VotePost(w http.ResponseWriter, r *http.Request) {
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		PostID   uint `json:"post_id"`
+		VoteType int  `json:"vote_type"` // 1 or -1
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if req.VoteType != 1 && req.VoteType != -1 {
+		http.Error(w, "Invalid vote type", http.StatusBadRequest)
+		return
+	}
+
+	var existingVote models.PostVote
+
+	err := db.DB.
+		Where("post_id = ? AND user_id = ?", req.PostID, userID).
+		First(&existingVote).Error
+
+	// If vote exists → update
+	if err == nil {
+		existingVote.VoteType = req.VoteType
+		db.DB.Save(&existingVote)
+	} else {
+		// Create new vote
+		newVote := models.PostVote{
+			PostID:   req.PostID,
+			UserID:   userID,
+			VoteType: req.VoteType,
+		}
+		db.DB.Create(&newVote)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

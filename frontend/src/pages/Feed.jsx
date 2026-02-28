@@ -55,15 +55,15 @@ function Feed() {
       <h2>Dashboard Feed</h2>
 
       {posts.map((post, index) => {
-        if (index === posts.length - 1) {
-          return (
-            <div ref={lastPostRef} key={post.ID}>
-              <PostCard post={post} />
-            </div>
-          );
-        }
-        return <PostCard key={post.ID} post={post} />;
-      })}
+      if (index === posts.length - 1) {
+        return (
+          <div ref={lastPostRef} key={post.post.ID}>
+            <PostCard post={post} />
+          </div>
+        );
+      }
+      return <PostCard key={post.post.ID} post={post} />;
+    })}
 
       {loading && <p>Loading...</p>}
       {!hasMore && <p>No more posts</p>}
@@ -72,6 +72,13 @@ function Feed() {
 }
 
 function PostCard({ post }) {
+  const realPost = post.post;
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(post.share_url);
+    alert("Share link copied!");
+  };
+
   return (
     <div style={{
       border: "1px solid #ddd",
@@ -82,13 +89,13 @@ function PostCard({ post }) {
     }}>
 
       <p>
-        <strong>{post.User?.Name}</strong> in{" "}
-        <span style={{ color: "gray" }}>{post.Group?.Name}</span>
+        <strong>{realPost.User?.Name}</strong> in{" "}
+        <span style={{ color: "gray" }}>{realPost.Group?.Name}</span>
       </p>
 
-      <p>{post.Content}</p>
+      <p>{realPost.Content}</p>
 
-      {post.Images?.map(img => (
+      {realPost.Images?.map(img => (
         <img
           key={img.ID}
           src={`http://localhost:8080/${img.URL}`}
@@ -98,7 +105,7 @@ function PostCard({ post }) {
       ))}
 
       <div style={{ marginTop: "8px" }}>
-        {post.Tags?.map(tag => (
+        {realPost.Tags?.map(tag => (
           <span key={tag.ID} style={{ marginRight: "8px", color: "#007bff" }}>
             #{tag.Name}
           </span>
@@ -106,7 +113,7 @@ function PostCard({ post }) {
       </div>
 
       <div>
-        {post.Links?.map(link => (
+        {realPost.Links?.map(link => (
           <div key={link.ID}>
             <a href={link.URL} target="_blank" rel="noopener noreferrer">
               {link.URL}
@@ -115,8 +122,31 @@ function PostCard({ post }) {
         ))}
       </div>
 
-      <small style={{ color: "gray" }}>
-        {new Date(post.CreatedAt).toLocaleString()}
+      <hr style={{ margin: "10px 0" }} />
+
+      {/* ACTION BAR */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
+        <div>
+          👍 {post.upvotes}
+          <span style={{ margin: "0 10px" }}></span>
+          👎 {post.downvotes}
+        </div>
+
+        <div>
+          💬 {post.comments} comments
+        </div>
+
+        <button onClick={handleShare}>
+          🔗 Share
+        </button>
+      </div>
+
+      <small style={{ color: "gray", display: "block", marginTop: "10px" }}>
+        {new Date(realPost.CreatedAt).toLocaleString()}
       </small>
     </div>
   );
