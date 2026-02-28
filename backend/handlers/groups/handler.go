@@ -247,3 +247,65 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 		return 
 	}
 }
+
+func LeaveGroup(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("LeaveGroup Endpoint")
+
+	var req struct {
+		GroupID uint `json:"groupID"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if group exists
+	var group models.Group
+	if err := db.DB.First(&group, req.GroupID).Error; err != nil {
+		http.Error(w, "Group not found", http.StatusNotFound)
+		return
+	}
+
+	// Prevent creator from leaving
+	if group.CreatorID == userID {
+		http.Error(w, "Creator cannot leave their own group", http.StatusForbidden)
+		return
+	}
+
+	tx := db.DB.Begin()
+
+	// Delete from group_data
+	if err := tx.Where("user_id = ? AND group_id = ?", userID, req.GroupID).
+		Delete(&models.GroupData{}).Error; err != nil {
+
+		tx.Rollback()
+		http.Error(w, "Failed to leave group", http.StatusInternalServerError)
+		return
+	}
+
+	// Decrement subscriber_count
+	if err := tx.Model(&models.Group{}).
+		Where("id = ?", req.GroupID).
+		UpdateColumn("subscriber_count", gorm.Expr("subscriber_count - ?", 1)).Error; err != nil {
+
+		tx.Rollback()
+		http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		http.Error(w, "Transaction commit failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Successfully left group"))
+}
