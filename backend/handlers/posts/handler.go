@@ -311,3 +311,36 @@ func AddComment(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(comment)
 }
+
+func DeleteComment(w http.ResponseWriter, r *http.Request) {
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	vars := mux.Vars(r)
+	commentID, _ := strconv.Atoi(vars["id"])
+
+	var comment models.Comment
+
+	if err := db.DB.First(&comment, commentID).Error; err != nil {
+		http.Error(w, "Comment not found", http.StatusNotFound)
+		return
+	}
+
+	// Only comment owner can delete
+	if comment.UserID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if err := db.DB.Delete(&comment).Error; err != nil {
+		http.Error(w, "Error deleting comment", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
