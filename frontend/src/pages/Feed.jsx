@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, memo } from "react";
 import { FeedAPI } from "../api/FeedAPI";
-import { VotePost, AddComment, DeleteComment , EditComment, GetComments} from "../api/PostAPI";
+import { VotePost, AddComment, DeleteComment, EditComment, GetComments } from "../api/PostAPI";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
@@ -10,6 +10,7 @@ function Feed() {
 
   const observer = useRef();
 
+  // ---------------- Infinite Scroll ----------------
   const lastPostRef = useCallback(node => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
@@ -23,50 +24,58 @@ function Feed() {
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
+  // ---------------- Fetch Posts ----------------
   const fetchPosts = async () => {
     setLoading(true);
-
-    const params = new URLSearchParams({
-      page: page,
-      limit: 5,
-    });
+    const params = new URLSearchParams({ page, limit: 5 });
 
     try {
       const res = await FeedAPI(params);
       const data = await res.json();
-
       setPosts(prev => [...prev, ...data.posts]);
 
-      if (page >= data.pagination.pages) {
-        setHasMore(false);
-      }
+      if (page >= data.pagination.pages) setHasMore(false);
     } catch (err) {
-      console.log(err);
+      console.error("Failed to fetch posts:", err);
     }
 
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, [page]);
+  useEffect(() => { fetchPosts(); }, [page]);
 
-  
+  // ---------------- Sync Vote with Feed State ----------------
+  const handleVoteInFeed = (postID, type) => {
+    setPosts(prevPosts =>
+      prevPosts.map(p =>
+        p.post.ID === postID
+          ? {
+              ...p,
+              upvotes: type === 1 ? p.upvotes + 1 : p.upvotes,
+              downvotes: type === -1 ? p.downvotes + 1 : p.downvotes
+            }
+          : p
+      )
+    );
+  };
 
   return (
     <div style={{ maxWidth: "600px", margin: "auto" }}>
       <h2>Dashboard Feed</h2>
 
       {posts.map((post, index) => {
-      if (index === posts.length - 1) {
-        return (
-          <div ref={lastPostRef} key={post.post.ID}>
-            <PostCard post={post} />
-          </div>
-        );
-      }
-      return <PostCard key={post.post.ID} post={post} />;
-    })}
+        const key = `post-${post.post.ID}-${index}`;
+
+        if (index === posts.length - 1) {
+          return (
+            <div ref={lastPostRef} key={`wrapper-${key}`}>
+              <PostCardMemo key={key} post={post} onVote={handleVoteInFeed} />
+            </div>
+          );
+        }
+
+        return <PostCardMemo key={key} post={post} onVote={handleVoteInFeed} />;
+      })}
 
       {loading && <p>Loading...</p>}
       {!hasMore && <p>No more posts</p>}
@@ -74,59 +83,96 @@ function Feed() {
   );
 }
 
-function PostCard({ post }) {
+// ---------------- PostCard Component ----------------
+function PostCard({ post, onVote }) {
   const realPost = post.post;
+
   const [upvotes, setUpvotes] = useState(post.upvotes);
   const [downvotes, setDownvotes] = useState(post.downvotes);
   const [commentsCount, setCommentsCount] = useState(post.comments);
   const [commentText, setCommentText] = useState("");
-  const [commentList, setCommentList] = useState(realPost.Comments || []);
+  const [commentList, setCommentList] = useState([]);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
   const [showComments, setShowComments] = useState(false);
-  
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
+  const COMMENTS_LIMIT = 5;
+  const [userVote, setUserVote] = useState(0); 
+  // 1 = upvoted, -1 = downvoted, 0 = no vote
+  // ---------------- Toggle Comments ----------------
   const toggleComments = async () => {
-    if (!showComments) {
-      // Fetch comments from backend
-      const comments = await GetComments(realPost.ID);
-      setCommentList(comments);
+    if (!showComments && !commentsLoaded) {
+      await loadComments(1);
     }
     setShowComments(!showComments);
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(post.share_url);
-    alert("Share link copied!");
+  // ---------------- Load Comments ----------------
+  const loadComments = async (page = 1) => {
+    try {
+      const res = await GetComments(realPost.ID, page, COMMENTS_LIMIT);
+      const newComments = Array.isArray(res.comments) ? res.comments : [];
+
+      setCommentList(prev => page === 1 ? newComments : [...prev, ...newComments]);
+      setCommentsLoaded(true);
+
+      // Pagination check
+      setHasMoreComments(page < res.pagination.pages);
+      setCommentsPage(page);
+    } catch (err) {
+      console.error("Failed to fetch comments:", err);
+    }
   };
 
-  const handleVote = async (type) => {
-    await VotePost(realPost.ID, type);
-    if (type === 1) setUpvotes(upvotes + 1);
-    else setDownvotes(downvotes + 1);
-  };
-
+  // ---------------- Add Comment ----------------
   const handleAddComment = async () => {
-    if (!commentText) return;
+    if (!commentText.trim()) return;
     const newComment = await AddComment(realPost.ID, commentText);
     setCommentList([newComment, ...commentList]);
-    setCommentsCount(commentsCount + 1);
+    setCommentsCount(prev => prev + 1);
     setCommentText("");
   };
 
+  // ---------------- Delete Comment ----------------
   const handleDeleteComment = async (id) => {
     const ok = await DeleteComment(id);
     if (ok) {
       setCommentList(commentList.filter(c => c.ID !== id));
-      setCommentsCount(commentsCount - 1);
+      setCommentsCount(prev => prev - 1);
     }
   };
 
+  // ---------------- Edit Comment ----------------
   const handleEditComment = async (id) => {
-    if (!editingText) return;
+    if (!editingText.trim()) return;
     const updatedComment = await EditComment(id, editingText);
-    setCommentList(commentList.map(c => c.ID === id ? updatedComment : c));
+    setCommentList(commentList.map(c => (c.ID === id ? updatedComment : c)));
     setEditingCommentId(null);
     setEditingText("");
+  };
+
+  // ---------------- Vote ----------------
+  const handleVote = (type) => {
+    // 1️⃣ Update local state immediately
+    setUpvotes(prev => (type === 1 ? prev + 1 : prev));
+    setDownvotes(prev => (type === -1 ? prev + 1 : prev));
+  
+    // 2️⃣ Update Feed state immediately
+    if (onVote) onVote(realPost.ID, type);
+  
+    // 3️⃣ Call API in background
+    VotePost(realPost.ID, type).catch(err => {
+      console.error("Vote failed:", err);
+      // Optional: rollback state if needed
+    });
+  };
+
+  // ---------------- Share ----------------
+  const handleShare = () => {
+    navigator.clipboard.writeText(post.share_url);
+    alert("Share link copied!");
   };
 
   return (
@@ -157,8 +203,8 @@ function PostCard({ post }) {
 
       <hr style={{ margin: "10px 0" }} />
 
-            {/* ACTION BAR */}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
+      {/* ACTION BAR */}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
           <button onClick={() => handleVote(1)}>👍</button> {upvotes}
           <button onClick={() => handleVote(-1)} style={{ marginLeft: "8px" }}>👎</button> {downvotes}
@@ -186,12 +232,12 @@ function PostCard({ post }) {
           <button onClick={handleAddComment}>Post</button>
 
           <div style={{ marginTop: "10px" }}>
-            {commentList.map(c => (
-              <div key={c.ID} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
-                <strong>{c.User?.Name}</strong>: 
+            {Array.isArray(commentList) && commentList.map(c => (
+              <div key={`comment-${c.ID}`} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
+                <strong>{c.User?.Name}</strong>:
                 {editingCommentId === c.ID ? (
                   <>
-                    <input 
+                    <input
                       type="text"
                       value={editingText}
                       onChange={e => setEditingText(e.target.value)}
@@ -213,6 +259,12 @@ function PostCard({ post }) {
                 )}
               </div>
             ))}
+
+            {hasMoreComments && (
+              <button onClick={() => loadComments(commentsPage + 1)} style={{ marginTop: "5px" }}>
+                Load more comments
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -223,5 +275,7 @@ function PostCard({ post }) {
     </div>
   );
 }
+
+const PostCardMemo = memo(PostCard);
 
 export default Feed;
