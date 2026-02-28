@@ -1,16 +1,13 @@
-export async function CreatePostAPI(groupID, content){
+export async function CreatePostAPI(data) {
     const response = await fetch("/api/post/create", {
         method: "POST",
         credentials: "include",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-            groupID: groupID,
-            content: content,
-          }),
+        body: JSON.stringify(data),
     });
-    return response
+    return response;
 }
 
 export async function MyPostsAPI(params){
