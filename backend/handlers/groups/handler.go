@@ -294,7 +294,7 @@ func LeaveGroup(w http.ResponseWriter, r *http.Request) {
 	// Decrement subscriber_count
 	if err := tx.Model(&models.Group{}).
 		Where("id = ?", req.GroupID).
-		UpdateColumn("subscriber_count", gorm.Expr("subscriber_count - ?", 1)).Error; err != nil {
+		UpdateColumn("subscriber_count", gorm.Expr("CASE WHEN subscriber_count > 0 THEN subscriber_count - 1 ELSE 0 END")).Error; err != nil {
 
 		tx.Rollback()
 		http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
