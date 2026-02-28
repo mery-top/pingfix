@@ -54,3 +54,26 @@ export async function LeaveGroupAPI(groupID){
     })
     return response
 }
+
+
+export const RequestDeleteGroupAPI = async (groupID) => {
+    return await fetch("/api/group/delete/request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ groupID }),
+    });
+  };
+  
+  export const ConfirmDeleteGroupAPI = async (groupID, otp) => {
+    return await fetch("/api/group/delete/confirm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ groupID, otp }),
+    });
+  };
