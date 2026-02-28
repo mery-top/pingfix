@@ -38,6 +38,7 @@ func CreatePost(
 	images []string,
 	links []string,
 	tags []string,
+	shareToken string,
 ) error {
 
 	tx := db.DB.Begin()
@@ -46,6 +47,7 @@ func CreatePost(
 		GroupID: groupID,
 		UserID:  userID,
 		Content: content,
+		ShareToken: shareToken,
 	}
 
 	// Create Post
