@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { MyGroupsAPI, LeaveGroupAPI } from '../api/GroupAPI'
+import { MyGroupsAPI, LeaveGroupAPI, RequestDeleteGroupAPI, ConfirmDeleteGroupAPIo } from '../api/GroupAPI'
 
 function MyGroups() {
     const [pagination, setPagination] = useState({})
@@ -133,12 +133,28 @@ function MyGroups() {
 
     <h1>Created & Joined Groups: {totalCreated}</h1>
     <ul>
-        {createdGroups.map((group)=>(
-            <li key={group.id}>
+            {createdGroups.map((group) => (
+        <li key={group.id}>
             <strong>{group.name}</strong> ({group.handle}) - {group.country}
-            {group.description} <br />
-            {group.subscriber_count}
+            <br />
+            {group.description}
+            <br />
+            Subscribers: {group.subscriber_count}
 
+            <button
+            onClick={() => handleDeleteClick(group.id)}
+            style={{
+                backgroundColor: "#000",
+                color: "#fff",
+                padding: "6px 12px",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                marginLeft: "10px"
+            }}
+            >
+            Delete Group
+            </button>
         </li>
         ))}
     </ul>
