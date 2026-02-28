@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { LogoutAPI } from '../api/AuthAPI'
 import { useNavigate, Link } from 'react-router-dom'
 import { GetCurrentUserAPI } from '../api/UserAPI'
+import Feed from './Feed';   // adjust path if needed
 
 function Dashboard() {
   const navigate = useNavigate()
@@ -50,19 +51,27 @@ function Dashboard() {
   }
 
   return (
-    <div>Dashboard
-      <p>Welcome, {user.name}</p>
-      <p> {user.email}</p>
-      <button onClick={LogoutHandler}>
-        Logout
-      </button>
-      <button onClick={goToGroups}>Create Groups</button>
-      <button onClick={goToSearch}>Search for Groups</button>
-      <button onClick={goToMyGroups}>My Groups</button>
-      <button onClick={goToCreatePosts}>Create Posts</button>
-      <button onClick={goToMyPosts}>My Posts</button>
+    <div style={{ display: "flex", gap: "30px", padding: "20px" }}>
+      
+      {/* Left Side - User Info & Actions */}
+      <div style={{ width: "250px" }}>
+        <h2>Dashboard</h2>
+  
+        <p>Welcome, {user.name}</p>
+        <p>{user.email}</p>
+  
+        <button onClick={LogoutHandler}>Logout</button>
+        <button onClick={goToGroups}>Create Groups</button>
+        <button onClick={goToSearch}>Search for Groups</button>
+        <button onClick={goToMyGroups}>My Groups</button>
+        <button onClick={goToCreatePosts}>Create Posts</button>
+        <button onClick={goToMyPosts}>My Posts</button>
+      </div>
+  
+        <Feed />
+  
     </div>
-  )
+  );
 }
 
 export default Dashboard
