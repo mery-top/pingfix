@@ -77,3 +77,12 @@ export const RequestDeleteGroupAPI = async (groupID) => {
       body: JSON.stringify({ groupID, otp }),
     });
   };
+
+  export async function ViewGroupAPI(groupID) {
+    const url = `/api/group/view?groupID=${groupID}`;
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include", // include session/cookies
+    });
+    return response;
+  }
