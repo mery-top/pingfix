@@ -43,6 +43,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/post/vote", posts.VotePost).Methods("POST")
 	r.HandleFunc("/api/post/comment", posts.AddComment).Methods("POST")
 	r.HandleFunc("/api/post/comment/{id}", posts.DeleteComment).Methods("DELETE")
+	r.HandleFunc("/api/comment/edit/{id}", posts.EditComment).Methods("PUT")
 	r.HandleFunc("/public/post/{token}", posts.GetSharedPost).Methods("GET")
 	// r.HandleFunc("/api/secure", auth.SecureHandler).Methods("POST")
 	// r.HandleFunc("/api/csrf-token", middleware.GetCSRFToken).Methods("GET")
