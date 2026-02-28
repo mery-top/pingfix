@@ -399,3 +399,51 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(comment)
 }
+
+func GetComments(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    postIDStr := vars["post_id"]
+    postID, err := strconv.Atoi(postIDStr)
+    if err != nil {
+        http.Error(w, "Invalid post ID", http.StatusBadRequest)
+        return
+    }
+
+    // Pagination query params
+    page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+    limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+    if page <= 0 {
+        page = 1
+    }
+    if limit <= 0 {
+        limit = 5
+    }
+    offset := (page - 1) * limit
+
+    var comments []models.Comment
+    query := db.DB.
+        Preload("User").
+        Where("post_id = ?", postID).
+        Order("created_at ASC") // oldest first for chat-like order
+
+    var total int64
+    query.Model(&models.Comment{}).Count(&total)
+
+    if err := query.Limit(limit).Offset(offset).Find(&comments).Error; err != nil {
+        http.Error(w, "Error fetching comments", http.StatusInternalServerError)
+        return
+    }
+
+    response := map[string]interface{}{
+        "pagination": map[string]interface{}{
+            "page":  page,
+            "limit": limit,
+            "total": total,
+            "pages": (total + int64(limit) - 1) / int64(limit),
+        },
+        "comments": comments,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
+}
