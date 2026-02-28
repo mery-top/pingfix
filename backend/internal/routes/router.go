@@ -45,6 +45,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/post/comment/{id}", posts.DeleteComment).Methods("DELETE")
 	r.HandleFunc("/api/comment/edit/{id}", posts.EditComment).Methods("PUT")
 	r.HandleFunc("/public/post/{token}", posts.GetSharedPost).Methods("GET")
+	r.HandleFunc("/api/post/comments/{post_id}", posts.GetComments).Methods("GET")
 	// r.HandleFunc("/api/secure", auth.SecureHandler).Methods("POST")
 	// r.HandleFunc("/api/csrf-token", middleware.GetCSRFToken).Methods("GET")
 	r.HandleFunc("/api/public", func(w http.ResponseWriter, r *http.Request) {
