@@ -18,11 +18,13 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var req struct{
-		GroupID []uint `json:"groupID"`
-		Content string `json:"content"`
-
-	}
+	var req struct {
+        GroupID []uint   `json:"groupID"`
+        Content string   `json:"content"`
+        Images  []string `json:"images"`
+        Links   []string `json:"links"`
+        Tags    []string `json:"tags"`
+    }
 
 	if err:= json.NewDecoder(r.Body).Decode(&req); err!=nil{
 		http.Error(w, "Invalid Request Payload", http.StatusBadRequest)
