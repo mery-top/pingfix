@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"gorm.io/gorm"
 
 )
 
@@ -35,29 +36,27 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 
 	var posts []models.Post
 
-	// Base Query
 	baseQuery := db.DB.
-		Model(&models.Post{}).
-		Distinct("posts.id").
-		Preload("User").
-		Preload("Group").
-		Preload("Images").
-		Preload("Links").
-		Preload("Tags").
-		Joins("LEFT JOIN group_data gd ON gd.group_id = posts.group_id").
-		Joins("LEFT JOIN groups g ON g.id = posts.group_id").
-		Where("gd.user_id = ? OR g.creator_id = ?", userID, userID).
-		Order("posts.created_at DESC")
+	Model(&models.Post{}).
+	Preload("User").
+	Preload("Group").
+	Preload("Images").
+	Preload("Links").
+	Preload("Tags").
+	Joins("LEFT JOIN group_data gd ON gd.group_id = posts.group_id").
+	Joins("LEFT JOIN groups g ON g.id = posts.group_id").
+	Where("gd.user_id = ? OR g.creator_id = ?", userID, userID).
+	Order("posts.created_at DESC")
 
-	// Count total properly
+	// Count
 	var total int64
-	if err := baseQuery.Count(&total).Error; err != nil {
+	if err := baseQuery.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		http.Error(w, "Error counting feed", http.StatusInternalServerError)
 		return
 	}
 
-	// Fetch paginated posts
-	if err := baseQuery.
+	// Fetch
+	if err := baseQuery.Session(&gorm.Session{}).
 		Limit(limit).
 		Offset(offset).
 		Find(&posts).Error; err != nil {
