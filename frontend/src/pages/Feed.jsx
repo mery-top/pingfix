@@ -221,10 +221,29 @@ function PostCard({ post, onVote }) {
 
       {/* ACTION BAR */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div>
-          <button onClick={() => handleVote(1)}>👍</button> {upvotes}
-          <button onClick={() => handleVote(-1)} style={{ marginLeft: "8px" }}>👎</button> {downvotes}
-        </div>
+      <div>
+        <button 
+          onClick={() => handleVote(1)}
+          disabled={userVote === -1} // disable if downvoted
+          style={{ 
+            color: userVote === 1 ? "black" : "gray" 
+          }}
+        >
+          👍
+        </button> 
+        {upvotes}
+
+        <button 
+          onClick={() => handleVote(-1)}
+          disabled={userVote === 1} // disable if upvoted
+          style={{ 
+            color: userVote === -1 ? "black" : "gray" 
+          }}
+        >
+          👎
+        </button> 
+        {downvotes}
+      </div>
 
         <div>
           <button onClick={toggleComments} style={{ background: "none", border: "none", cursor: "pointer" }}>
