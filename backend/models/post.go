@@ -46,14 +46,6 @@ type Comment struct {
 	User User `gorm:"foreignKey:UserID"`
 }
 
-type PostShare struct {
-	gorm.Model
-	PostID uint `gorm:"uniqueIndex:idx_user_share"`
-	UserID uint `gorm:"uniqueIndex:idx_user_share"`
-
-	Post Post `gorm:"foreignKey:PostID"`
-	User User `gorm:"foreignKey:UserID"`
-}
 
 type Post struct {
 	gorm.Model
@@ -72,5 +64,5 @@ type Post struct {
 
 	Votes    []PostVote   `gorm:"constraint:OnDelete:CASCADE"`
 	Comments []Comment    `gorm:"constraint:OnDelete:CASCADE"`
-	Shares   []PostShare  `gorm:"constraint:OnDelete:CASCADE"`
+	ShareToken string `gorm:"uniqueIndex"`
 }
