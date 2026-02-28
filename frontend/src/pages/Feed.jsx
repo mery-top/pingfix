@@ -81,6 +81,8 @@ function PostCard({ post }) {
   const [commentsCount, setCommentsCount] = useState(post.comments);
   const [commentText, setCommentText] = useState("");
   const [commentList, setCommentList] = useState(realPost.Comments || []);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
   const handleShare = () => {
     navigator.clipboard.writeText(post.share_url);
@@ -109,44 +111,36 @@ function PostCard({ post }) {
     }
   };
 
+  const handleEditComment = async (id) => {
+    if (!editingText) return;
+    const updatedComment = await EditComment(id, editingText);
+    setCommentList(commentList.map(c => c.ID === id ? updatedComment : c));
+    setEditingCommentId(null);
+    setEditingText("");
+  };
+
   return (
-    <div style={{
-      border: "1px solid #ddd",
-      borderRadius: "10px",
-      padding: "15px",
-      marginBottom: "20px",
-      background: "white"
-    }}>
+    <div style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "15px", marginBottom: "20px", background: "white" }}>
       <p>
-        <strong>{realPost.User?.Name}</strong> in{" "}
-        <span style={{ color: "gray" }}>{realPost.Group?.Name}</span>
+        <strong>{realPost.User?.Name}</strong> in <span style={{ color: "gray" }}>{realPost.Group?.Name}</span>
       </p>
 
       <p>{realPost.Content}</p>
 
       {realPost.Images?.map(img => (
-        <img
-          key={img.ID}
-          src={`http://localhost:8080/${img.URL}`}
-          alt=""
-          style={{ width: "100%", borderRadius: "8px", marginTop: "10px" }}
-        />
+        <img key={img.ID} src={`http://localhost:8080/${img.URL}`} alt="" style={{ width: "100%", borderRadius: "8px", marginTop: "10px" }} />
       ))}
 
       <div style={{ marginTop: "8px" }}>
         {realPost.Tags?.map(tag => (
-          <span key={tag.ID} style={{ marginRight: "8px", color: "#007bff" }}>
-            #{tag.Name}
-          </span>
+          <span key={tag.ID} style={{ marginRight: "8px", color: "#007bff" }}>#{tag.Name}</span>
         ))}
       </div>
 
       <div>
         {realPost.Links?.map(link => (
           <div key={link.ID}>
-            <a href={link.URL} target="_blank" rel="noopener noreferrer">
-              {link.URL}
-            </a>
+            <a href={link.URL} target="_blank" rel="noopener noreferrer">{link.URL}</a>
           </div>
         ))}
       </div>
@@ -179,14 +173,28 @@ function PostCard({ post }) {
         <div style={{ marginTop: "10px" }}>
           {commentList.map(c => (
             <div key={c.ID} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
-              <strong>{c.User?.Name}</strong>: {c.Content}
-              {c.UserID === realPost.UserID && (
-                <button
-                  onClick={() => handleDeleteComment(c.ID)}
-                  style={{ marginLeft: "10px", color: "red" }}
-                >
-                  Delete
-                </button>
+              <strong>{c.User?.Name}</strong>: 
+              {editingCommentId === c.ID ? (
+                <>
+                  <input 
+                    type="text"
+                    value={editingText}
+                    onChange={e => setEditingText(e.target.value)}
+                    style={{ marginLeft: "5px", width: "60%" }}
+                  />
+                  <button onClick={() => handleEditComment(c.ID)} style={{ marginLeft: "5px" }}>Save</button>
+                  <button onClick={() => setEditingCommentId(null)} style={{ marginLeft: "5px" }}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <span style={{ marginLeft: "5px" }}>{c.Content}</span>
+                  {c.UserID === realPost.UserID && (
+                    <>
+                      <button onClick={() => { setEditingCommentId(c.ID); setEditingText(c.Content); }} style={{ marginLeft: "10px" }}>Edit</button>
+                      <button onClick={() => handleDeleteComment(c.ID)} style={{ marginLeft: "5px", color: "red" }}>Delete</button>
+                    </>
+                  )}
+                </>
               )}
             </div>
           ))}
