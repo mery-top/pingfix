@@ -371,3 +371,81 @@ func RequestDeleteGroup(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func ConfirmDeleteGroup(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("ConfirmDeleteGroup Endpoint")
+
+	var req struct {
+		GroupID uint   `json:"groupID"`
+		OTP     string `json:"otp"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get user email
+	var user models.User
+	if err := db.DB.First(&user, userID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusInternalServerError)
+		return
+	}
+
+	otpStore, _ := db.Store.Get(r, "otp")
+	key := user.Email + "_delete_" + fmt.Sprint(req.GroupID)
+
+	storedOTP, ok := otpStore.Values[key]
+	if !ok || storedOTP != req.OTP {
+		http.Error(w, "Invalid OTP", http.StatusUnauthorized)
+		return
+	}
+
+	delete(otpStore.Values, key)
+	otpStore.Save(r, w)
+
+	tx := db.DB.Begin()
+
+	// Delete post images
+	tx.Exec(`
+		DELETE FROM post_images 
+		WHERE post_id IN (SELECT id FROM posts WHERE group_id = ?)`, req.GroupID)
+
+	// Delete post links
+	tx.Exec(`
+		DELETE FROM post_links 
+		WHERE post_id IN (SELECT id FROM posts WHERE group_id = ?)`, req.GroupID)
+
+	// Delete post tags
+	tx.Exec(`
+		DELETE FROM post_tags 
+		WHERE post_id IN (SELECT id FROM posts WHERE group_id = ?)`, req.GroupID)
+
+	// Delete posts
+	tx.Where("group_id = ?", req.GroupID).Delete(&models.Post{})
+
+	// Delete group members
+	tx.Where("group_id = ?", req.GroupID).Delete(&models.GroupData{})
+
+	// Delete group itself
+	if err := tx.Delete(&models.Group{}, req.GroupID).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Failed to delete group", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		http.Error(w, "Transaction failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Group deleted successfully"))
+}
