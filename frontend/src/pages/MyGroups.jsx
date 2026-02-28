@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { MyGroupsAPI, LeaveGroupAPI, RequestDeleteGroupAPI, ConfirmDeleteGroupAPI } from '../api/GroupAPI'
+import Modal from "../components/Modal"
+
 
 function MyGroups() {
     const [pagination, setPagination] = useState({})
@@ -10,6 +12,15 @@ function MyGroups() {
     const [createdGroups, setCreatedGroups] = useState([])
     const [totalJoined, setTotalJoined] = useState(1)
     const [totalCreated, setTotalCreated] = useState(1)
+    const [modal, setModal] = useState({
+        isOpen: false,
+        type: null,   // leave | delete | otp | success | info
+        group: null,
+        message: ""
+      })
+      
+      const [otpValue, setOtpValue] = useState("")
+      const [loading, setLoading] = useState(false)
 
     const handleLeave = async (groupID) => {
         const confirmLeave = window.confirm("Are you sure you want to leave this group?")
