@@ -21,6 +21,13 @@ function MyGroups() {
       
       const [otpValue, setOtpValue] = useState("")
       const [loading, setLoading] = useState(false)
+      const openLeaveModal = (group) => {
+        setModal({
+          isOpen: true,
+          type: "leave",
+          group
+        })
+      }
 
     const handleLeave = async (groupID) => {
         const confirmLeave = window.confirm("Are you sure you want to leave this group?")
@@ -125,19 +132,9 @@ function MyGroups() {
             <strong>{group.name}</strong> ({group.handle}) - {group.country}
             {group.description} <br />
             {group.subscriber_count}
-            <button
-            onClick={() => handleLeave(group.id)}
-            style={{
-                background: "red",
-                color: "white",
-                padding: "6px 12px",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer"
-            }}
->
-  Leave
-</button>
+            <button onClick={() => openLeaveModal(group)}>
+            Leave
+            </button>
         </li>
         ))}
     </ul>
