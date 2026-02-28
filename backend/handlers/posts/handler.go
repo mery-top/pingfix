@@ -190,3 +190,32 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 }
 
 
+
+func GetSharedPost(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+
+	if token == "" {
+		http.Error(w, "Invalid token", http.StatusBadRequest)
+		return
+	}
+
+	var post models.Post
+
+	err := db.DB.
+		Preload("User").
+		Preload("Group").
+		Preload("Images").
+		Preload("Links").
+		Preload("Tags").
+		Where("share_token = ?", token).
+		First(&post).Error
+
+	if err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
