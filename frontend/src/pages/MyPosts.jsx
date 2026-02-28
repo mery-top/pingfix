@@ -1,11 +1,31 @@
 import React from 'react'
-import { MyPostsAPI } from '../api/PostAPI'
+import { MyPostsAPI, DeletePostAPI } from '../api/PostAPI'
 import { useState, useEffect } from 'react'
 function MyPosts() {
     const [pagination, setPagination] = useState({})
     const [message, setMessage] = useState("")
     const [pages, setPage] = useState(1)
     const [posts, setPosts] = useState([]) 
+
+    const handleDelete = async (postID) => {
+      const confirmDelete = window.confirm("Are you sure you want to delete this post?")
+      if (!confirmDelete) return
+  
+      try {
+          const res = await DeletePostAPI(postID)
+  
+          if (!res.ok) {
+              const text = await res.text()
+              throw new Error(text)
+          }
+  
+          // Refresh posts after delete
+          fetchPosts()
+  
+      } catch (error) {
+          console.log(error)
+      }
+  }
 
     const fetchPosts = async () =>{
         const params = new URLSearchParams({
@@ -32,25 +52,6 @@ function MyPosts() {
         fetchPosts()
       }, [pages]) 
 
-      const handleDelete = async (postID) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this post?")
-        if (!confirmDelete) return
-    
-        try {
-            const res = await DeletePostAPI(postID)
-    
-            if (!res.ok) {
-                const text = await res.text()
-                throw new Error(text)
-            }
-    
-            // Refresh posts after delete
-            fetchPosts()
-    
-        } catch (error) {
-            console.log(error)
-        }
-    }
   return (
     <>
     <div>MyPosts</div>
@@ -102,20 +103,21 @@ function MyPosts() {
           </div>
         ))}
       </div>
-        <button
-      onClick={() => handleDelete(post.ID)}
-      style={{
-          marginTop: "10px",
-          padding: "6px 12px",
-          background: "red",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer"
-      }}
-  >
-      Delete
-  </button>
+
+      <button
+        onClick={() => handleDelete(post.ID)}
+        style={{
+            marginTop: "10px",
+            padding: "6px 12px",
+            background: "red",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer"
+        }}
+    >
+        Delete
+    </button>
 
       <small>
         Posted on {new Date(post.CreatedAt).toLocaleString()}
