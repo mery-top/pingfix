@@ -449,3 +449,105 @@ func ConfirmDeleteGroup(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Group deleted successfully"))
 }
+
+func ViewGroup(w http.ResponseWriter, r *http.Request) {
+    // Get groupID from query
+    groupIDStr := r.URL.Query().Get("groupID")
+    if groupIDStr == "" {
+        http.Error(w, "groupID is required", http.StatusBadRequest)
+        return
+    }
+
+    groupID, err := strconv.Atoi(groupIDStr)
+    if err != nil {
+        http.Error(w, "Invalid groupID", http.StatusBadRequest)
+        return
+    }
+
+    session, _ := db.Store.Get(r, "session")
+    userID, ok := session.Values["user_id"].(uint)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
+
+    // Fetch group with creator info
+    var group models.Group
+    if err := db.DB.Preload("Creator").First(&group, groupID).Error; err != nil {
+        http.Error(w, "Group not found", http.StatusNotFound)
+        return
+    }
+
+    // Check if current user has joined
+    var isJoined bool
+    var gd models.GroupData
+    if err := db.DB.Where("group_id = ? AND user_id = ?", groupID, userID).First(&gd).Error; err == nil {
+        isJoined = true
+    }
+
+    // Fetch subscribers (basic info)
+    var subscribers []models.User
+    if err := db.DB.Model(&group).Association("Subscribers").Find(&subscribers); err != nil {
+        log.Println("Failed to fetch subscribers:", err)
+    }
+
+    // Fetch posts with related data
+    var posts []models.Post
+    if err := db.DB.Preload("Tags").
+        Preload("Images").
+        Preload("Links").
+        Preload("Votes").
+        Preload("Comments").
+        Where("group_id = ?", groupID).
+        Order("created_at DESC").
+        Find(&posts).Error; err != nil {
+        log.Println("Failed to fetch posts:", err)
+    }
+
+    // Prepare posts response
+    postResponses := []map[string]interface{}{}
+    for _, post := range posts {
+        var upvotes, downvotes int64
+        for _, v := range post.Votes {
+            if v.VoteType == 1 {
+                upvotes++
+            } else if v.VoteType == -1 {
+                downvotes++
+            }
+        }
+        postResponses = append(postResponses, map[string]interface{}{
+            "post":      post,
+            "upvotes":   upvotes,
+            "downvotes": downvotes,
+            "comments":  len(post.Comments),
+            "share_url": fmt.Sprintf("/share/%s", post.ShareToken),
+        })
+    }
+
+    // Response JSON
+    response := map[string]interface{}{
+        "group": map[string]interface{}{
+            "id":               group.ID,
+            "name":             group.Name,
+            "handle":           group.Handle,
+            "description":      group.Description,
+            "type":             group.Type,
+            "country":          group.Country,
+            "state":            group.State,
+            "city":             group.City,
+            "authorityEmail":   group.AuthorityEmail,
+            "creator": map[string]interface{}{
+                "id":    group.Creator.ID,
+                "name":  group.Creator.Name,
+                "email": group.Creator.Email,
+            },
+            "subscriberCount": group.SubscriberCount,
+            "isJoined":        isJoined,
+        },
+        "subscribers": subscribers,
+        "posts":       postResponses,
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
+}
