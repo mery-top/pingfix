@@ -61,3 +61,10 @@ export async function EditComment(comment_id, content) {
     });
     return res.json();
   }
+
+export async function GetComments(post_id) {
+    const res = await fetch(`/api/post/comments/${post_id}`, {
+      credentials: "include"
+    });
+    return res.json(); // should return an array of comments
+  }
