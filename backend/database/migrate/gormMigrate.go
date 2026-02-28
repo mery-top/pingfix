@@ -14,5 +14,7 @@ func Migrate(){
 		&models.Tag{},
 		&models.PostImage{},
 		&models.PostLink{},
+		&models.PostVote{},  // 
+        &models.Comment{},
 	)
 }
