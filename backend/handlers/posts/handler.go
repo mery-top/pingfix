@@ -143,5 +143,50 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func DeletePost(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("DeletePost Endpoint")
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Get post ID from URL
+	postIDStr := r.URL.Query().Get("id")
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	var post models.Post
+
+	// Find post with group
+	err = db.DB.
+		Preload("Group").
+		First(&post, postID).Error
+
+	if err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	// Authorization: only group creator can delete
+	if post.Group.CreatorID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Soft delete (because you have deleted_at)
+	if err := db.DB.Delete(&post).Error; err != nil {
+		http.Error(w, "Failed to delete post", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Post deleted successfully"))
+}
 
 
