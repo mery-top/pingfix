@@ -29,6 +29,53 @@ function MyGroups() {
         }
       }
 
+      const handleDeleteClick = async (groupID) => {
+        const confirmDelete = window.confirm(
+          "This will permanently delete the group and all posts. Continue?"
+        )
+        if (!confirmDelete) return
+      
+        try {
+          // Request OTP
+          const res = await RequestDeleteGroupAPI(groupID)
+      
+          if (!res.ok) {
+            const text = await res.text()
+            throw new Error(text)
+          }
+      
+          alert("OTP sent to your email")
+      
+          const otp = window.prompt("Enter OTP to confirm deletion:")
+          if (!otp) return
+      
+          // Call second function
+          await handleConfirmDelete(groupID, otp)
+      
+        } catch (error) {
+          console.log(error)
+          alert(error.message)
+        }
+      }
+
+      const handleConfirmDelete = async (groupID, otp) => {
+        try {
+          const res = await ConfirmDeleteGroupAPI(groupID, otp)
+      
+          if (!res.ok) {
+            const text = await res.text()
+            throw new Error(text)
+          }
+      
+          alert("Group deleted successfully")
+          fetchGroups()
+      
+        } catch (error) {
+          console.log(error)
+          alert(error.message)
+        }
+      }
+
     const fetchGroups = async () =>{
         const params = new URLSearchParams({
             page: pages,
