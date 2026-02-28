@@ -83,6 +83,15 @@ function PostCard({ post }) {
   const [commentList, setCommentList] = useState(realPost.Comments || []);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  
+  const toggleComments = async () => {
+    if (!showComments) {
+      // Fetch comments from backend
+      const comments = await GetComments(realPost.ID);
+      setCommentList(comments);
+    }
+    setShowComments(!showComments);
+  };
 
   const handleShare = () => {
     navigator.clipboard.writeText(post.share_url);
@@ -147,59 +156,65 @@ function PostCard({ post }) {
 
       <hr style={{ margin: "10px 0" }} />
 
-      {/* ACTION BAR */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+            {/* ACTION BAR */}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
         <div>
           <button onClick={() => handleVote(1)}>👍</button> {upvotes}
           <button onClick={() => handleVote(-1)} style={{ marginLeft: "8px" }}>👎</button> {downvotes}
         </div>
 
-        <div>💬 {commentsCount} comments</div>
+        <div>
+          <button onClick={toggleComments} style={{ background: "none", border: "none", cursor: "pointer" }}>
+            💬 {commentsCount} comments
+          </button>
+        </div>
 
         <button onClick={handleShare}>🔗 Share</button>
       </div>
 
       {/* COMMENT SECTION */}
-      <div style={{ marginTop: "10px" }}>
-        <input
-          type="text"
-          placeholder="Write a comment..."
-          value={commentText}
-          onChange={e => setCommentText(e.target.value)}
-          style={{ width: "80%" }}
-        />
-        <button onClick={handleAddComment}>Post</button>
-
+      {showComments && (
         <div style={{ marginTop: "10px" }}>
-          {commentList.map(c => (
-            <div key={c.ID} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
-              <strong>{c.User?.Name}</strong>: 
-              {editingCommentId === c.ID ? (
-                <>
-                  <input 
-                    type="text"
-                    value={editingText}
-                    onChange={e => setEditingText(e.target.value)}
-                    style={{ marginLeft: "5px", width: "60%" }}
-                  />
-                  <button onClick={() => handleEditComment(c.ID)} style={{ marginLeft: "5px" }}>Save</button>
-                  <button onClick={() => setEditingCommentId(null)} style={{ marginLeft: "5px" }}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  <span style={{ marginLeft: "5px" }}>{c.Content}</span>
-                  {c.UserID === realPost.UserID && (
-                    <>
-                      <button onClick={() => { setEditingCommentId(c.ID); setEditingText(c.Content); }} style={{ marginLeft: "10px" }}>Edit</button>
-                      <button onClick={() => handleDeleteComment(c.ID)} style={{ marginLeft: "5px", color: "red" }}>Delete</button>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+          <input
+            type="text"
+            placeholder="Write a comment..."
+            value={commentText}
+            onChange={e => setCommentText(e.target.value)}
+            style={{ width: "80%" }}
+          />
+          <button onClick={handleAddComment}>Post</button>
+
+          <div style={{ marginTop: "10px" }}>
+            {commentList.map(c => (
+              <div key={c.ID} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
+                <strong>{c.User?.Name}</strong>: 
+                {editingCommentId === c.ID ? (
+                  <>
+                    <input 
+                      type="text"
+                      value={editingText}
+                      onChange={e => setEditingText(e.target.value)}
+                      style={{ marginLeft: "5px", width: "60%" }}
+                    />
+                    <button onClick={() => handleEditComment(c.ID)} style={{ marginLeft: "5px" }}>Save</button>
+                    <button onClick={() => setEditingCommentId(null)} style={{ marginLeft: "5px" }}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ marginLeft: "5px" }}>{c.Content}</span>
+                    {c.UserID === realPost.UserID && (
+                      <>
+                        <button onClick={() => { setEditingCommentId(c.ID); setEditingText(c.Content); }} style={{ marginLeft: "10px" }}>Edit</button>
+                        <button onClick={() => handleDeleteComment(c.ID)} style={{ marginLeft: "5px", color: "red" }}>Delete</button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <small style={{ color: "gray", display: "block", marginTop: "10px" }}>
         {new Date(realPost.CreatedAt).toLocaleString()}
