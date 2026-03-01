@@ -15,27 +15,36 @@ const overlayStyle = {
 }
 
 const modalStyle = {
-  background: "white",
-  padding: "30px",
-  borderRadius: "12px",
-  width: "400px",
+  background: "#1a1a1a",
+  padding: "40px",
+  borderRadius: "16px",
+  width: "450px",
   position: "relative",
-  textAlign: "center"
+  textAlign: "center",
+  border: "1px solid rgba(244, 125, 52, 0.3)",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+  color: "#fff"
 }
 
 const closeStyle = {
   position: "absolute",
-  top: "10px",
-  right: "15px",
+  top: "15px",
+  right: "20px",
   cursor: "pointer",
-  fontSize: "18px",
-  fontWeight: "bold"
+  fontSize: "24px",
+  color: "#666",
+  fontWeight: "300"
 }
 
 const inputStyle = {
-  padding: "8px",
+  padding: "12px",
   width: "100%",
-  marginTop: "10px"
+  marginTop: "20px",
+  backgroundColor: "rgba(244, 125, 52, 0.05)",
+  border: "1px solid rgba(244, 125, 52, 0.2)",
+  borderRadius: "8px",
+  color: "#fff",
+  outline: "none"
 }
 
 function Modal({
@@ -71,8 +80,13 @@ function Modal({
           />
         )}
 
-        <div style={{ marginTop: "20px" }}>
-          <button onClick={onConfirm} disabled={loading}>
+        <div style={{ marginTop: "30px" }}>
+          <button
+            className="ig-btn"
+            onClick={onConfirm}
+            disabled={loading}
+            style={{ margin: 0, width: '100%' }}
+          >
             {loading ? "Processing..." : confirmText}
           </button>
         </div>

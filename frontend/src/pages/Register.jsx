@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { LoginWithGoogle, RegisterAPI, SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
 import SecureInput from '../wrapper/SecureInput'
+import Modal from '../components/Modal'
 
 function Register() {
   const [email, setEmail] = useState("")
@@ -9,6 +10,7 @@ function Register() {
   const [name, setName] = useState("")
   const [otp, setOTP] = useState("")
   const [message, setMessage] = useState("")
+  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false)
   const navigate = useNavigate()
 
   const handleRegister = async () => {
@@ -43,8 +45,8 @@ function Register() {
       const message = await res.text();
 
       if (res.status === 201) {
-        setMessage("Registered Successfully");
-        navigate("/login");
+        setSuccessModalOpen(true);
+        setMessage("");
       } else {
         setMessage(message || "Registration failed");
       }
@@ -137,6 +139,15 @@ function Register() {
           Sign In with Google
         </button>
       </div>
+
+      <Modal
+        isOpen={isSuccessModalOpen}
+        title="Account Created!"
+        message="Welcome to PingFix! Your account has been created successfully."
+        confirmText="Login Now"
+        onConfirm={() => navigate("/login")}
+        onClose={() => navigate("/login")}
+      />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI';
 import { useNavigate } from 'react-router-dom'
 import SecureInput from '../wrapper/SecureInput';
 import countries from '../assets/countries.json'
+import Modal from '../components/Modal';
 
 function GroupRegister() {
   const [groupName, setGroupName] = useState("");
@@ -16,6 +17,7 @@ function GroupRegister() {
   const [groupHandle, setHandle] = useState("");
   const [groupType, setGroupType] = useState("");
   const [message, setMessage] = useState("")
+  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
   const navigate = useNavigate()
 
   const handleGroupRegister = async () => {
@@ -44,9 +46,9 @@ function GroupRegister() {
       const message = await res.text();
 
       if (res.status === 201) {
-        setMessage("Registered Successfully");
-        navigate("/login");
-      } if (res.status === 409) {
+        setSuccessModalOpen(true);
+        setMessage("");
+      } else if (res.status === 409) {
         setMessage("Handle already exists. Try another one.");
       } else {
         setMessage(message || "Registration failed");
@@ -198,6 +200,15 @@ function GroupRegister() {
         <button className="ig-btn" type="submit" onClick={handleGroupRegister}>Register Group</button>
         {message && <p style={{ color: '#F47D34', textAlign: 'center', marginTop: '15px' }}>{message}</p>}
       </div>
+
+      <Modal
+        isOpen={isSuccessModalOpen}
+        title="Welcome!"
+        message="Your group has been registered successfully."
+        confirmText="Go to Login"
+        onConfirm={() => navigate("/login")}
+        onClose={() => navigate("/login")}
+      />
     </div>
   )
 }

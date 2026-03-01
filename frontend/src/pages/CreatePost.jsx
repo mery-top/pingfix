@@ -4,6 +4,7 @@ import AsyncSelect from "react-select/async";
 import { SearchGroupAPI } from '../api/GroupAPI';
 import SecureInput from '../wrapper/SecureInput';
 import { CreatePostAPI } from '../api/PostAPI';
+import Modal from '../components/Modal';
 
 function CreatePost() {
 
@@ -14,6 +15,7 @@ function CreatePost() {
   const [linksInput, setLinksInput] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [message, setMessage] = useState("");
+  const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
 
   const navigate = useNavigate()
 
@@ -74,12 +76,13 @@ function CreatePost() {
       const msg = await res.text();
 
       if (res.status === 201) {
-        setMessage("Create Post Successfully");
+        setSuccessModalOpen(true);
         setSelectedGroups([]);
         setContent("");
         setImages([]);
         setLinksInput("");
         setTagsInput("");
+        setMessage("");
       } else {
         setMessage(msg || "Post Creation failed");
       }
@@ -192,6 +195,15 @@ function CreatePost() {
 
         {message && <p style={{ color: "#F47D34", textAlign: "center", marginTop: "15px" }}>{message}</p>}
       </div>
+
+      <Modal
+        isOpen={isSuccessModalOpen}
+        title="Success!"
+        message="Your post has been created successfully."
+        confirmText="Awesome"
+        onConfirm={() => setSuccessModalOpen(false)}
+        onClose={() => setSuccessModalOpen(false)}
+      />
     </div>
   );
 }
