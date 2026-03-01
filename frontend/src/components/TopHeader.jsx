@@ -38,8 +38,8 @@ const TopHeader = ({ user, onToggleSidebar }) => {
                 </button>
                 <button
                     className="symbol-btn"
-                    onClick={() => navigate('/group/register')}
-                    title="Create Group"
+                    onClick={() => navigate('/group/mygroups')}
+                    title="My Groups"
                 >
                     <FiUsers size={24} />
                 </button>
