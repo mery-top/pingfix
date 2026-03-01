@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"strconv"
 	"fmt"
-    "io"
-    "os"
 	"github.com/gorilla/mux"
 )
 
@@ -44,25 +42,21 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 	imagePaths := []string{}
 
 	for _, fileHeader := range files {
-
 		file, err := fileHeader.Open()
 		if err != nil {
 			continue
 		}
-		defer file.Close()
+		defer file.Close() // will close after the loop ends
+		//file.Close() // close immediately
 
-		filePath := "./uploads/" + fileHeader.Filename
-		dst, err := os.Create(filePath)
+		url, err := utils.UploadToS3(file, fileHeader.Filename)
 		if err != nil {
+			fmt.Println("S3 upload failed for", fileHeader.Filename, err)
 			continue
 		}
-		defer dst.Close()
 
-		io.Copy(dst, file)
-
-		imagePaths = append(imagePaths, filePath)
+		imagePaths = append(imagePaths, url)
 	}
-
 	shareToken := utils.GenerateShareToken()
 
 	for _, idStr := range groupIDs {
