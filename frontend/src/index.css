@@ -485,6 +485,22 @@ button:focus-visible {
   .tg-content {
     padding: 15px;
   }
+
+  .tg-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .tg-list-item-left {
+    width: 100%;
+  }
+
+  .tg-list-item>div:last-child {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
 }
 
 /* ========================================================
