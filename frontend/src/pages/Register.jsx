@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { LoginWithGoogle, RegisterAPI, SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
+import { sanitizeInput } from '../utils/sanitizer'
 
 function Register() {
   const [email, setEmail] = useState("")
@@ -89,7 +90,7 @@ function Register() {
     <div className="ig-auth-container">
       <div className="ig-auth-card" style={{ position: 'relative' }}>
         <button onClick={() => navigate('/')} style={{ position: 'absolute', top: '15px', left: '15px', background: 'none', border: 'none', color: '#F47D34', cursor: 'pointer', fontSize: '1em' }}>
-          ← 
+          ←
         </button>
         <h2>Register</h2>
 
@@ -97,14 +98,14 @@ function Register() {
           className="ig-input"
           placeholder='Name'
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={e => setName(sanitizeInput(e.target.value, { allowSpace: true }))}
         />
 
         <input type="email"
           className="ig-input"
           placeholder='Email'
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={e => setEmail(sanitizeInput(e.target.value))}
         />
 
         <input type="password"
@@ -118,7 +119,7 @@ function Register() {
           className="ig-input"
           placeholder='OTP'
           value={otp}
-          onChange={e => setOTP(e.target.value)}
+          onChange={e => setOTP(sanitizeInput(e.target.value))}
         />
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
