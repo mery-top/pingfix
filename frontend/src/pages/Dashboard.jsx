@@ -26,7 +26,6 @@ function Dashboard() {
       const res = await LogoutAPI()
       navigate("/login")
     } catch (error) {
-      console.log(error)
     }
   }
 
