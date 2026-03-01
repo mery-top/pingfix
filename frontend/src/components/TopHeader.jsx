@@ -1,42 +1,48 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlusSquare, FiUsers, FiSearch } from 'react-icons/fi';
+import { FiPlusSquare, FiUsers, FiSearch, FiMenu } from 'react-icons/fi';
+import logo from '../assets/logo.png';
 
-const TopHeader = ({ user }) => {
+const TopHeader = ({ user, onToggleSidebar }) => {
     const navigate = useNavigate();
 
     return (
         <div className="top-header-symbols">
-            <button
-                className="symbol-btn"
-                onClick={() => navigate('/post/createpost')}
-                title="Create Post"
-            >
-                <FiPlusSquare size={24} />
-            </button>
-            <button
-                className="symbol-btn"
-                onClick={() => navigate('/group/search')}
-                title="Search for Groups"
-            >
-                <FiSearch size={24} />
-            </button>
-            <button
-                className="symbol-btn"
-                onClick={() => navigate('/group/register')}
-                title="Create Group"
-            >
-                <FiUsers size={24} />
-            </button>
+            {/* Menu and Logo on the Left */}
+            <div className="header-left-section">
+                <button
+                    className="sidebar-toggle-in-header"
+                    onClick={onToggleSidebar}
+                    title="Menu"
+                >
+                    <FiMenu size={24} />
+                </button>
+                <img src={logo} alt="Pingfix Logo" className="header-logo" />
+            </div>
 
-            {/* Profile Section */}
-            <div className="header-profile">
-                <div className="header-avatar">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-                </div>
-                <div className="header-user-info">
-                    <span className="header-user-name">{user?.name || "User"}</span>
-                </div>
+            {/* Action Symbols in the Center */}
+            <div className="center-symbols">
+                <button
+                    className="symbol-btn"
+                    onClick={() => navigate('/post/createpost')}
+                    title="Create Post"
+                >
+                    <FiPlusSquare size={24} />
+                </button>
+                <button
+                    className="symbol-btn"
+                    onClick={() => navigate('/group/search')}
+                    title="Search for Groups"
+                >
+                    <FiSearch size={24} />
+                </button>
+                <button
+                    className="symbol-btn"
+                    onClick={() => navigate('/group/register')}
+                    title="Create Group"
+                >
+                    <FiUsers size={24} />
+                </button>
             </div>
         </div>
     );
