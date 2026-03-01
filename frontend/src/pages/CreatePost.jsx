@@ -168,10 +168,10 @@ function CreatePost() {
 
         <div style={{ marginBottom: "15px" }}>
           <label style={{ color: "#aaa", fontSize: "0.9em", marginBottom: "5px", display: "block" }}>Links (comma separated):</label>
-          <input
-            type="text"
+          <SecureInput
             value={linksInput}
-            onChange={(e) => setLinksInput(e.target.value)}
+            onChange={setLinksInput}
+            allowSpace={true}
             placeholder="https://example.com, https://another.com"
             style={{ width: "100%", padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
           />
@@ -179,10 +179,10 @@ function CreatePost() {
 
         <div style={{ marginBottom: "25px" }}>
           <label style={{ color: "#aaa", fontSize: "0.9em", marginBottom: "5px", display: "block" }}>Tags (comma separated):</label>
-          <input
-            type="text"
+          <SecureInput
             value={tagsInput}
-            onChange={(e) => setTagsInput(e.target.value)}
+            onChange={setTagsInput}
+            allowSpace={true}
             placeholder="roads, animals, emergency"
             style={{ width: "100%", padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
           />
