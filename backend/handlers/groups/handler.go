@@ -28,7 +28,6 @@ func GroupRegister(w http.ResponseWriter, r *http.Request) {
 		CreatorID      uint
 	}
 
-	log.Println("Group Register Endpoint HIT")
 	if err := json.NewDecoder(r.Body).Decode(&group); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -45,7 +44,17 @@ func GroupRegister(w http.ResponseWriter, r *http.Request) {
 	session, _ := db.Store.Get(r, "session")
 	group.CreatorID = session.Values["user_id"].(uint)
 
-	dbhandler.CreateGroup(group.Name, group.Description, group.Handle, group.Type, group.Country, group.State, group.City, group.AuthorityEmail, int(group.CreatorID))
+	dbhandler.CreateGroup(
+		utils.Sanitize(group.Name),
+		utils.Sanitize(group.Description),
+		utils.Sanitize(group.Handle),
+		group.Type,
+		group.Country,
+		group.State,
+		utils.Sanitize(group.City),
+		utils.Sanitize(group.AuthorityEmail),
+		int(group.CreatorID),
+	)
 
 	w.WriteHeader(http.StatusCreated)
 }
@@ -174,8 +183,6 @@ NEED TO APPLY UNION HERE
 */
 func MyGroups(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("MyGroups Endpoint")
-
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 
@@ -198,7 +205,6 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createdGroups := []map[string]interface{}{}
-	fmt.Println("Reached Created Groups")
 	if err := db.DB.Table("groups").
 		Where("creator_id = ? AND deleted_at IS NULL", userID).
 		Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
@@ -211,7 +217,6 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	joinedGroups := []map[string]interface{}{}
-	fmt.Println("Reached Joined Groups")
 	if err := db.DB.Table("groups").
 		Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
 				CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined`).
@@ -258,7 +263,6 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 func LeaveGroup(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("LeaveGroup Endpoint")
 
 	var req struct {
 		GroupID uint `json:"groupID"`
@@ -320,7 +324,6 @@ func LeaveGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func RequestDeleteGroup(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("RequestDeleteGroup Endpoint")
 
 	var req struct {
 		GroupID uint `json:"groupID"`
@@ -379,7 +382,6 @@ func RequestDeleteGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func ConfirmDeleteGroup(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("ConfirmDeleteGroup Endpoint")
 
 	var req struct {
 		GroupID uint   `json:"groupID"`
