@@ -1,4 +1,5 @@
 import React from "react"
+import SecureInput from "../wrapper/SecureInput"
 
 const overlayStyle = {
   position: "fixed",
@@ -62,10 +63,9 @@ function Modal({
         <p>{message}</p>
 
         {showInput && (
-          <input
-            type="text"
+          <SecureInput
             value={inputValue}
-            onChange={(e) => onInputChange(e.target.value)}
+            onChange={onInputChange}
             style={inputStyle}
             placeholder="Enter OTP"
           />
