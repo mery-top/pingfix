@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 import { LoginAPI, LoginWithGoogle } from '../api/AuthAPI'
-import SecureInput from '../wrapper/SecureInput'
-
 import { useNavigate } from 'react-router-dom'
 
 function Login() {
@@ -47,15 +45,15 @@ function Login() {
     <div className="ig-auth-container">
       <div className="ig-auth-card" style={{ position: 'relative' }}>
         <button onClick={() => navigate('/')} style={{ position: 'absolute', top: '15px', left: '15px', background: 'none', border: 'none', color: '#F47D34', cursor: 'pointer', fontSize: '1em' }}>
-          ← Home
+          ← 
         </button>
         <h2>Login</h2>
-        <SecureInput
+        <input
+          type="email"
           className="ig-input"
           placeholder='Email'
           value={email}
-          onChange={setEmail}
-          style={{ marginBottom: '15px' }}
+          onChange={e => setEmail(e.target.value)}
         />
         <input
           type="password"

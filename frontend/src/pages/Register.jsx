@@ -89,7 +89,7 @@ function Register() {
     <div className="ig-auth-container">
       <div className="ig-auth-card" style={{ position: 'relative' }}>
         <button onClick={() => navigate('/')} style={{ position: 'absolute', top: '15px', left: '15px', background: 'none', border: 'none', color: '#F47D34', cursor: 'pointer', fontSize: '1em' }}>
-          ← Home
+          ← 
         </button>
         <h2>Register</h2>
 
