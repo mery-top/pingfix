@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { LoginWithGoogle, RegisterAPI, SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
-import SecureInput from '../wrapper/SecureInput'
 import Modal from '../components/Modal'
 
 function Register() {
@@ -94,19 +93,18 @@ function Register() {
         </button>
         <h2>Register</h2>
 
-        <SecureInput
+        <input type="text"
+          className="ig-input"
           placeholder='Name'
           value={name}
-          onChange={setName}
-          allowSpace={true}
-          style={{ marginBottom: '15px' }}
+          onChange={e => setName(e.target.value)}
         />
 
-        <SecureInput
+        <input type="email"
+          className="ig-input"
           placeholder='Email'
           value={email}
-          onChange={setEmail}
-          style={{ marginBottom: '15px' }}
+          onChange={e => setEmail(e.target.value)}
         />
 
         <input type="password"
@@ -116,11 +114,11 @@ function Register() {
           onChange={e => setPassword(e.target.value)}
         />
 
-        <SecureInput
+        <input type="text"
+          className="ig-input"
           placeholder='OTP'
           value={otp}
-          onChange={setOTP}
-          style={{ marginBottom: '15px' }}
+          onChange={e => setOTP(e.target.value)}
         />
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
