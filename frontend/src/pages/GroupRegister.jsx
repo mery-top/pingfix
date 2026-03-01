@@ -92,9 +92,11 @@ function GroupRegister() {
 
   return (
     <div className="container" style={{ maxWidth: '700px', margin: '40px auto' }}>
-      <button className="ig-btn" style={{ width: 'auto', margin: '0 0 20px 0', padding: '8px 16px', backgroundColor: 'transparent', border: '1px solid #F47D34', color: '#F47D34' }} onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+      <div className="top-nav-bar">
+        <button className="btn-nav" onClick={() => navigate(-1)}>
+          ← Back
+        </button>
+      </div>
       <div className="tg-card">
         <h2 style={{ marginBottom: '25px', color: '#fff' }}>Register a Group</h2>
 
@@ -131,13 +133,13 @@ function GroupRegister() {
                 onChange={(e) => setAuthEmail(e.target.value)}
                 style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
               />
-              <button className="ig-btn" style={{ width: 'auto', marginTop: 0 }} onClick={handleSendOTP}>Send OTP</button>
+              <button className="btn-nav" style={{ minWidth: '100px' }} onClick={handleSendOTP}>Send OTP</button>
             </div>
 
             <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', marginTop: '15px', display: 'block' }}>OTP:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
               <SecureInput value={otp} onChange={setOTP} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
-              <button className="ig-btn" style={{ width: 'auto', marginTop: 0 }} onClick={handleVerifyOTP}>Verify OTP</button>
+              <button className="btn-nav" style={{ minWidth: '100px' }} onClick={handleVerifyOTP}>Verify OTP</button>
             </div>
           </div>
         )}

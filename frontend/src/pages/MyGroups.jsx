@@ -162,12 +162,11 @@ function MyGroups() {
 
   return (
     <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "20px" }}>
-        <button className="ig-btn" style={{ width: 'auto', margin: 0, padding: '8px 16px', backgroundColor: 'transparent', border: '1px solid #F47D34', color: '#F47D34' }} onClick={() => navigate(-1)}>
+      <div className="top-nav-bar">
+        <button className="btn-nav" onClick={() => navigate(-1)}>
           ← Back
         </button>
-        <h2 style={{ margin: 0 }}>My Groups</h2>
-        <div style={{ width: '80px' }}></div> {/* Spacer for centering */}
+        <h2>My Groups</h2>
       </div>
 
       <h3 style={{ color: "#F47D34", marginTop: "30px", marginBottom: "15px" }}>Joined Groups: {totalJoined}</h3>
@@ -226,13 +225,13 @@ function MyGroups() {
         ))}
       </ul>
 
-      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+      <div className="pagination-bar">
         {pagination.page > 1 && (
-          <button style={{ padding: "0.4em 1em" }} onClick={() => setPage(pages - 1)}>Previous</button>
+          <button className="btn-nav" onClick={() => setPage(pages - 1)}>Previous</button>
         )}
 
         {pagination.page < pagination.pages && (
-          <button style={{ padding: "0.4em 1em" }} onClick={() => setPage(pages + 1)}>Next</button>
+          <button className="btn-nav" onClick={() => setPage(pages + 1)}>Next</button>
         )}
       </div>
 

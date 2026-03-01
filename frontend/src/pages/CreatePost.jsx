@@ -92,9 +92,11 @@ function CreatePost() {
 
   return (
     <div className="container" style={{ maxWidth: '700px', margin: '40px auto' }}>
-      <button className="ig-btn" style={{ width: 'auto', margin: '0 0 20px 0', padding: '8px 16px', backgroundColor: 'transparent', border: '1px solid #F47D34', color: '#F47D34' }} onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+      <div className="top-nav-bar">
+        <button className="btn-nav" onClick={() => navigate(-1)}>
+          ← Back
+        </button>
+      </div>
       <div className="tg-card">
         <h2 style={{ marginBottom: "25px", textAlign: "center", color: "#fff" }}>Create Post</h2>
 

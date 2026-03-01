@@ -454,3 +454,57 @@ button:focus-visible {
     padding: 15px;
   }
 }
+
+/* ========================================================
+   NAVIGATION & ALIGNMENT UTILITIES
+   ======================================================== */
+.top-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  width: 100%;
+}
+
+.top-nav-bar h2 {
+  margin: 0;
+  font-size: 1.5em;
+  color: #fff;
+  flex: 1;
+  text-align: center;
+}
+
+/* Spacer for centering title when back button is present */
+.top-nav-bar::after {
+  content: "";
+  width: 80px;
+}
+
+.btn-nav {
+  width: auto !important;
+  min-width: 80px;
+  padding: 6px 12px !important;
+  font-size: 0.85em !important;
+  margin: 0 !important;
+  background-color: transparent !important;
+  border: 1px solid rgba(244, 125, 52, 0.4) !important;
+  color: #F47D34 !important;
+  border-radius: 6px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-nav:hover {
+  background-color: rgba(244, 125, 52, 0.1) !important;
+  border-color: #F47D34 !important;
+}
+
+.pagination-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 40px;
+}
