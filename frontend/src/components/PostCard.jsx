@@ -97,90 +97,118 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
   };
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "15px", marginBottom: "20px", background: "white" }}>
-      <p>
-        <strong>{realPost.User?.Name || "Unknown User"}</strong>
-        {!hideViewGroup && (
-          <> in <span style={{ color: "gray" }}>{realPost.Group?.Name || "Unknown Group"}</span></>
-        )}
-      </p>
-
-      {!hideViewGroup && (
-        <button onClick={() => handleViewGroup(realPost.GroupID)}>View Group</button>
-      )}
-
-      <p>{realPost.Content || ""}</p>
-
-      {Array.isArray(realPost.Images) && realPost.Images.map((img) => (
-        <img key={img.ID} src={`http://localhost:8080/${img.URL}`} alt="" style={{ width: "100%", borderRadius: "8px", marginTop: "10px" }} />
-      ))}
-
-      <div style={{ marginTop: "8px" }}>
-        {Array.isArray(realPost.Tags) && realPost.Tags.map((tag) => (
-          <span key={tag.ID} style={{ marginRight: "8px", color: "#007bff" }}>#{tag.Name}</span>
-        ))}
-      </div>
-
-      <div>
-        {Array.isArray(realPost.Links) && realPost.Links.map((link) => (
-          <div key={link.ID}>
-            <a href={link.URL} target="_blank" rel="noopener noreferrer">{link.URL}</a>
+    <div className="ig-post-card">
+      <div className="ig-post-header">
+        <div className="ig-post-header-left">
+          <div className="ig-avatar">
+            {realPost.User?.Name ? realPost.User.Name.charAt(0).toUpperCase() : "U"}
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '0.95em', color: '#fff' }}>
+              {realPost.User?.Name || "Unknown User"}
+            </span>
+            {!hideViewGroup && (
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.8em" }}>
+                in {realPost.Group?.Name || "Unknown Group"}
+              </span>
+            )}
+          </div>
+        </div>
+        {!hideViewGroup && (
+          <button style={{ background: 'none', border: 'none', color: '#F47D34', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.85em' }} onClick={() => handleViewGroup(realPost.GroupID)}>
+            View Group
+          </button>
+        )}
+      </div>
+
+      <div className="ig-post-content">
+        <p style={{ margin: '0 0 10px 0', fontSize: '0.95em', lineHeight: '1.5' }}>{realPost.Content || ""}</p>
+
+        {Array.isArray(realPost.Images) && realPost.Images.map((img) => (
+          <img key={img.ID} src={`http://localhost:8080/${img.URL}`} alt="" style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }} />
         ))}
-      </div>
 
-      <hr style={{ margin: "10px 0" }} />
-
-      {/* ACTION BAR */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div>
-          <button onClick={() => handleVote(1)} disabled={userVote === -1} style={{ color: userVote === 1 ? "black" : "gray" }}>👍</button> {upvotes}
-          <button onClick={() => handleVote(-1)} disabled={userVote === 1} style={{ color: userVote === -1 ? "black" : "gray" }}>👎</button> {downvotes}
-        </div>
-
-        <div>
-          <button onClick={toggleComments} style={{ background: "none", border: "none", cursor: "pointer" }}>💬 {commentsCount} comments</button>
-        </div>
-
-        <button onClick={handleShare}>🔗 Share</button>
-      </div>
-
-      {/* COMMENT SECTION */}
-      {showComments && (
         <div style={{ marginTop: "10px" }}>
-          <input type="text" placeholder="Write a comment..." value={commentText} onChange={(e) => setCommentText(e.target.value)} style={{ width: "80%" }} />
-          <button onClick={handleAddComment}>Post</button>
+          {Array.isArray(realPost.Tags) && realPost.Tags.map((tag) => (
+            <span key={tag.ID} style={{ marginRight: "8px", color: "#F47D34", fontSize: '0.9em' }}>#{tag.Name}</span>
+          ))}
+        </div>
 
-          <div style={{ marginTop: "10px" }}>
+        <div>
+          {Array.isArray(realPost.Links) && realPost.Links.map((link) => (
+            <div key={link.ID} style={{ marginTop: "5px" }}>
+              <a href={link.URL} target="_blank" rel="noopener noreferrer" style={{ color: "#F47D34", fontSize: '0.9em' }}>{link.URL}</a>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="ig-post-actions">
+        <div className="ig-action-icons">
+          <button className="ig-action-btn" onClick={() => handleVote(1)} disabled={userVote === -1} style={{ color: userVote === 1 ? "#F47D34" : "#fff" }}>
+            {userVote === 1 ? '🧡' : '🤍'}
+          </button>
+          <button className="ig-action-btn" onClick={() => handleVote(-1)} disabled={userVote === 1} style={{ color: userVote === -1 ? "#F47D34" : "#fff" }}>
+            💔
+          </button>
+          <button className="ig-action-btn" onClick={toggleComments}>
+            💬
+          </button>
+        </div>
+        <button className="ig-action-btn" onClick={handleShare}>
+          🔗
+        </button>
+      </div>
+
+      <div className="ig-post-stats">
+        <span style={{ marginRight: '15px' }}>{upvotes} likes • {downvotes} dislikes</span>
+        <span>{commentsCount} comments</span>
+      </div>
+
+      {showComments && (
+        <div style={{ padding: "0 16px 16px" }}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+            <input
+              type="text"
+              className="ig-input"
+              placeholder="Add a comment..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
+            <button className="ig-btn" onClick={handleAddComment} style={{ width: 'auto', margin: 0 }}>Post</button>
+          </div>
+
+          <div style={{ marginTop: "10px", display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {Array.isArray(commentList) && commentList.map((c) => (
-              <div key={`comment-${c.ID}`} style={{ borderTop: "1px solid #eee", padding: "5px 0" }}>
-                <strong>{c.User?.Name || "Unknown"}</strong>:
+              <div key={`comment-${c.ID}`} style={{ padding: "5px 0", fontSize: '0.9em' }}>
+                <span style={{ fontWeight: 'bold', marginRight: '5px' }}>{c.User?.Name || "Unknown"}</span>
                 {editingCommentId === c.ID ? (
-                  <>
-                    <input type="text" value={editingText} onChange={(e) => setEditingText(e.target.value)} style={{ marginLeft: "5px", width: "60%" }} />
-                    <button onClick={() => handleEditComment(c.ID)} style={{ marginLeft: "5px" }}>Save</button>
-                    <button onClick={() => setEditingCommentId(null)} style={{ marginLeft: "5px" }}>Cancel</button>
-                  </>
+                  <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+                    <input type="text" className="ig-input" value={editingText} onChange={(e) => setEditingText(e.target.value)} style={{ marginBottom: 0, padding: '5px' }} />
+                    <button className="ig-btn" onClick={() => handleEditComment(c.ID)} style={{ width: 'auto', margin: 0, padding: '4px 8px' }}>Save</button>
+                    <button className="ig-btn-outline" onClick={() => setEditingCommentId(null)} style={{ width: 'auto', margin: 0, padding: '4px 8px' }}>Cancel</button>
+                  </div>
                 ) : (
                   <>
-                    <span style={{ marginLeft: "5px" }}>{c.Content}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.9)' }}>{c.Content}</span>
                     {c.UserID === realPost.UserID && (
-                      <>
-                        <button onClick={() => { setEditingCommentId(c.ID); setEditingText(c.Content); }} style={{ marginLeft: "10px" }}>Edit</button>
-                        <button onClick={() => handleDeleteComment(c.ID)} style={{ marginLeft: "5px", color: "red" }}>Delete</button>
-                      </>
+                      <div style={{ marginTop: '4px' }}>
+                        <button style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '0.8em', cursor: 'pointer', padding: 0, marginRight: '10px' }} onClick={() => { setEditingCommentId(c.ID); setEditingText(c.Content); }}>Edit</button>
+                        <button style={{ background: 'none', border: 'none', color: '#ff4d4f', fontSize: '0.8em', cursor: 'pointer', padding: 0 }} onClick={() => handleDeleteComment(c.ID)}>Delete</button>
+                      </div>
                     )}
                   </>
                 )}
               </div>
             ))}
 
-            {hasMoreComments && <button onClick={() => loadComments(commentsPage + 1)} style={{ marginTop: "5px" }}>Load more comments</button>}
+            {hasMoreComments && <button style={{ background: 'none', border: 'none', color: '#F47D34', cursor: 'pointer', textAlign: 'left', padding: 0, fontSize: '0.85em', marginTop: '5px' }} onClick={() => loadComments(commentsPage + 1)}>View more comments</button>}
           </div>
         </div>
       )}
 
-      <small style={{ color: "gray", display: "block", marginTop: "10px" }}>
+      <small style={{ color: "rgba(255,255,255,0.4)", display: "block", padding: "0 16px 16px", fontSize: "0.75em", textTransform: "uppercase" }}>
         {realPost.CreatedAt ? new Date(realPost.CreatedAt).toLocaleString() : ""}
       </small>
     </div>
