@@ -392,6 +392,9 @@ func AddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Preload User for the response
+	db.DB.Preload("User").First(&comment, comment.ID)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(comment)
 }
@@ -480,6 +483,9 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error updating comment", http.StatusInternalServerError)
 		return
 	}
+
+	// Preload User for the response
+	db.DB.Preload("User").First(&comment, comment.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(comment)
