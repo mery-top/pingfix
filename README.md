@@ -41,7 +41,7 @@ Explore the desktop interface designed for high productivity and detailed commun
 | ![Dashboard](demo/c1.png) | ![Feed](demo/c2.png) | ![Search](demo/c3.png) |
 | ![Group Details](demo/c4.png) | ![Create Post](demo/c5.png) | ![My Groups](demo/c6.png) |
 | ![Settings](demo/c7.png) | ![Auth](demo/c8.png) | ![Profile](demo/c9.png) |
-| ![Verification](demo/c10.png) | | |
+| ![Verification](demo/c10.png) | ![Admin Sidebar](demo/c11.png) | ![Group Search](demo/c12.png) |
 
 ### Mobile Experience
 Stay connected on the go with our fully responsive mobile design.
@@ -51,7 +51,7 @@ Stay connected on the go with our fully responsive mobile design.
 | ![Mobile Home](demo/m1.png) | ![Mobile Feed](demo/m2.png) | ![Mobile Search](demo/m3.png) |
 | ![Mobile Group](demo/m4.png) | ![Mobile Post](demo/m5.png) | ![Mobile Profile](demo/m6.png) |
 | ![Mobile Menu](demo/m7.png) | ![Mobile Auth](demo/m8.png) | ![Mobile Settings](demo/m9.png) |
-| ![Mobile Resolution](demo/m10.png) | | |
+| ![Mobile Resolution](demo/m10.png) | ![Mobile Sidebar](demo/m11.png) | ![Mobile Search](demo/m12.png) |
 
 ---
 
