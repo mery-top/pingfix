@@ -152,7 +152,6 @@ function MyGroups() {
       setTotalCreated(data.pagination.total_created)
       setPagination(data.pagination)
     } catch (error) {
-      console.log(error)
     }
   }
 
