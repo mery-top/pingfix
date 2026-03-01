@@ -40,8 +40,8 @@ function Dashboard() {
     navigate('/group/search')
   }
 
-  const goToMyGroups = () => {
-    navigate('/group/mygroups')
+  const goToRegisterGroup = () => {
+    navigate('/group/register')
   }
 
   const goToCreatePosts = () => {
@@ -80,7 +80,7 @@ function Dashboard() {
 
         <div className="tg-menu-list">
           <button className="tg-menu-item active" onClick={() => setIsSidebarOpen(false)}>Dashboard Feed</button>
-          <button className="tg-menu-item" onClick={() => { goToMyGroups(); setIsSidebarOpen(false); }}>My Groups</button>
+          <button className="tg-menu-item" onClick={() => { goToRegisterGroup(); setIsSidebarOpen(false); }}>Register Group</button>
           <button className="tg-menu-item" onClick={() => { goToMyPosts(); setIsSidebarOpen(false); }}>My Posts</button>
           <hr style={{ borderColor: "rgba(255,255,255,0.05)", margin: "10px 0" }} />
           <button className="tg-menu-item" style={{ color: "#ff4d4f" }} onClick={LogoutHandler}>Logout</button>
