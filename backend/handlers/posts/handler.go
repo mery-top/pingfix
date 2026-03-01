@@ -118,7 +118,7 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 		Preload("Links").
 		Preload("Tags").
 		Joins("JOIN groups ON posts.group_id = groups.id").
-		Where("groups.creator_id = ?", userID).
+		Where("groups.creator_id = ? AND groups.deleted_at IS NULL", userID).
 		Order("posts.created_at DESC")
 
 	// Count total
