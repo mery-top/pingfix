@@ -50,8 +50,8 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		if err != nil {
 			continue
 		}
-		defer file.Close() // will close after the loop ends
-		// Replace all kinds of whitespace with underscore
+	
+		// Replace whitespace with underscore
 		safeFileName := strings.Map(func(r rune) rune {
 			if unicode.IsSpace(r) {
 				return '_'
@@ -59,23 +59,24 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 			return r
 		}, fileHeader.Filename)
 	
-		// Remove any other unsafe characters
+		// Remove unsafe characters
 		re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
 		safeFileName = re.ReplaceAllString(safeFileName, "")
 	
-		// Optional: prepend timestamp to make filename unique
+		// Add timestamp for uniqueness
 		safeFileName = fmt.Sprintf("%d_%s", time.Now().UnixNano(), safeFileName)
 	
-	
-
 		url, err := utils.UploadToS3(file, safeFileName)
+		file.Close()
+	
 		if err != nil {
 			fmt.Println("S3 upload failed for", safeFileName, err)
 			continue
 		}
-
+	
 		imagePaths = append(imagePaths, url)
 	}
+	
 	shareToken := utils.GenerateShareToken()
 
 	for _, idStr := range groupIDs {
