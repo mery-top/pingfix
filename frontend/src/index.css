@@ -343,20 +343,34 @@ button:focus-visible {
   display: block;
 }
 
-.sidebar-toggle-btn {
+.sidebar-toggle-in-header {
   background: transparent !important;
   border: none !important;
   color: #F47D34 !important;
-  padding: 10px !important;
+  padding: 8px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  z-index: 2001;
+  transition: opacity 0.2s;
 }
 
-.sidebar-toggle-btn:hover {
-  background-color: rgba(244, 125, 52, 0.1) !important;
+.sidebar-toggle-in-header:hover {
+  opacity: 0.8;
+}
+
+.tg-sidebar-close-container {
+  padding: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sidebar-close-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #F47D34 !important;
+  padding: 5px !important;
+  cursor: pointer !important;
 }
 
 .tg-sidebar-header {
@@ -468,32 +482,6 @@ button:focus-visible {
     height: auto;
   }
 
-  .tg-sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .tg-menu-list {
-    display: flex;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 0;
-  }
-
-  .tg-menu-item {
-    width: auto;
-    padding: 15px;
-    border-left: none;
-    text-align: center;
-  }
-
-  .tg-menu-item.active {
-    border-left: none;
-    border-bottom: 3px solid #F47D34;
-  }
-
   .tg-content {
     padding: 15px;
   }
@@ -560,7 +548,6 @@ button:focus-visible {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 30px;
   padding: 12px 20px;
   width: 100%;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -571,66 +558,73 @@ button:focus-visible {
   box-sizing: border-box;
 }
 
-.header-profile {
+.center-symbols {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.header-left-section {
   position: absolute;
-  right: 20px;
+  left: 20px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.header-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #F47D34;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.9em;
-  color: #350E25;
-}
-
-.header-user-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.header-user-name {
-  color: #fff;
-  font-size: 0.9em;
-  font-weight: 600;
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.header-logo {
+  height: 50px;
+  /* Increased size */
+  width: auto;
+  object-fit: contain;
 }
 
 @media (max-width: 768px) {
   .top-header-symbols {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #350E25;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 20px;
+    z-index: 1100;
+    height: 70px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .header-left-section {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    /* Match desktop order: button then logo */
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-logo {
+    height: 45px;
+  }
+
+  .center-symbols {
     position: fixed;
     bottom: 0;
-    top: auto;
     left: 0;
     width: 100%;
     background-color: #350E25;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    border-bottom: none;
+    display: flex;
+    justify-content: space-around;
     padding: 12px 0;
-    margin-bottom: 0;
     z-index: 1000;
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3);
   }
 
-  .header-profile {
-    display: none;
-    /* Hide profile in bottom bar for better UX */
-  }
-
   .tg-content {
     padding-bottom: 80px !important;
-    padding-top: 10px !important;
+    padding-top: 20px !important;
   }
 }
 
