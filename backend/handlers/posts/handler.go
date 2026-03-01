@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"fmt"
 	"github.com/gorilla/mux"
+	"strings"
+	"regexp"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request){
@@ -48,10 +50,16 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		}
 		defer file.Close() // will close after the loop ends
 		//file.Close() // close immediately
+		// Replace spaces with underscores and remove unsafe chars
+		safeFileName := strings.ReplaceAll(fileHeader.Filename, " ", "_")
+		// Optional: remove any other non-alphanumeric except ., _, -
+		re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
+		safeFileName = re.ReplaceAllString(safeFileName, "")
+	
 
-		url, err := utils.UploadToS3(file, fileHeader.Filename)
+		url, err := utils.UploadToS3(file, safeFileName)
 		if err != nil {
-			fmt.Println("S3 upload failed for", fileHeader.Filename, err)
+			fmt.Println("S3 upload failed for", safeFileName, err)
 			continue
 		}
 
