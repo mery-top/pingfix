@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { GroupRegisterAPI } from '../api/GroupAPI';
 import { SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI';
 import { useNavigate } from 'react-router-dom'
-import SecureInput from '../wrapper/SecureInput';
+import { sanitizeInput } from '../utils/sanitizer';
 import countries from '../assets/countries.json'
 import Modal from '../components/Modal';
 
@@ -21,11 +21,25 @@ function GroupRegister() {
   const navigate = useNavigate()
 
   const handleGroupRegister = async () => {
+    // Basic required field validation
+    if (!groupName.trim() || !groupDes.trim() || !groupType || !selectedCountry || !selectedState || !groupCity.trim() || !groupHandle.trim()) {
+      setMessage("All fields are required");
+      return;
+    }
 
     if (requiresAuthorityEmail(groupType)) {
+      if (!authEmail.trim()) {
+        setMessage("Authorized Email is required for " + groupType);
+        return;
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(authEmail)) {
         setMessage("Invalid email format");
+        return;
+      }
+      // Note: Assuming OTP verification is required as well if authEmail is present
+      if (!otp.trim()) {
+        setMessage("OTP verification is required");
         return;
       }
     }
@@ -60,6 +74,10 @@ function GroupRegister() {
 
   }
   const handleSendOTP = async () => {
+    if (!authEmail.trim()) {
+      setMessage("Enter Authorized Email first");
+      return;
+    }
     try {
       const res = await SendOTPAPI(authEmail)
       if (res.status === 200) {
@@ -74,6 +92,10 @@ function GroupRegister() {
   }
 
   const handleVerifyOTP = async () => {
+    if (!otp.trim()) {
+      setMessage("Enter OTP first");
+      return;
+    }
     try {
       const res = await VerifyOTPAPI(authEmail, otp)
       if (res.status === 200) {
@@ -96,7 +118,7 @@ function GroupRegister() {
     <div className="container" style={{ maxWidth: '700px', margin: '40px auto' }}>
       <div className="top-nav-bar">
         <button className="btn-nav" onClick={() => navigate(-1)}>
-          ← Back
+          ←
         </button>
       </div>
       <div className="tg-card">
@@ -104,13 +126,23 @@ function GroupRegister() {
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Group Name:</label>
-          <SecureInput value={groupName} onChange={setGroupName} allowSpace={true} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+          <input
+            type="text"
+            className="ig-input"
+            value={groupName}
+            onChange={e => setGroupName(sanitizeInput(e.target.value, { allowSpace: true }))}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', marginBottom: 0 }}
+          />
           <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>{groupName.length}/150 characters</p>
         </div>
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Group Description:</label>
-          <SecureInput value={groupDes} onChange={setGroupDes} allowSpace={true} maxLength={2000} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+          <textarea
+            value={groupDes}
+            onChange={e => setGroupDes(sanitizeInput(e.target.value, { allowSpace: true, maxLength: 2000 }))}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', minHeight: '100px', fontFamily: 'inherit' }}
+          />
           <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>{groupDes.length}/2000 characters</p>
         </div>
 
@@ -129,11 +161,12 @@ function GroupRegister() {
           <div style={{ marginBottom: '15px', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(244,125,52,0.2)' }}>
             <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Authorized Email:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <SecureInput
+              <input
+                type="email"
                 className="ig-input"
                 placeholder='Authorized Email'
                 value={authEmail}
-                onChange={setAuthEmail}
+                onChange={e => setAuthEmail(sanitizeInput(e.target.value))}
                 style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', marginBottom: 0 }}
               />
               <button className="btn-nav" style={{ minWidth: '100px' }} onClick={handleSendOTP}>Send OTP</button>
@@ -141,7 +174,13 @@ function GroupRegister() {
 
             <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', marginTop: '15px', display: 'block' }}>OTP:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <SecureInput value={otp} onChange={setOTP} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+              <input
+                type="text"
+                className="ig-input"
+                value={otp}
+                onChange={e => setOTP(sanitizeInput(e.target.value))}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', marginBottom: 0 }}
+              />
               <button className="btn-nav" style={{ minWidth: '100px' }} onClick={handleVerifyOTP}>Verify OTP</button>
             </div>
           </div>
@@ -189,12 +228,24 @@ function GroupRegister() {
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>City:</label>
-          <SecureInput value={groupCity} onChange={setCity} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+          <input
+            type="text"
+            className="ig-input"
+            value={groupCity}
+            onChange={e => setCity(sanitizeInput(e.target.value, { allowSpace: true }))}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', marginBottom: 0 }}
+          />
         </div>
 
         <div style={{ marginBottom: '25px' }}>
           <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Handle (e.g., @mygroup):</label>
-          <SecureInput value={groupHandle} onChange={setHandle} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+          <input
+            type="text"
+            className="ig-input"
+            value={groupHandle}
+            onChange={e => setHandle(sanitizeInput(e.target.value))}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', marginBottom: 0 }}
+          />
         </div>
 
         <button className="ig-btn" type="submit" onClick={handleGroupRegister}>Register Group</button>
