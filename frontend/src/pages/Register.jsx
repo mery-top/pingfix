@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { LoginWithGoogle, RegisterAPI, SendOTPAPI, VerifyOTPAPI } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
+import SecureInput from '../wrapper/SecureInput'
 
 function Register() {
   const [email, setEmail] = useState("")
@@ -91,18 +92,19 @@ function Register() {
         </button>
         <h2>Register</h2>
 
-        <input type="text"
-          className="ig-input"
+        <SecureInput
           placeholder='Name'
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={setName}
+          allowSpace={true}
+          style={{ marginBottom: '15px' }}
         />
 
-        <input type="email"
-          className="ig-input"
+        <SecureInput
           placeholder='Email'
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={setEmail}
+          style={{ marginBottom: '15px' }}
         />
 
         <input type="password"
@@ -112,11 +114,11 @@ function Register() {
           onChange={e => setPassword(e.target.value)}
         />
 
-        <input type="text"
-          className="ig-input"
+        <SecureInput
           placeholder='OTP'
           value={otp}
-          onChange={e => setOTP(e.target.value)}
+          onChange={setOTP}
+          style={{ marginBottom: '15px' }}
         />
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
