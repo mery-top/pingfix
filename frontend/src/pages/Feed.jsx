@@ -72,7 +72,10 @@ function Feed() {
 
   return (
     <div style={{ maxWidth: "600px", margin: "auto" }}>
-      <h2>Dashboard Feed</h2>
+
+      <h2 style={{ margin: "30px 0", textAlign: "center" }}>
+        What's happening ?
+      </h2>
 
       {posts.length === 0 && !loading && <p>No posts yet.</p>}
 
