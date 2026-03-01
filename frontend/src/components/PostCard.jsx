@@ -4,7 +4,7 @@ import { VotePost, AddComment, DeleteComment, EditComment, GetComments, ResolveP
 import SecureInput from "../wrapper/SecureInput";
 
 // ---------------- PostCard Component ----------------
-function PostCard({ post, onVote, hideViewGroup = false }) {
+function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
   const realPost = post?.post || {};
 
   const [upvotes, setUpvotes] = useState(post?.upvotes || 0);
@@ -242,9 +242,29 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
         </div>
       )}
 
-      <small style={{ color: "rgba(255,255,255,0.4)", display: "block", padding: "0 16px 16px", fontSize: "0.75em", textTransform: "uppercase" }}>
-        {realPost.CreatedAt ? new Date(realPost.CreatedAt).toLocaleString() : ""}
-      </small>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: "0 16px 16px" }}>
+        <small style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75em", textTransform: "uppercase" }}>
+          {realPost.CreatedAt ? new Date(realPost.CreatedAt).toLocaleString() : ""}
+        </small>
+
+        {onDelete && (
+          <button
+            onClick={() => onDelete(realPost.ID)}
+            style={{
+              background: "transparent",
+              color: "#ff4d4f",
+              border: "1px solid rgba(255,77,79,0.3)",
+              borderRadius: "20px",
+              padding: "4px 10px",
+              fontSize: "0.7em",
+              fontWeight: "bold",
+              cursor: "pointer"
+            }}
+          >
+            Delete Post
+          </button>
+        )}
+      </div>
     </div>
   );
 }
