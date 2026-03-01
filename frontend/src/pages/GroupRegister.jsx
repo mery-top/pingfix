@@ -256,7 +256,7 @@ function GroupRegister() {
         isOpen={isSuccessModalOpen}
         title="Welcome!"
         message="Your group has been registered successfully."
-        confirmText="Go to Login"
+        confirmText="Go to Dashboard"
         onConfirm={() => navigate("/login")}
         onClose={() => navigate("/login")}
       />
