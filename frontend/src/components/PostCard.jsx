@@ -125,7 +125,7 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
         <p style={{ margin: '0 0 10px 0', fontSize: '0.95em', lineHeight: '1.5' }}>{realPost.Content || ""}</p>
 
         {Array.isArray(realPost.Images) && realPost.Images.map((img) => (
-          <img key={img.ID} src={`http://localhost:8080/${img.URL}`} alt="" style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }} />
+          <img key={img.ID} src={img.URL} alt="" style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }} />
         ))}
 
         <div style={{ marginTop: "10px" }}>
