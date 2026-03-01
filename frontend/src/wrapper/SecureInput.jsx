@@ -21,9 +21,9 @@ function SecureInput({ value, onChange, allowSpace = false, maxLength = 150, sty
       .replace(/(%27|%22|%2D%2D|%3B)/gi, '')
 
     if (allowSpace) {
-      sanitized = sanitized.replace(/[^a-zA-Z0-9_@.\s-]/g, '');
+      sanitized = sanitized.replace(/[^a-zA-Z0-9_@.\s,?!-]/g, '');
     } else {
-      sanitized = sanitized.replace(/[^a-zA-Z0-9_@.-]/g, '');   // disallow spaces
+      sanitized = sanitized.replace(/[^a-zA-Z0-9_@.,?!-]/g, '');   // disallow spaces
     }
 
     return sanitized.slice(0, maxLength);
