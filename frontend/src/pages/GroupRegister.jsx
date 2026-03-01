@@ -127,11 +127,12 @@ function GroupRegister() {
           <div style={{ marginBottom: '15px', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(244,125,52,0.2)' }}>
             <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Authorized Email:</label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <input
-                type="email"
+              <SecureInput
+                className="ig-input"
+                placeholder='Authorized Email'
                 value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
+                onChange={setAuthEmail}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', marginBottom: 0 }}
               />
               <button className="btn-nav" style={{ minWidth: '100px' }} onClick={handleSendOTP}>Send OTP</button>
             </div>
