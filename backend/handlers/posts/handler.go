@@ -465,8 +465,7 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Comment content cannot be empty", http.StatusBadRequest)
 		return
 	}
-	fmt.Printf("DEBUG: New Content for comment %d: %s\n", commentID, req.Content)
-
+	
 	// Find the comment
 	var comment models.Comment
 	if err := db.DB.First(&comment, commentID).Error; err != nil {
