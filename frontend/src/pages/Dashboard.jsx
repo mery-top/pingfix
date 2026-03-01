@@ -60,15 +60,24 @@ function Dashboard() {
         onClick={() => setIsSidebarOpen(false)}
       ></div>
 
-      {/* Toggle Button */}
-      <div style={{ position: 'fixed', top: '15px', left: '15px', zIndex: 2001 }}>
-        <button className="sidebar-toggle-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-          {isSidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-        </button>
-      </div>
-
       {/* Left Sidebar */}
       <div className={`tg-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="tg-sidebar-close-container">
+          <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)}>
+            <FiX size={24} />
+          </button>
+        </div>
+
+        <div className="tg-sidebar-header">
+          <div className="tg-avatar">
+            {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+          </div>
+          <div style={{ overflow: "hidden" }}>
+            <h3 style={{ margin: 0, color: "#fff", fontSize: "1.1em", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>{user.name || "Loading..."}</h3>
+            <p style={{ margin: 0, color: "rgba(255,255,255,0.6)", fontSize: "0.85em", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>{user.email}</p>
+          </div>
+        </div>
+
         <div className="tg-menu-list">
           <button className="tg-menu-item active" onClick={() => setIsSidebarOpen(false)}>Dashboard Feed</button>
           <button className="tg-menu-item" onClick={() => { goToMyGroups(); setIsSidebarOpen(false); }}>My Groups</button>
@@ -80,7 +89,7 @@ function Dashboard() {
 
       {/* Main Content */}
       <div className="tg-content">
-        <TopHeader user={user} />
+        <TopHeader user={user} onToggleSidebar={() => setIsSidebarOpen(true)} />
         <Feed />
       </div>
     </div>
