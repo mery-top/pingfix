@@ -15,7 +15,10 @@ var (
 func init() {
 	err := godotenv.Load("../../.env")
 	if err != nil {
-		log.Println("Error loading .env file")
+		err = godotenv.Load(".env")
+		if err != nil {
+			log.Println("Error loading .env file")
+		}
 	}
 
 	AWSRegion = os.Getenv("AWS_REGION")
