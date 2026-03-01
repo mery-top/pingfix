@@ -2,6 +2,7 @@ import React, { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { VotePost, AddComment, DeleteComment, EditComment, GetComments, ResolvePost } from "../api/PostAPI";
 import SecureInput from "../wrapper/SecureInput";
+import { FiArrowUp, FiArrowDown, FiCheckCircle, FiMessageSquare, FiShare2 } from 'react-icons/fi';
 
 // ---------------- PostCard Component ----------------
 function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
@@ -171,20 +172,20 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
       <div className="ig-post-actions">
         <div className="ig-action-icons">
           <button className="ig-action-btn" onClick={() => handleVote(1)} disabled={userVote === -1} style={{ color: userVote === 1 ? "#F47D34" : "#fff" }}>
-            {userVote === 1 ? '🧡' : '🤍'}
+            <FiArrowUp size={24} />
           </button>
           <button className="ig-action-btn" onClick={() => handleVote(-1)} disabled={userVote === 1} style={{ color: userVote === -1 ? "#F47D34" : "#fff" }}>
-            💔
+            <FiArrowDown size={24} />
           </button>
           <button className="ig-action-btn" onClick={handleResolve} style={{ color: userResolved ? "#F47D34" : "#fff" }}>
-            ✅
+            <FiCheckCircle size={24} />
           </button>
           <button className="ig-action-btn" onClick={toggleComments}>
-            💬
+            <FiMessageSquare size={24} />
           </button>
         </div>
         <button className="ig-action-btn" onClick={handleShare}>
-          🔗
+          <FiShare2 size={24} />
         </button>
       </div>
 
