@@ -7,6 +7,7 @@ function MyPosts() {
   const [pagination, setPagination] = useState({});
   const [pages, setPage] = useState(1);
   const [posts, setPosts] = useState([]);
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const fetchPosts = async () => {
@@ -40,10 +41,12 @@ function MyPosts() {
       const res = await DeletePostAPI(postID);
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text);
+        throw new Error(text || "Failed to delete post");
       }
       fetchPosts(); // Refresh after deletion
+      setMessage("");
     } catch (error) {
+      setMessage(error.message);
     }
   };
 
@@ -57,8 +60,9 @@ function MyPosts() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {message && <p style={{ color: "#ff4d4f", textAlign: "center", marginBottom: "10px" }}>{message}</p>}
         {posts.map((post) => (
-          <div key={post.ID}>
+          <div key={post.post.ID}>
             <PostCardMemo
               post={post}
               hideViewGroup={false}
@@ -67,7 +71,7 @@ function MyPosts() {
             {/* Delete Button */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '5px' }}>
               <button
-                onClick={() => handleDelete(post.ID)}
+                onClick={() => handleDelete(post.post.ID)}
                 style={{
                   padding: "6px 12px",
                   background: "transparent",
