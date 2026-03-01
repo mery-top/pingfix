@@ -5,16 +5,17 @@ import (
 	"backend/models"
 )
 
-func Migrate(){
+func Migrate() {
 	db.DB.AutoMigrate(
 		&models.User{},
 		&models.Group{},
-		&models.GroupData{},   // for group_data join table
+		&models.GroupData{}, // for group_data join table
 		&models.Post{},
 		&models.Tag{},
 		&models.PostImage{},
 		&models.PostLink{},
-		&models.PostVote{},  // 
-        &models.Comment{},
+		&models.PostVote{}, //
+		&models.Comment{},
+		&models.PostResolve{},
 	)
 }
