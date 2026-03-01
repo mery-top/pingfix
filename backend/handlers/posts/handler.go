@@ -12,6 +12,8 @@ import (
 	"github.com/gorilla/mux"
 	"strings"
 	"regexp"
+	"time"
+	"unicode"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request){
@@ -49,12 +51,21 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 			continue
 		}
 		defer file.Close() // will close after the loop ends
-		//file.Close() // close immediately
-		// Replace spaces with underscores and remove unsafe chars
-		safeFileName := strings.ReplaceAll(fileHeader.Filename, " ", "_")
-		// Optional: remove any other non-alphanumeric except ., _, -
+		// Replace all kinds of whitespace with underscore
+		safeFileName := strings.Map(func(r rune) rune {
+			if unicode.IsSpace(r) {
+				return '_'
+			}
+			return r
+		}, fileHeader.Filename)
+	
+		// Remove any other unsafe characters
 		re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
 		safeFileName = re.ReplaceAllString(safeFileName, "")
+	
+		// Optional: prepend timestamp to make filename unique
+		safeFileName = fmt.Sprintf("%d_%s", time.Now().UnixNano(), safeFileName)
+	
 	
 
 		url, err := utils.UploadToS3(file, safeFileName)
