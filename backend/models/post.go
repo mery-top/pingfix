@@ -15,6 +15,7 @@ type PostImage struct {
 	PostID uint   `gorm:"not null"`
 	URL    string `gorm:"not null"` // stored image path
 }
+
 type PostLink struct {
 	gorm.Model
 	PostID uint   `gorm:"not null"`
