@@ -67,10 +67,10 @@ function Home() {
         <span className="divider-text">Spot it. Ping it. Fix it.</span>
         </div>
 
-        <div className="card">
+        {/* <div className="card">
           <img src={h4} alt="Logo" />
           <p className="overlay-text">Save Wildlife</p>
-        </div>
+        </div> */}
 
 
       
