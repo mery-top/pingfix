@@ -46,7 +46,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 	Preload("Tags").
 	Joins("LEFT JOIN group_data gd ON gd.group_id = posts.group_id").
 	Joins("LEFT JOIN groups g ON g.id = posts.group_id").
-	Where("gd.user_id = ? OR g.creator_id = ?", userID, userID).
+	Where("(gd.user_id = ? OR g.creator_id = ?) AND g.deleted_at IS NULL", userID, userID).
 	Order("posts.created_at DESC")
 
 	// Count
