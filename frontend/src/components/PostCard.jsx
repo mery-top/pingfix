@@ -121,12 +121,22 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
         )}
       </div>
 
+      {/* -------------------------- CONTENT--------------------------- */}
+
       <div className="ig-post-content">
         <p style={{ margin: '0 0 10px 0', fontSize: '0.95em', lineHeight: '1.5' }}>{realPost.Content || ""}</p>
 
-        {Array.isArray(realPost.Images) && realPost.Images.map((img) => (
-          <img key={img.ID} src={img.URL} alt="" style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }} />
-        ))}
+        {Array.isArray(realPost.Images) && realPost.Images.map((img) => {
+        const imgSrc = img.URL.startsWith("https") ? img.URL : `http://localhost:8080/${img.URL}`;
+        return (
+          <img
+            key={img.ID}
+            src={imgSrc}
+            alt=""
+            style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }}
+          />
+        );
+      })}
 
         <div style={{ marginTop: "10px" }}>
           {Array.isArray(realPost.Tags) && realPost.Tags.map((tag) => (
