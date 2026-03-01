@@ -31,6 +31,10 @@ export async function VotePost(post_id, vote_type) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ post_id, vote_type }),
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Vote failed");
+  }
   return res.json();
 }
 

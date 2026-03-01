@@ -315,7 +315,8 @@ func VotePost(w http.ResponseWriter, r *http.Request) {
 		db.DB.Create(&newVote)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
 
 func ResolvePost(w http.ResponseWriter, r *http.Request) {
@@ -354,7 +355,8 @@ func ResolvePost(w http.ResponseWriter, r *http.Request) {
 		db.DB.Create(&newResolve)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
 
 func AddComment(w http.ResponseWriter, r *http.Request) {
@@ -426,7 +428,8 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
 
 func EditComment(w http.ResponseWriter, r *http.Request) {
