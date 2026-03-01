@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { LoginAPI, LoginWithGoogle } from '../api/AuthAPI'
+import SecureInput from '../wrapper/SecureInput'
 
 import { useNavigate } from 'react-router-dom'
 
@@ -49,12 +50,12 @@ function Login() {
           ← Home
         </button>
         <h2>Login</h2>
-        <input
-          type="email"
+        <SecureInput
           className="ig-input"
           placeholder='Email'
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={setEmail}
+          style={{ marginBottom: '15px' }}
         />
         <input
           type="password"
