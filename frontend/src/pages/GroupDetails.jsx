@@ -85,7 +85,6 @@ function GroupDetails() {
           <ul style={{ listStyle: "none", padding: 0, display: "flex", flexWrap: "wrap", gap: "10px" }}>
             {subscribers.map((sub) => (
               <li key={sub.ID || sub.id} style={{ background: "rgba(255,255,255,0.05)", padding: "5px 10px", borderRadius: "15px", fontSize: "0.9em", color: "#fff" }}>
-                {sub.Name || sub.name}
               </li>
             ))}
           </ul>
