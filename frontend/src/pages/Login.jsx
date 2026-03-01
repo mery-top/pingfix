@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { LoginAPI, LoginWithGoogle } from '../api/AuthAPI'
 import { useNavigate } from 'react-router-dom'
+import { sanitizeInput } from '../utils/sanitizer'
 
 function Login() {
   const [email, setEmail] = useState("")
@@ -45,7 +46,7 @@ function Login() {
     <div className="ig-auth-container">
       <div className="ig-auth-card" style={{ position: 'relative' }}>
         <button onClick={() => navigate('/')} style={{ position: 'absolute', top: '15px', left: '15px', background: 'none', border: 'none', color: '#F47D34', cursor: 'pointer', fontSize: '1em' }}>
-          ← 
+          ←
         </button>
         <h2>Login</h2>
         <input
@@ -53,7 +54,7 @@ function Login() {
           className="ig-input"
           placeholder='Email'
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={e => setEmail(sanitizeInput(e.target.value))}
         />
         <input
           type="password"
