@@ -589,7 +589,7 @@ button:focus-visible {
 }
 
 .header-logo {
-  height: 50px;
+  height: 100px;
   /* Increased size */
   width: auto;
   object-fit: contain;
@@ -605,7 +605,8 @@ button:focus-visible {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 10px 20px;
     z-index: 1100;
-    height: 70px;
+    height: 120px;
+    /* Increased to fit larger logo */
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -621,7 +622,8 @@ button:focus-visible {
   }
 
   .header-logo {
-    height: 45px;
+    height: 130px;
+    /* Increased mobile size */
   }
 
   .center-symbols {
