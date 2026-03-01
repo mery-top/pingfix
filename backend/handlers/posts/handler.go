@@ -33,9 +33,9 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	groupIDs := r.Form["groupID"]
-	content := r.FormValue("content")
-	links := r.Form["links"]
-	tags := r.Form["tags"]
+	content := utils.Sanitize(r.FormValue("content"))
+	links := utils.SanitizeSlice(r.Form["links"])
+	tags := utils.SanitizeSlice(r.Form["tags"])
 
 	if len(groupIDs) == 0 {
 		http.Error(w, "No groups selected", http.StatusBadRequest)
@@ -104,7 +104,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func MyPosts(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("MyPosts Endpoint")
 
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -182,7 +181,6 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePost(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("DeletePost Endpoint")
 
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
@@ -386,7 +384,7 @@ func AddComment(w http.ResponseWriter, r *http.Request) {
 	comment := models.Comment{
 		PostID:  req.PostID,
 		UserID:  userID,
-		Content: req.Content,
+		Content: utils.Sanitize(req.Content),
 	}
 
 	if err := db.DB.Create(&comment).Error; err != nil {
@@ -477,7 +475,7 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update comment
-	comment.Content = req.Content
+	comment.Content = utils.Sanitize(req.Content)
 	if err := db.DB.Save(&comment).Error; err != nil {
 		http.Error(w, "Error updating comment", http.StatusInternalServerError)
 		return
