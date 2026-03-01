@@ -445,7 +445,9 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 	// Get comment ID from URL
 	vars := mux.Vars(r)
 	commentID, err := strconv.Atoi(vars["id"])
+	fmt.Printf("DEBUG: Editing comment ID: %v from URL vars\n", vars["id"])
 	if err != nil {
+		fmt.Printf("DEBUG: Invalid comment ID: %v\n", err)
 		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
 		return
 	}
@@ -463,6 +465,7 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Comment content cannot be empty", http.StatusBadRequest)
 		return
 	}
+	fmt.Printf("DEBUG: New Content for comment %d: %s\n", commentID, req.Content)
 
 	// Find the comment
 	var comment models.Comment
@@ -473,9 +476,11 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 
 	// Check ownership
 	if comment.UserID != userID {
+		fmt.Printf("DEBUG: Forbidden - User %d tried to edit comment of User %d\n", userID, comment.UserID)
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
+	fmt.Printf("DEBUG: Ownership verified for User %d\n", userID)
 
 	// Update comment
 	comment.Content = utils.Sanitize(req.Content)
