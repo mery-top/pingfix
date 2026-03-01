@@ -1,142 +1,109 @@
-import React from 'react'
-import { MyPostsAPI, DeletePostAPI } from '../api/PostAPI'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import { MyPostsAPI, DeletePostAPI } from '../api/PostAPI';
+import PostCardMemo from '../components/PostCard'; // memoized PostCard
+import { useNavigate } from 'react-router-dom';
+
 function MyPosts() {
-    const [pagination, setPagination] = useState({})
-    const [message, setMessage] = useState("")
-    const [pages, setPage] = useState(1)
-    const [posts, setPosts] = useState([]) 
+  const [pagination, setPagination] = useState({});
+  const [pages, setPage] = useState(1);
+  const [posts, setPosts] = useState([]);
+  const navigate = useNavigate();
 
-    const handleDelete = async (postID) => {
-      const confirmDelete = window.confirm("Are you sure you want to delete this post?")
-      if (!confirmDelete) return
-  
-      try {
-          const res = await DeletePostAPI(postID)
-  
-          if (!res.ok) {
-              const text = await res.text()
-              throw new Error(text)
-          }
-  
-          // Refresh posts after delete
-          fetchPosts()
-  
-      } catch (error) {
-          console.log(error)
+  const fetchPosts = async () => {
+    const params = new URLSearchParams({
+      page: pages,
+      limit: 5,
+    });
+
+    try {
+      const res = await MyPostsAPI(params);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
       }
-  }
-
-    const fetchPosts = async () =>{
-        const params = new URLSearchParams({
-            page: pages,
-            limit: 5,
-        })
-
-        try{
-            const res = await MyPostsAPI(params)
-            if (!res.ok) {
-                const text = await res.text()  
-                throw new Error(text)
-            }
-
-            const data = await res.json()
-            setPosts(data.posts) 
-            setPagination(data.pagination)
-        }catch(error){
-            console.log(error)
-        }
+      const data = await res.json();
+      setPosts(data.posts);
+      setPagination(data.pagination);
+    } catch (error) {
+      console.log(error);
     }
+  };
 
-    useEffect(() => {
-        fetchPosts()
-      }, [pages]) 
+  useEffect(() => {
+    fetchPosts();
+  }, [pages]);
+
+  const handleDelete = async (postID) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this post?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await DeletePostAPI(postID);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+      fetchPosts(); // Refresh after deletion
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
-    <>
-    <div>MyPosts</div>
-
-    <ul>
-  {posts.map((post) => (
-    <li key={post.ID} style={{ marginBottom: "2rem" }}>
-      
-      <p>
-        <strong>{post.User?.Name}</strong> in{" "}
-        <em>{post.Group?.Name}</em>
-      </p>
-
-      <p>{post.Content}</p>
-
-      {/*  Tags */}
-      <div>
-        {post.Tags?.map((tag) => (
-          <span key={tag.ID} style={{
-            marginRight: "8px",
-            padding: "4px 8px",
-            background: "#eee",
-            borderRadius: "5px"
-          }}>
-            #{tag.Name}
-          </span>
-        ))}
+    <div className="container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: "20px" }}>
+        <button
+          className="ig-btn"
+          style={{ width: 'auto', margin: 0, padding: '8px 16px', backgroundColor: 'transparent', border: '1px solid #F47D34', color: '#F47D34' }}
+          onClick={() => navigate(-1)}
+        >
+          ← Back
+        </button>
+        <h2 style={{ margin: 0 }}>My Posts</h2>
+        <div style={{ width: '80px' }}></div> {/* Spacer */}
       </div>
 
-      {/*  Images */}
-      <div>
-        {post.Images?.map((img) => (
-          <img
-            key={img.ID}
-            src={`http://localhost:8080/${img.URL}`}
-            alt="post"
-            style={{ width: "200px", marginTop: "10px" }}
-          />
-        ))}
-      </div>
-
-      {/*  Links */}
-      <div>
-        {post.Links?.map((link) => (
-          <div key={link.ID}>
-            <a href={link.URL} target="_blank" rel="noopener noreferrer">
-              {link.URL}
-            </a>
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {posts.map((post) => (
+          <div key={post.ID}>
+            <PostCardMemo
+              post={{ post }}
+              hideViewGroup={false}
+              onVote={() => {}} // optional: handle votes if needed
+            />
+            {/* Delete Button */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '5px' }}>
+              <button
+                onClick={() => handleDelete(post.ID)}
+                style={{
+                  padding: "6px 12px",
+                  background: "transparent",
+                  color: "#ff4d4f",
+                  border: "1px solid rgba(255,77,79,0.3)",
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  fontSize: "0.85em",
+                  fontWeight: "bold"
+                }}
+              >
+                Delete Post
+              </button>
+            </div>
           </div>
         ))}
       </div>
 
-      <button
-        onClick={() => handleDelete(post.ID)}
-        style={{
-            marginTop: "10px",
-            padding: "6px 12px",
-            background: "red",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer"
-        }}
-    >
-        Delete
-    </button>
-
-      <small>
-        Posted on {new Date(post.CreatedAt).toLocaleString()}
-      </small>
-    </li>
-  ))}
-</ul>
-
-
-    <div>
+      {/* Pagination */}
+      <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
         {pagination.page > 1 && (
-            <button onClick={() => setPage(pages - 1)}>Previous</button>
+          <button style={{ padding: "0.4em 1em" }} onClick={() => setPage(pages - 1)}>Previous</button>
         )}
-
         {pagination.page < pagination.pages && (
-            <button onClick={() => setPage(pages + 1)}>Next</button>
+          <button style={{ padding: "0.4em 1em" }} onClick={() => setPage(pages + 1)}>Next</button>
         )}
+      </div>
     </div>
-    </>
-  )
+  );
 }
-export default MyPosts
+
+export default MyPosts;
