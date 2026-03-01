@@ -1,6 +1,7 @@
 import React, { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { VotePost, AddComment, DeleteComment, EditComment, GetComments, ResolvePost } from "../api/PostAPI";
+import SecureInput from "../wrapper/SecureInput";
 
 // ---------------- PostCard Component ----------------
 function PostCard({ post, onVote, hideViewGroup = false }) {
@@ -195,13 +196,13 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
       {showComments && (
         <div style={{ padding: "0 16px 16px" }}>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-            <input
-              type="text"
+            <SecureInput
               className="ig-input"
               placeholder="Add a comment..."
               value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              style={{ marginBottom: 0 }}
+              onChange={setCommentText}
+              allowSpace={true}
+              style={{ flex: 1, marginBottom: 0 }}
             />
             <button className="ig-btn" onClick={handleAddComment} style={{ width: 'auto', margin: 0 }}>Post</button>
           </div>
@@ -212,7 +213,13 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
                 <span style={{ fontWeight: 'bold', marginRight: '5px' }}>{c.User?.Name || "Unknown"}</span>
                 {editingCommentId === c.ID ? (
                   <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                    <input type="text" className="ig-input" value={editingText} onChange={(e) => setEditingText(e.target.value)} style={{ marginBottom: 0, padding: '5px' }} />
+                    <SecureInput
+                      className="ig-input"
+                      value={editingText}
+                      onChange={setEditingText}
+                      allowSpace={true}
+                      style={{ marginBottom: 0, padding: '5px' }}
+                    />
                     <button className="ig-btn" onClick={() => handleEditComment(c.ID)} style={{ width: 'auto', margin: 0, padding: '4px 8px' }}>Save</button>
                     <button className="ig-btn-outline" onClick={() => setEditingCommentId(null)} style={{ width: 'auto', margin: 0, padding: '4px 8px' }}>Cancel</button>
                   </div>
