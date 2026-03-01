@@ -25,7 +25,6 @@ function MyPosts() {
       setPosts(data.posts);
       setPagination(data.pagination);
     } catch (error) {
-      console.log(error);
     }
   };
 
@@ -45,7 +44,6 @@ function MyPosts() {
       }
       fetchPosts(); // Refresh after deletion
     } catch (error) {
-      console.log(error);
     }
   };
 
