@@ -62,31 +62,13 @@ function MyPosts() {
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {message && <p style={{ color: "#ff4d4f", textAlign: "center", marginBottom: "10px" }}>{message}</p>}
         {posts.map((post) => (
-          <div key={post.post.ID}>
-            <PostCardMemo
-              post={post}
-              hideViewGroup={false}
-              onVote={() => { }} // optional: handle votes if needed
-            />
-            {/* Delete Button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '5px' }}>
-              <button
-                onClick={() => handleDelete(post.post.ID)}
-                style={{
-                  padding: "6px 12px",
-                  background: "transparent",
-                  color: "#ff4d4f",
-                  border: "1px solid rgba(255,77,79,0.3)",
-                  borderRadius: "20px",
-                  cursor: "pointer",
-                  fontSize: "0.85em",
-                  fontWeight: "bold"
-                }}
-              >
-                Delete Post
-              </button>
-            </div>
-          </div>
+          <PostCardMemo
+            key={post.post.ID}
+            post={post}
+            hideViewGroup={false}
+            onVote={() => { }} // optional: handle votes if needed
+            onDelete={handleDelete}
+          />
         ))}
       </div>
 
