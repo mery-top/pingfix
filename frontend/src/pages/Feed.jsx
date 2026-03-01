@@ -77,18 +77,27 @@ function Feed() {
       {posts.length === 0 && !loading && <p>No posts yet.</p>}
 
       {posts.map((post, index) => {
-        const key = `post-${post?.post?.ID}-${index}`;
+          const key = post?.ID;
 
-        if (index === posts.length - 1) {
+          if (index === posts.length - 1) {
+            return (
+              <div ref={lastPostRef} key={`wrapper-${key}`}>
+                <PostCardMemo
+                  post={post}
+                  onVote={handleVoteInFeed}
+                />
+              </div>
+            );
+          }
+
           return (
-            <div ref={lastPostRef} key={`wrapper-${key}`}>
-              <PostCardMemo key={key} post={post} onVote={handleVoteInFeed} />
-            </div>
+            <PostCardMemo
+              key={key}
+              post={post}
+              onVote={handleVoteInFeed}
+            />
           );
-        }
-
-        return <PostCardMemo key={key} post={post} onVote={handleVoteInFeed} />;
-      })}
+        })}
 
       {loading && <p>Loading...</p>}
       {!hasMore && <p>No more posts</p>}
