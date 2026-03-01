@@ -2,7 +2,7 @@ package groups
 
 import (
 	"backend/database/db"
-	"backend/database/handlers"
+	dbhandler "backend/database/handlers"
 	"backend/models"
 	"encoding/json"
 	"fmt"
@@ -15,17 +15,17 @@ import (
 	"backend/utils"
 )
 
-func GroupRegister(w http.ResponseWriter, r *http.Request){
-	var group struct{
-		Name string `json:"name"`
-		Description string `json:"description"`
-		Handle string `json:"handle"`
-		Type string `json:"type"`
-		Country string `json:"country"`
-		State string `json:"state"`
-		City string `json:"city"`
+func GroupRegister(w http.ResponseWriter, r *http.Request) {
+	var group struct {
+		Name           string `json:"name"`
+		Description    string `json:"description"`
+		Handle         string `json:"handle"`
+		Type           string `json:"type"`
+		Country        string `json:"country"`
+		State          string `json:"state"`
+		City           string `json:"city"`
 		AuthorityEmail string `json:"authorityEmail"`
-		CreatorID uint
+		CreatorID      uint
 	}
 
 	log.Println("Group Register Endpoint HIT")
@@ -33,16 +33,16 @@ func GroupRegister(w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	
-	var existingGroup models.Group
-	result:= db.DB.First(&existingGroup, "handle = ?", group.Handle)
 
-	if result.Error == nil{
+	var existingGroup models.Group
+	result := db.DB.First(&existingGroup, "handle = ?", group.Handle)
+
+	if result.Error == nil {
 		http.Error(w, "Handle Already Exists", http.StatusConflict)
 		return
 	}
 
-	session, _:= db.Store.Get(r, "session")
+	session, _ := db.Store.Get(r, "session")
 	group.CreatorID = session.Values["user_id"].(uint)
 
 	dbhandler.CreateGroup(group.Name, group.Description, group.Handle, group.Type, group.Country, group.State, group.City, group.AuthorityEmail, int(group.CreatorID))
@@ -50,47 +50,47 @@ func GroupRegister(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusCreated)
 }
 
-func SearchGroups(w http.ResponseWriter, r *http.Request){
+func SearchGroups(w http.ResponseWriter, r *http.Request) {
 
 	handle := r.URL.Query().Get("handle")
 	country := r.URL.Query().Get("country")
 	state := r.URL.Query().Get("state")
 	city := r.URL.Query().Get("city")
 
-	page, _:= strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _:= strconv.Atoi(r.URL.Query().Get("limit"))
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 
-	if page <= 0{
+	if page <= 0 {
 		page = 1
 	}
 
-	if limit <=0{
+	if limit <= 0 {
 		limit = 10
 	}
 
-	offset:= (page -1) * limit
+	offset := (page - 1) * limit
 
 	var groups []struct {
-        ID              uint   `json:"ID"`
-        Name            string `json:"Name"`
-        Handle          string `json:"Handle"`
-        Country         string `json:"Country"`
-        State           string `json:"State"`
-        City            string `json:"City"`
-        Description     string `json:"Description"`
-        Type            string `json:"Type"`
-        SubscriberCount int    `json:"SubscriberCount"`
-        IsJoined        bool   `json:"isJoined"`
-    }
+		ID              uint   `json:"ID"`
+		Name            string `json:"Name"`
+		Handle          string `json:"Handle"`
+		Country         string `json:"Country"`
+		State           string `json:"State"`
+		City            string `json:"City"`
+		Description     string `json:"Description"`
+		Type            string `json:"Type"`
+		SubscriberCount int    `json:"SubscriberCount"`
+		IsJoined        bool   `json:"isJoined"`
+	}
 
 	session, _ := db.Store.Get(r, "session")
 	userID := session.Values["user_id"].(uint)
 
 	query := db.DB.Table("groups").
-    Select(`groups.id, groups.name, groups.handle, groups.country, groups.state, groups.city, groups.description, groups.type, groups.subscriber_count,
+		Select(`groups.id, groups.name, groups.handle, groups.country, groups.state, groups.city, groups.description, groups.type, groups.subscriber_count,
         CASE WHEN gd.user_id is NOT NULL THEN true ELSE false END AS is_joined`).
-    Joins("LEFT JOIN group_data as gd ON gd.group_id = groups.id AND gd.user_id = ?", userID).
-    Where("groups.deleted_at IS NULL")
+		Joins("LEFT JOIN group_data as gd ON gd.group_id = groups.id AND gd.user_id = ?", userID).
+		Where("groups.deleted_at IS NULL")
 
 	if handle != "" {
 		query = query.Where("handle LIKE ?", "%"+handle+"%")
@@ -108,10 +108,9 @@ func SearchGroups(w http.ResponseWriter, r *http.Request){
 	var total int64
 	query.Count(&total)
 
+	err := query.Offset(offset).Limit(limit).Find(&groups).Error
 
-	err:= query.Offset(offset).Limit(limit).Find(&groups).Error
-
-	if err !=nil && err != gorm.ErrRecordNotFound{
+	if err != nil && err != gorm.ErrRecordNotFound {
 		http.Error(w, "Error fetching groups", http.StatusInternalServerError)
 		return
 	}
@@ -130,11 +129,11 @@ func SearchGroups(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(response)
 }
 
-func JoinGroup(w http.ResponseWriter, r *http.Request){
-	var req struct{
+func JoinGroup(w http.ResponseWriter, r *http.Request) {
+	var req struct {
 		GroupID uint `json:"groupID"`
 	}
-	if err:= json.NewDecoder(r.Body).Decode(&req); err!=nil{
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
@@ -142,18 +141,18 @@ func JoinGroup(w http.ResponseWriter, r *http.Request){
 	session, _ := db.Store.Get(r, "session")
 	userID := session.Values["user_id"].(uint)
 
-	tx:= db.DB.Begin()
+	tx := db.DB.Begin()
 
-	if err:= tx.Create(&models.GroupData{
-		UserID: userID,
+	if err := tx.Create(&models.GroupData{
+		UserID:  userID,
 		GroupID: req.GroupID,
-	}).Error; err!=nil{
+	}).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to Create Join Group", http.StatusInternalServerError)
 		return
 	}
 
-	if err:= tx.Model(&models.Group{}).Where("id = ?", req.GroupID).UpdateColumn("subscriber_count", gorm.Expr("subscriber_count + ?", 1)).Error; err!=nil{
+	if err := tx.Model(&models.Group{}).Where("id = ?", req.GroupID).UpdateColumn("subscriber_count", gorm.Expr("subscriber_count + ?", 1)).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
 		return
@@ -167,37 +166,38 @@ func JoinGroup(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusOK)
 
 }
-/*--------------------------------------------------
+
+/*
+--------------------------------------------------
 NEED TO APPLY UNION HERE
 ----------------------------------------------------
 */
-func MyGroups(w http.ResponseWriter, r *http.Request){
+func MyGroups(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("MyGroups Endpoint")
 
-	page, _:= strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _:= strconv.Atoi(r.URL.Query().Get("limit"))
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 
-	if page <= 0{
+	if page <= 0 {
 		page = 1
 	}
 
-	if limit <=0{
+	if limit <= 0 {
 		limit = 10
 	}
 
-	offset:= (page -1) * limit
-
+	offset := (page - 1) * limit
 
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
 
-	if !ok{
+	if !ok {
 		http.Error(w, "Status Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	createdGroups :=[]map[string]interface{}{}
+	createdGroups := []map[string]interface{}{}
 	fmt.Println("Reached Created Groups")
 	if err := db.DB.Table("groups").
 		Where("creator_id = ? AND deleted_at IS NULL", userID).
@@ -210,7 +210,6 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	
 	joinedGroups := []map[string]interface{}{}
 	fmt.Println("Reached Joined Groups")
 	if err := db.DB.Table("groups").
@@ -225,37 +224,36 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-
 	var totalCreated int64
 
-    db.DB.Model(&models.Group{}).
+	db.DB.Model(&models.Group{}).
 		Where("creator_id = ? AND deleted_at IS NULL", userID).
 		Count(&totalCreated)
 
-    var totalJoined int64
-    db.DB.Table("groups").
+	var totalJoined int64
+	db.DB.Table("groups").
 		Joins("JOIN group_data gd ON gd.group_id = groups.id").
 		Where("gd.user_id = ? AND groups.creator_id <> ? AND groups.deleted_at IS NULL", userID, userID).
 		Count(&totalJoined)
 
-	total:= totalCreated + totalJoined
+	total := totalCreated + totalJoined
 
-	response:= map[string]interface{}{
+	response := map[string]interface{}{
 		"pagination": map[string]interface{}{
-            "page":           page,
-			"limit": 			limit,
-            "total_created":  totalCreated,
-            "total_joined":   totalJoined,
-			"pages": (total + int64(limit) - 1) / int64(limit),
-        },
-		"groups": joinedGroups,
+			"page":          page,
+			"limit":         limit,
+			"total_created": totalCreated,
+			"total_joined":  totalJoined,
+			"pages":         (total + int64(limit) - 1) / int64(limit),
+		},
+		"groups":  joinedGroups,
 		"created": createdGroups,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err:= json.NewEncoder(w).Encode(response); err!=nil{
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return 
+		return
 	}
 }
 
@@ -320,7 +318,6 @@ func LeaveGroup(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Successfully left group"))
 }
-
 
 func RequestDeleteGroup(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("RequestDeleteGroup Endpoint")
@@ -460,27 +457,27 @@ func ConfirmDeleteGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewGroup(w http.ResponseWriter, r *http.Request) {
-    groupIDStr := r.URL.Query().Get("groupID")
-    if groupIDStr == "" {
-        http.Error(w, "groupID is required", http.StatusBadRequest)
-        return
-    }
+	groupIDStr := r.URL.Query().Get("groupID")
+	if groupIDStr == "" {
+		http.Error(w, "groupID is required", http.StatusBadRequest)
+		return
+	}
 
-    groupID, err := strconv.Atoi(groupIDStr)
-    if err != nil {
-        http.Error(w, "Invalid groupID", http.StatusBadRequest)
-        return
-    }
+	groupID, err := strconv.Atoi(groupIDStr)
+	if err != nil {
+		http.Error(w, "Invalid groupID", http.StatusBadRequest)
+		return
+	}
 
-    session, _ := db.Store.Get(r, "session")
-    userID, ok := session.Values["user_id"].(uint)
-    if !ok {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    // ---------------- Fetch Group with Creator ----------------
-    var group models.Group
+	// ---------------- Fetch Group with Creator ----------------
+	var group models.Group
 	if err := db.DB.Preload("Creator").
 		Where("id = ? AND deleted_at IS NULL", groupID).
 		First(&group).Error; err != nil {
@@ -488,122 +485,126 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    // ---------------- Check if Current User Joined ----------------
-    var isJoined bool
-    var gd models.GroupData
-    if err := db.DB.Where("group_id = ? AND user_id = ?", groupID, userID).First(&gd).Error; err == nil {
-        isJoined = true
-    }
+	// ---------------- Check if Current User Joined ----------------
+	var isJoined bool
+	var gd models.GroupData
+	if err := db.DB.Where("group_id = ? AND user_id = ?", groupID, userID).First(&gd).Error; err == nil {
+		isJoined = true
+	}
 
-    // ---------------- Fetch Subscribers ----------------
-    var subscribers []models.User
-    if err := db.DB.Model(&group).Association("Subscribers").Find(&subscribers); err != nil {
-        log.Println("Failed to fetch subscribers:", err)
-    }
+	// ---------------- Fetch Subscribers ----------------
+	var subscribers []models.User
+	if err := db.DB.Model(&group).Association("Subscribers").Find(&subscribers); err != nil {
+		log.Println("Failed to fetch subscribers:", err)
+	}
 
 	if len(subscribers) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-    // ---------------- Fetch Posts with All Preloads ----------------
-    var posts []models.Post
-    if err := db.DB.Preload("User").
-        Preload("Tags").
-        Preload("Images").
-        Preload("Links").
-        Preload("Votes").
-        Preload("Comments").
-        Preload("Comments.User").
-        Where("group_id = ? AND deleted_at IS NULL", groupID).
-        Order("created_at DESC").
-        Find(&posts).Error; err != nil {
-        log.Println("Failed to fetch posts:", err)
-    }
+	// ---------------- Fetch Posts with All Preloads ----------------
+	var posts []models.Post
+	if err := db.DB.Preload("User").
+		Preload("Tags").
+		Preload("Images").
+		Preload("Links").
+		Preload("Votes").
+		Preload("Resolves").
+		Preload("Comments").
+		Preload("Comments.User").
+		Where("group_id = ? AND deleted_at IS NULL", groupID).
+		Order("created_at DESC").
+		Find(&posts).Error; err != nil {
+		log.Println("Failed to fetch posts:", err)
+	}
 
 	if len(posts) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-    // ---------------- Prepare Post Responses ----------------
-    postResponses := make([]map[string]interface{}, len(posts))
-    for i, post := range posts {
-        upvotes, downvotes := int64(0), int64(0)
-        for _, v := range post.Votes {
-            if v.VoteType == 1 {
-                upvotes++
-            } else if v.VoteType == -1 {
-                downvotes++
-            }
-        }
+	// ---------------- Prepare Post Responses ----------------
+	postResponses := make([]map[string]interface{}, len(posts))
+	for i, post := range posts {
+		upvotes, downvotes := int64(0), int64(0)
+		for _, v := range post.Votes {
+			if v.VoteType == 1 {
+				upvotes++
+			} else if v.VoteType == -1 {
+				downvotes++
+			}
+		}
 
-        // Prepare comments
-        commentsResp := make([]map[string]interface{}, len(post.Comments))
-        for j, c := range post.Comments {
-            commentsResp[j] = map[string]interface{}{
-                "ID":      c.ID,
-                "Content": c.Content,
-                "UserID":  c.UserID,
-                "User": map[string]interface{}{
-                    "ID":   c.User.ID,
-                    "Name": c.User.Name,
-                },
-                "CreatedAt": c.CreatedAt,
-            }
-        }
+		resolves := int64(len(post.Resolves))
 
-        postResponses[i] = map[string]interface{}{
-            "post": map[string]interface{}{
-                "ID":      post.ID,
-                "Content": post.Content,
-                "UserID":  post.UserID,
-                "User": map[string]interface{}{
-                    "ID":   post.User.ID,
-                    "Name": post.User.Name,
-                },
-                "GroupID": post.GroupID,
-                "Group": map[string]interface{}{
-                    "ID":   group.ID,
-                    "Name": group.Name,
-                },
-                "CreatedAt": post.CreatedAt,
-                "Tags":      post.Tags,
-                "Images":    post.Images,
-                "Links":     post.Links,
-            },
-            "upvotes":   upvotes,
-            "downvotes": downvotes,
-            "comments":  len(post.Comments),
-            "commentsData": commentsResp,
-            "share_url": fmt.Sprintf("/share/%s", post.ShareToken),
-        }
-    }
+		// Prepare comments
+		commentsResp := make([]map[string]interface{}, len(post.Comments))
+		for j, c := range post.Comments {
+			commentsResp[j] = map[string]interface{}{
+				"ID":      c.ID,
+				"Content": c.Content,
+				"UserID":  c.UserID,
+				"User": map[string]interface{}{
+					"ID":   c.User.ID,
+					"Name": c.User.Name,
+				},
+				"CreatedAt": c.CreatedAt,
+			}
+		}
 
-    // ---------------- Response JSON ----------------
-    response := map[string]interface{}{
-        "group": map[string]interface{}{
-            "id":               group.ID,
-            "name":             group.Name,
-            "handle":           group.Handle,
-            "description":      group.Description,
-            "type":             group.Type,
-            "country":          group.Country,
-            "state":            group.State,
-            "city":             group.City,
-            "authorityEmail":   group.AuthorityEmail,
-            "creator": map[string]interface{}{
-                "id":    group.Creator.ID,
-                "name":  group.Creator.Name,
-                "email": group.Creator.Email,
-            },
-            "subscriberCount": group.SubscriberCount,
-            "isJoined":        isJoined,
-        },
-        "subscribers": subscribers,
-        "posts":       postResponses,
-    }
+		postResponses[i] = map[string]interface{}{
+			"post": map[string]interface{}{
+				"ID":      post.ID,
+				"Content": post.Content,
+				"UserID":  post.UserID,
+				"User": map[string]interface{}{
+					"ID":   post.User.ID,
+					"Name": post.User.Name,
+				},
+				"GroupID": post.GroupID,
+				"Group": map[string]interface{}{
+					"ID":   group.ID,
+					"Name": group.Name,
+				},
+				"CreatedAt": post.CreatedAt,
+				"Tags":      post.Tags,
+				"Images":    post.Images,
+				"Links":     post.Links,
+			},
+			"upvotes":       upvotes,
+			"downvotes":     downvotes,
+			"resolve_count": resolves,
+			"comments":      len(post.Comments),
+			"commentsData":  commentsResp,
+			"share_url":     fmt.Sprintf("/share/%s", post.ShareToken),
+		}
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(response)
+	// ---------------- Response JSON ----------------
+	response := map[string]interface{}{
+		"group": map[string]interface{}{
+			"id":             group.ID,
+			"name":           group.Name,
+			"handle":         group.Handle,
+			"description":    group.Description,
+			"type":           group.Type,
+			"country":        group.Country,
+			"state":          group.State,
+			"city":           group.City,
+			"authorityEmail": group.AuthorityEmail,
+			"creator": map[string]interface{}{
+				"id":    group.Creator.ID,
+				"name":  group.Creator.Name,
+				"email": group.Creator.Email,
+			},
+			"subscriberCount": group.SubscriberCount,
+			"isJoined":        isJoined,
+		},
+		"subscribers": subscribers,
+		"posts":       postResponses,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

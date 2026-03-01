@@ -67,9 +67,9 @@ function MyPosts() {
         {posts.map((post) => (
           <div key={post.ID}>
             <PostCardMemo
-              post={{ post }}
+              post={post}
               hideViewGroup={false}
-              onVote={() => {}} // optional: handle votes if needed
+              onVote={() => { }} // optional: handle votes if needed
             />
             {/* Delete Button */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '5px' }}>

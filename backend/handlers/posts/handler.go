@@ -3,22 +3,23 @@ package posts
 import (
 	"backend/database/db"
 	dbhandler "backend/database/handlers"
-    models "backend/models"
+	models "backend/models"
 	utils "backend/utils"
 	"encoding/json"
-	"net/http"
-	"strconv"
 	"fmt"
-	"github.com/gorilla/mux"
-	"strings"
+	"net/http"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 	"unicode"
+
+	"github.com/gorilla/mux"
 )
 
-func CreatePost(w http.ResponseWriter, r *http.Request){
-	session, _:= db.Store.Get(r,"session")
-	userID, ok:= session.Values["user_id"].(uint)
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
 
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -50,7 +51,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 		if err != nil {
 			continue
 		}
-	
+
 		// Replace whitespace with underscore
 		safeFileName := strings.Map(func(r rune) rune {
 			if unicode.IsSpace(r) {
@@ -58,25 +59,25 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 			}
 			return r
 		}, fileHeader.Filename)
-	
+
 		// Remove unsafe characters
 		re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
 		safeFileName = re.ReplaceAllString(safeFileName, "")
-	
+
 		// Add timestamp for uniqueness
 		safeFileName = fmt.Sprintf("%d_%s", time.Now().UnixNano(), safeFileName)
-	
+
 		url, err := utils.UploadToS3(file, safeFileName)
 		file.Close()
-	
+
 		if err != nil {
 			fmt.Println("S3 upload failed for", safeFileName, err)
 			continue
 		}
-	
+
 		imagePaths = append(imagePaths, url)
 	}
-	
+
 	shareToken := utils.GenerateShareToken()
 
 	for _, idStr := range groupIDs {
@@ -101,7 +102,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusCreated)
 
 }
-
 
 func MyPosts(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("MyPosts Endpoint")
@@ -148,6 +148,24 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var responsePosts []models.PostResponse
+	for _, post := range posts {
+		var upvotes, downvotes, commentCount, resolveCount int64
+
+		db.DB.Model(&models.PostVote{}).Where("post_id = ? AND vote_type = 1", post.ID).Count(&upvotes)
+		db.DB.Model(&models.PostVote{}).Where("post_id = ? AND vote_type = -1", post.ID).Count(&downvotes)
+		db.DB.Model(&models.Comment{}).Where("post_id = ?", post.ID).Count(&commentCount)
+		db.DB.Model(&models.PostResolve{}).Where("post_id = ?", post.ID).Count(&resolveCount)
+
+		responsePosts = append(responsePosts, models.PostResponse{
+			Post:         post,
+			Upvotes:      upvotes,
+			Downvotes:    downvotes,
+			Comments:     commentCount,
+			ResolveCount: resolveCount,
+			ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
+		})
+	}
 
 	response := map[string]interface{}{
 		"pagination": map[string]interface{}{
@@ -156,7 +174,7 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 			"total": total,
 			"pages": (total + int64(limit) - 1) / int64(limit),
 		},
-		"posts": posts,
+		"posts": responsePosts,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -209,8 +227,6 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Post deleted successfully"))
 }
 
-
-
 func GetSharedPost(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
@@ -236,8 +252,23 @@ func GetSharedPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var upvotes, downvotes, commentCount, resolveCount int64
+	db.DB.Model(&models.PostVote{}).Where("post_id = ? AND vote_type = 1", post.ID).Count(&upvotes)
+	db.DB.Model(&models.PostVote{}).Where("post_id = ? AND vote_type = -1", post.ID).Count(&downvotes)
+	db.DB.Model(&models.Comment{}).Where("post_id = ?", post.ID).Count(&commentCount)
+	db.DB.Model(&models.PostResolve{}).Where("post_id = ?", post.ID).Count(&resolveCount)
+
+	response := models.PostResponse{
+		Post:         post,
+		Upvotes:      upvotes,
+		Downvotes:    downvotes,
+		Comments:     commentCount,
+		ResolveCount: resolveCount,
+		ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(post)
+	json.NewEncoder(w).Encode(response)
 }
 
 func VotePost(w http.ResponseWriter, r *http.Request) {
@@ -282,6 +313,45 @@ func VotePost(w http.ResponseWriter, r *http.Request) {
 			VoteType: req.VoteType,
 		}
 		db.DB.Create(&newVote)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func ResolvePost(w http.ResponseWriter, r *http.Request) {
+
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		PostID uint `json:"post_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	var existingResolve models.PostResolve
+
+	err := db.DB.
+		Where("post_id = ? AND user_id = ?", req.PostID, userID).
+		First(&existingResolve).Error
+
+	// If resolve exists → remove it (toggle off)
+	if err == nil {
+		db.DB.Delete(&existingResolve)
+	} else {
+		// Create new resolve (toggle on)
+		newResolve := models.PostResolve{
+			PostID: req.PostID,
+			UserID: userID,
+		}
+		db.DB.Create(&newResolve)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -360,104 +430,104 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditComment(w http.ResponseWriter, r *http.Request) {
-    // Get session and user
-    session, _ := db.Store.Get(r, "session")
-    userID, ok := session.Values["user_id"].(uint)
-    if !ok {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	// Get session and user
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    // Get comment ID from URL
-    vars := mux.Vars(r)
-    commentID, err := strconv.Atoi(vars["id"])
-    if err != nil {
-        http.Error(w, "Invalid comment ID", http.StatusBadRequest)
-        return
-    }
+	// Get comment ID from URL
+	vars := mux.Vars(r)
+	commentID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+		return
+	}
 
-    // Decode new content from request body
-    var req struct {
-        Content string `json:"content"`
-    }
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid request", http.StatusBadRequest)
-        return
-    }
+	// Decode new content from request body
+	var req struct {
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
 
-    if req.Content == "" {
-        http.Error(w, "Comment content cannot be empty", http.StatusBadRequest)
-        return
-    }
+	if req.Content == "" {
+		http.Error(w, "Comment content cannot be empty", http.StatusBadRequest)
+		return
+	}
 
-    // Find the comment
-    var comment models.Comment
-    if err := db.DB.First(&comment, commentID).Error; err != nil {
-        http.Error(w, "Comment not found", http.StatusNotFound)
-        return
-    }
+	// Find the comment
+	var comment models.Comment
+	if err := db.DB.First(&comment, commentID).Error; err != nil {
+		http.Error(w, "Comment not found", http.StatusNotFound)
+		return
+	}
 
-    // Check ownership
-    if comment.UserID != userID {
-        http.Error(w, "Forbidden", http.StatusForbidden)
-        return
-    }
+	// Check ownership
+	if comment.UserID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 
-    // Update comment
-    comment.Content = req.Content
-    if err := db.DB.Save(&comment).Error; err != nil {
-        http.Error(w, "Error updating comment", http.StatusInternalServerError)
-        return
-    }
+	// Update comment
+	comment.Content = req.Content
+	if err := db.DB.Save(&comment).Error; err != nil {
+		http.Error(w, "Error updating comment", http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(comment)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comment)
 }
 
 func GetComments(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    postIDStr := vars["post_id"]
-    postID, err := strconv.Atoi(postIDStr)
-    if err != nil {
-        http.Error(w, "Invalid post ID", http.StatusBadRequest)
-        return
-    }
+	vars := mux.Vars(r)
+	postIDStr := vars["post_id"]
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
 
-    // Pagination query params
-    page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-    limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-    if page <= 0 {
-        page = 1
-    }
-    if limit <= 0 {
-        limit = 5
-    }
-    offset := (page - 1) * limit
+	// Pagination query params
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 5
+	}
+	offset := (page - 1) * limit
 
-    var comments []models.Comment
-    query := db.DB.
-        Preload("User").
-        Where("post_id = ?", postID).
-        Order("created_at ASC") // oldest first for chat-like order
+	var comments []models.Comment
+	query := db.DB.
+		Preload("User").
+		Where("post_id = ?", postID).
+		Order("created_at ASC") // oldest first for chat-like order
 
-    var total int64
-    query.Model(&models.Comment{}).Count(&total)
+	var total int64
+	query.Model(&models.Comment{}).Count(&total)
 
-    if err := query.Limit(limit).Offset(offset).Find(&comments).Error; err != nil {
-        http.Error(w, "Error fetching comments", http.StatusInternalServerError)
-        return
-    }
+	if err := query.Limit(limit).Offset(offset).Find(&comments).Error; err != nil {
+		http.Error(w, "Error fetching comments", http.StatusInternalServerError)
+		return
+	}
 
-    response := map[string]interface{}{
-        "pagination": map[string]interface{}{
-            "page":  page,
-            "limit": limit,
-            "total": total,
-            "pages": (total + int64(limit) - 1) / int64(limit),
-        },
-        "comments": comments,
-    }
+	response := map[string]interface{}{
+		"pagination": map[string]interface{}{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+			"pages": (total + int64(limit) - 1) / int64(limit),
+		},
+		"comments": comments,
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

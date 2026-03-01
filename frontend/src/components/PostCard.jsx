@@ -1,6 +1,6 @@
 import React, { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { VotePost, AddComment, DeleteComment, EditComment, GetComments } from "../api/PostAPI";
+import { VotePost, AddComment, DeleteComment, EditComment, GetComments, ResolvePost } from "../api/PostAPI";
 
 // ---------------- PostCard Component ----------------
 function PostCard({ post, onVote, hideViewGroup = false }) {
@@ -8,6 +8,7 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
 
   const [upvotes, setUpvotes] = useState(post?.upvotes || 0);
   const [downvotes, setDownvotes] = useState(post?.downvotes || 0);
+  const [resolves, setResolves] = useState(post?.resolve_count || 0);
   const [commentsCount, setCommentsCount] = useState(post?.comments || 0);
   const [commentText, setCommentText] = useState("");
   const [commentList, setCommentList] = useState([]);
@@ -19,8 +20,21 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
   const [hasMoreComments, setHasMoreComments] = useState(true);
   const COMMENTS_LIMIT = 5;
   const [userVote, setUserVote] = useState(0);
+  const [userResolved, setUserResolved] = useState(false); // Can track if we know it initially, but usually defaults to false
 
   const navigate = useNavigate();
+
+  // ---------------- Toggle Resolve ----------------
+  const handleResolve = async () => {
+    setUserResolved(!userResolved);
+    setResolves((prev) => (userResolved ? prev - 1 : prev + 1));
+    const ok = await ResolvePost(realPost.ID);
+    if (!ok) {
+      // Revert on failure
+      setUserResolved(userResolved);
+      setResolves((prev) => (userResolved ? prev + 1 : prev - 1));
+    }
+  };
 
   // ---------------- Toggle Comments ----------------
   const toggleComments = async () => {
@@ -127,16 +141,16 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
         <p style={{ margin: '0 0 10px 0', fontSize: '0.95em', lineHeight: '1.5' }}>{realPost.Content || ""}</p>
 
         {Array.isArray(realPost.Images) && realPost.Images.map((img) => {
-        const imgSrc = img.URL.startsWith("https") ? img.URL : `http://localhost:8080/${img.URL}`;
-        return (
-          <img
-            key={img.ID}
-            src={imgSrc}
-            alt=""
-            style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }}
-          />
-        );
-      })}
+          const imgSrc = img.URL.startsWith("https") ? img.URL : `http://localhost:8080/${img.URL}`;
+          return (
+            <img
+              key={img.ID}
+              src={imgSrc}
+              alt=""
+              style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }}
+            />
+          );
+        })}
 
         <div style={{ marginTop: "10px" }}>
           {Array.isArray(realPost.Tags) && realPost.Tags.map((tag) => (
@@ -161,6 +175,9 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
           <button className="ig-action-btn" onClick={() => handleVote(-1)} disabled={userVote === 1} style={{ color: userVote === -1 ? "#F47D34" : "#fff" }}>
             💔
           </button>
+          <button className="ig-action-btn" onClick={handleResolve} style={{ color: userResolved ? "#F47D34" : "#fff" }}>
+            ✅
+          </button>
           <button className="ig-action-btn" onClick={toggleComments}>
             💬
           </button>
@@ -171,7 +188,7 @@ function PostCard({ post, onVote, hideViewGroup = false }) {
       </div>
 
       <div className="ig-post-stats">
-        <span style={{ marginRight: '15px' }}>{upvotes} likes • {downvotes} dislikes</span>
+        <span style={{ marginRight: '15px' }}>{upvotes} likes • {downvotes} dislikes • {resolves} resolved</span>
         <span>{commentsCount} comments</span>
       </div>
 

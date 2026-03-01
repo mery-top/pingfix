@@ -3,20 +3,20 @@ package routes
 import (
 	"net/http"
 
+	"backend/handlers/feed"
 	"backend/handlers/groups"
 	"backend/handlers/posts"
 	"backend/handlers/user"
 	"backend/internal/auth"
-	"backend/handlers/feed"
 	"backend/internal/middleware"
 	"backend/utils"
 
 	"github.com/gorilla/mux"
 )
 
-func SetupRouter() *mux.Router{
+func SetupRouter() *mux.Router {
 	auth.InitProviders()
-	r:= mux.NewRouter()
+	r := mux.NewRouter()
 	r.Use(middleware.CORS)
 
 	r.HandleFunc("/auth/{provider}", auth.BeginAuth).Methods("GET")
@@ -42,6 +42,7 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/post/feed", feed.Feed).Methods("GET")
 	r.HandleFunc("/api/post/delete", posts.DeletePost).Methods("DELETE")
 	r.HandleFunc("/api/post/vote", posts.VotePost).Methods("POST")
+	r.HandleFunc("/api/post/resolve", posts.ResolvePost).Methods("POST")
 	r.HandleFunc("/api/post/comment", posts.AddComment).Methods("POST")
 	r.HandleFunc("/api/post/comment/{id}", posts.DeleteComment).Methods("DELETE")
 	r.HandleFunc("/api/comment/edit/{id}", posts.EditComment).Methods("PUT")
@@ -52,6 +53,6 @@ func SetupRouter() *mux.Router{
 	r.HandleFunc("/api/public", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Public Route is Working"))
 	}).Methods("GET")
-	
+
 	return r
 }

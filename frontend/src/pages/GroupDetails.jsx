@@ -36,6 +36,7 @@ function GroupDetails() {
           },
           upvotes: p.upvotes || 0,
           downvotes: p.downvotes || 0,
+          resolve_count: p.resolve_count || 0,
           comments: p.comments || 0,
           share_url: p.share_url || "",
         }));
