@@ -6,173 +6,196 @@ import SecureInput from '../wrapper/SecureInput';
 import countries from '../assets/countries.json'
 
 function GroupRegister() {
-    const [groupName, setGroupName] = useState("");
-    const [groupDes, setGroupDes] = useState("");
-    const [authEmail, setAuthEmail] = useState("");
-    const [otp, setOTP] = useState("");
-    const [selectedCountry, setSelectedCountry] = useState("");
-    const [selectedState, setSelectedState] = useState("");
-    const [groupCity, setCity] = useState("");
-    const [groupHandle, setHandle] = useState("");
-    const [groupType, setGroupType] = useState("");
-    const[message, setMessage] = useState("")
-    const navigate = useNavigate()
+  const [groupName, setGroupName] = useState("");
+  const [groupDes, setGroupDes] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [otp, setOTP] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedState, setSelectedState] = useState("");
+  const [groupCity, setCity] = useState("");
+  const [groupHandle, setHandle] = useState("");
+  const [groupType, setGroupType] = useState("");
+  const [message, setMessage] = useState("")
+  const navigate = useNavigate()
 
-    const handleGroupRegister = async() =>{
+  const handleGroupRegister = async () => {
 
-      if (requiresAuthorityEmail(groupType)) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(authEmail)) {
-            setMessage("Invalid email format");
-            return;
-        }
-      }
-
-      const payload = {
-        name: groupName,
-        description: groupDes,
-        handle: groupHandle,
-        type: groupType,
-        country: selectedCountry,
-        state: selectedState,
-        city: groupCity,
-        authorityEmail: authEmail,
-      };
-
-          try {
-            const res = await GroupRegisterAPI(payload);
-            const message = await res.text();
-        
-            if (res.status === 201) {
-              setMessage("Registered Successfully");
-              navigate("/login");
-            }if (res.status === 409) {
-              setMessage("Handle already exists. Try another one.");
-            } else {
-              setMessage(message || "Registration failed");
-            }
-          } catch (error) {
-            console.error("Register error", error);
-            setMessage("Something went wrong");
-          }
-
-    }
-    const handleSendOTP = async() =>{
-      try{
-        const res = await SendOTPAPI(authEmail)
-        if(res.status === 200){
-          setMessage("Sent OTP")
-        }else{
-              setMessage("Enter Correct Details, Register Failed")
-        }
-      }catch(error){
-          setMessage("OTP Not Sent")
-          console.error("Register error", error)
-      }
-    }
-  
-    const handleVerifyOTP = async() =>{
-      try{
-        const res = await VerifyOTPAPI(authEmail,otp)
-        if(res.status === 200){
-          setMessage("OTP Verified Success")
-        }else{
-              setMessage("Enter Correct Details, Register Failed")
-        }
-      }catch(error){
-          setMessage("OTP Not Verified")
-          console.error("Register error", error)
+    if (requiresAuthorityEmail(groupType)) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(authEmail)) {
+        setMessage("Invalid email format");
+        return;
       }
     }
 
-    const requiresAuthorityEmail = (type)=>{
-      return ["Organization", "NGO"].includes(type)
+    const payload = {
+      name: groupName,
+      description: groupDes,
+      handle: groupHandle,
+      type: groupType,
+      country: selectedCountry,
+      state: selectedState,
+      city: groupCity,
+      authorityEmail: authEmail,
+    };
+
+    try {
+      const res = await GroupRegisterAPI(payload);
+      const message = await res.text();
+
+      if (res.status === 201) {
+        setMessage("Registered Successfully");
+        navigate("/login");
+      } if (res.status === 409) {
+        setMessage("Handle already exists. Try another one.");
+      } else {
+        setMessage(message || "Registration failed");
+      }
+    } catch (error) {
+      console.error("Register error", error);
+      setMessage("Something went wrong");
     }
+
+  }
+  const handleSendOTP = async () => {
+    try {
+      const res = await SendOTPAPI(authEmail)
+      if (res.status === 200) {
+        setMessage("Sent OTP")
+      } else {
+        setMessage("Enter Correct Details, Register Failed")
+      }
+    } catch (error) {
+      setMessage("OTP Not Sent")
+      console.error("Register error", error)
+    }
+  }
+
+  const handleVerifyOTP = async () => {
+    try {
+      const res = await VerifyOTPAPI(authEmail, otp)
+      if (res.status === 200) {
+        setMessage("OTP Verified Success")
+      } else {
+        setMessage("Enter Correct Details, Register Failed")
+      }
+    } catch (error) {
+      setMessage("OTP Not Verified")
+      console.error("Register error", error)
+    }
+  }
+
+  const requiresAuthorityEmail = (type) => {
+    return ["Organization", "NGO"].includes(type)
+  }
 
 
   return (
-    <>
-    <h2>Register a Group</h2>
-        <label>Group Name:</label><br />
-        <SecureInput value={groupName} onChange={setGroupName} allowSpace={true}/>
-        <p>{groupName.length}/150 characters</p>
-        <label>Group Description:</label><br />
-        <SecureInput value={groupDes} onChange={setGroupDes} allowSpace={true} maxLength={2000}/>
-        <p>{groupDes.length}/2000 characters</p>
+    <div className="container" style={{ maxWidth: '700px', margin: '40px auto' }}>
+      <button className="ig-btn" style={{ width: 'auto', margin: '0 0 20px 0', padding: '8px 16px', backgroundColor: 'transparent', border: '1px solid #F47D34', color: '#F47D34' }} onClick={() => navigate(-1)}>
+        ← Back
+      </button>
+      <div className="tg-card">
+        <h2 style={{ marginBottom: '25px', color: '#fff' }}>Register a Group</h2>
 
-        <label htmlFor="">Group Type:</label>
-        <select name="" value={groupType} onChange={(e)=> setGroupType(e.target.value)}>
-              <option value="">Select Type</option>
-                <option value="Public">Public</option>
-                <option value="Local">Local</option>
-                <option value="Organization">Organization</option>
-                <option value="NGO">NGO</option>
-        </select>
-    <br />
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Group Name:</label>
+          <SecureInput value={groupName} onChange={setGroupName} allowSpace={true} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+          <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>{groupName.length}/150 characters</p>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Group Description:</label>
+          <SecureInput value={groupDes} onChange={setGroupDes} allowSpace={true} maxLength={2000} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+          <p style={{ fontSize: '0.8em', color: '#666', marginTop: '5px' }}>{groupDes.length}/2000 characters</p>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Group Type:</label>
+          <select value={groupType} onChange={(e) => setGroupType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}>
+            <option value="">Select Type</option>
+            <option value="Public">Public</option>
+            <option value="Local">Local</option>
+            <option value="Organization">Organization</option>
+            <option value="NGO">NGO</option>
+          </select>
+        </div>
+
         {requiresAuthorityEmail(groupType) && (
-          <div>
-            <label>Authorized Email:</label><br />
-            <input
-              type="email"
-              value={authEmail}
-              onChange={(e) => setAuthEmail(e.target.value)}
-            />
-            <button onClick={handleSendOTP}>SendOTP</button>
-            <p>{message}</p>
+          <div style={{ marginBottom: '15px', padding: '15px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(244,125,52,0.2)' }}>
+            <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Authorized Email:</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
+              />
+              <button className="ig-btn" style={{ width: 'auto', marginTop: 0 }} onClick={handleSendOTP}>Send OTP</button>
+            </div>
 
-            <label>OTP:</label><br />
-            <SecureInput value={otp} onChange={setOTP} />
-            <p>{message}</p>
-
-            <button onClick={handleVerifyOTP}>VerifyOTP</button>
+            <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', marginTop: '15px', display: 'block' }}>OTP:</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <SecureInput value={otp} onChange={setOTP} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+              <button className="ig-btn" style={{ width: 'auto', marginTop: 0 }} onClick={handleVerifyOTP}>Verify OTP</button>
+            </div>
           </div>
         )}
-        
-        <label>Country:</label><br />
-        <select
-          value={selectedCountry}
-          onChange={(e) => {
-            setSelectedCountry(e.target.value);
-            setSelectedState("");
-          }}
-        >
-          <option value="">Select a country</option>
-          {countries.map((country) => (
-            <option key={country.code2} value={country.name}>
-              {country.name}
-            </option>
-          ))}
-        </select>
 
-        <br /><br />
+        <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Country:</label>
+            <select
+              value={selectedCountry}
+              onChange={(e) => {
+                setSelectedCountry(e.target.value);
+                setSelectedState("");
+              }}
+              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
+            >
+              <option value="">Select a country</option>
+              {countries.map((country) => (
+                <option key={country.code2} value={country.name}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label>State:</label><br />
-        <select
-          value={selectedState}
-          onChange={(e) => setSelectedState(e.target.value)}
-          disabled={!selectedCountry}
-        >
-          <option value="">Select a state</option>
-          {countries
-            .find((c) => c.name === selectedCountry)
-            ?.states?.map((state) => (
-              <option key={state.code} value={state.name}>
-                {state.name}
-              </option>
-            ))}
-        </select>
-        <br />
-        <label>City:</label><br />
-        <SecureInput value={groupCity} onChange={setCity} />
- 
+          <div style={{ flex: 1 }}>
+            <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>State:</label>
+            <select
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              disabled={!selectedCountry}
+              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
+            >
+              <option value="">Select a state</option>
+              {countries
+                .find((c) => c.name === selectedCountry)
+                ?.states?.map((state) => (
+                  <option key={state.code} value={state.name}>
+                    {state.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+        </div>
 
-        <label>Handle (e.g., @mygroup):</label><br />
-        <SecureInput value={groupHandle} onChange={setHandle} />
-    
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>City:</label>
+          <SecureInput value={groupCity} onChange={setCity} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+        </div>
 
-        <button type="submit" onClick={handleGroupRegister}>Register Group</button>
-        <p>{message}</p>
-    </>
+        <div style={{ marginBottom: '25px' }}>
+          <label style={{ color: '#aaa', fontSize: '0.9em', marginBottom: '5px', display: 'block' }}>Handle (e.g., @mygroup):</label>
+          <SecureInput value={groupHandle} onChange={setHandle} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }} />
+        </div>
+
+        <button className="ig-btn" type="submit" onClick={handleGroupRegister}>Register Group</button>
+        {message && <p style={{ color: '#F47D34', textAlign: 'center', marginTop: '15px' }}>{message}</p>}
+      </div>
+    </div>
   )
 }
 
