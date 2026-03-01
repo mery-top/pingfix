@@ -29,6 +29,10 @@ PingFix is a community-driven issue resolution and social interaction platform. 
 - **Database**: [PostgreSQL](https://www.postgresql.org/)
 - **Storage**: [AWS S3](https://aws.amazon.com/s3/)
 
+### Demo Video
+
+Watch here: https://youtu.be/pxOwVjbPHu0
+
 ---
 
 ## 📱 Demo Gallery
