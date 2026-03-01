@@ -86,10 +86,11 @@ func SearchGroups(w http.ResponseWriter, r *http.Request){
 	session, _ := db.Store.Get(r, "session")
 	userID := session.Values["user_id"].(uint)
 
-	query:= db.DB.Table("groups").
-			Select(`groups.id, groups.name, groups.handle, groups.country, groups.state, groups.city, groups.description, groups.type, groups.subscriber_count,
-			CASE WHEN gd.user_id is NOT NULL THEN true ELSE false END AS is_joined `).
-			Joins("LEFT JOIN group_data as gd ON gd.group_id = groups.id AND gd.user_id = ?", userID)
+	query := db.DB.Table("groups").
+    Select(`groups.id, groups.name, groups.handle, groups.country, groups.state, groups.city, groups.description, groups.type, groups.subscriber_count,
+        CASE WHEN gd.user_id is NOT NULL THEN true ELSE false END AS is_joined`).
+    Joins("LEFT JOIN group_data as gd ON gd.group_id = groups.id AND gd.user_id = ?", userID).
+    Where("groups.deleted_at IS NULL")
 
 	if handle != "" {
 		query = query.Where("handle LIKE ?", "%"+handle+"%")
@@ -198,36 +199,44 @@ func MyGroups(w http.ResponseWriter, r *http.Request){
 
 	createdGroups :=[]map[string]interface{}{}
 	fmt.Println("Reached Created Groups")
-	if err:= db.DB.Table("groups").Where("creator_id = ?", userID).Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
-                true AS is_joined`).Limit(limit).Offset(offset).Find(&createdGroups).Error; err!=nil{
+	if err := db.DB.Table("groups").
+		Where("creator_id = ? AND deleted_at IS NULL", userID).
+		Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
+				true AS is_joined`).
+		Limit(limit).Offset(offset).
+		Find(&createdGroups).Error; err != nil {
 		fmt.Println(err)
 		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
-        return
+		return
 	}
 
 	
 	joinedGroups := []map[string]interface{}{}
 	fmt.Println("Reached Joined Groups")
-	if err:= db.DB.Table("groups").
-			Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
-                CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined`).
-			Joins("JOIN group_data gd on groups.id = gd.group_id").
-			Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).
-			Limit(limit).Offset(offset).Find(&joinedGroups).Error; err!=nil{
+	if err := db.DB.Table("groups").
+		Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
+				CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined`).
+		Joins("JOIN group_data gd on groups.id = gd.group_id").
+		Where("gd.user_id = ? AND groups.creator_id <> ? AND groups.deleted_at IS NULL", userID, userID).
+		Limit(limit).Offset(offset).
+		Find(&joinedGroups).Error; err != nil {
 		fmt.Println(err)
-		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
-        return
+		http.Error(w, "Error fetching joined groups", http.StatusInternalServerError)
+		return
 	}
 
 
 	var totalCreated int64
-    db.DB.Model(&models.Group{}).Where("creator_id = ?", userID).Count(&totalCreated)
+
+    db.DB.Model(&models.Group{}).
+		Where("creator_id = ? AND deleted_at IS NULL", userID).
+		Count(&totalCreated)
 
     var totalJoined int64
     db.DB.Table("groups").
-        Joins("JOIN group_data gd ON gd.group_id = groups.id").
-        Where("gd.user_id = ? AND groups.creator_id <> ?", userID, userID).
-        Count(&totalJoined)
+		Joins("JOIN group_data gd ON gd.group_id = groups.id").
+		Where("gd.user_id = ? AND groups.creator_id <> ? AND groups.deleted_at IS NULL", userID, userID).
+		Count(&totalJoined)
 
 	total:= totalCreated + totalJoined
 
@@ -472,10 +481,12 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 
     // ---------------- Fetch Group with Creator ----------------
     var group models.Group
-    if err := db.DB.Preload("Creator").First(&group, groupID).Error; err != nil {
-        http.Error(w, "Group not found", http.StatusNotFound)
-        return
-    }
+	if err := db.DB.Preload("Creator").
+		Where("id = ? AND deleted_at IS NULL", groupID).
+		First(&group).Error; err != nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
     // ---------------- Check if Current User Joined ----------------
     var isJoined bool
@@ -490,6 +501,11 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
         log.Println("Failed to fetch subscribers:", err)
     }
 
+	if len(subscribers) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
     // ---------------- Fetch Posts with All Preloads ----------------
     var posts []models.Post
     if err := db.DB.Preload("User").
@@ -499,11 +515,16 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
         Preload("Votes").
         Preload("Comments").
         Preload("Comments.User").
-        Where("group_id = ?", groupID).
+        Where("group_id = ? AND deleted_at IS NULL", groupID).
         Order("created_at DESC").
         Find(&posts).Error; err != nil {
         log.Println("Failed to fetch posts:", err)
     }
+
+	if len(posts) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
     // ---------------- Prepare Post Responses ----------------
     postResponses := make([]map[string]interface{}, len(posts))
