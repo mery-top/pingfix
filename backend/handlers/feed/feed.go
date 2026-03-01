@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
 	"gorm.io/gorm"
-
 )
-
 
 func Feed(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Feed Endpoint")
@@ -38,17 +37,17 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 	var posts []models.Post
 
 	baseQuery := db.DB.
-	Model(&models.Post{}).
-	Preload("User").
-	Preload("Group").
-	Preload("Images").
-	Preload("Links").
-	Preload("Tags").
-	Joins("LEFT JOIN group_data gd ON gd.group_id = posts.group_id").
-	Joins("LEFT JOIN groups g ON g.id = posts.group_id").
-	Where("(gd.user_id = ? OR g.creator_id = ?) AND g.deleted_at IS NULL", userID, userID).
-	Group("posts.id").
-	Order("posts.created_at DESC")
+		Model(&models.Post{}).
+		Preload("User").
+		Preload("Group").
+		Preload("Images").
+		Preload("Links").
+		Preload("Tags").
+		Joins("LEFT JOIN group_data gd ON gd.group_id = posts.group_id").
+		Joins("LEFT JOIN groups g ON g.id = posts.group_id").
+		Where("(gd.user_id = ? OR g.creator_id = ?) AND g.deleted_at IS NULL", userID, userID).
+		Group("posts.id").
+		Order("posts.created_at DESC")
 
 	// Count
 	var total int64
@@ -67,7 +66,6 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	var responsePosts []models.PostResponse
 
 	for _, post := range posts {
@@ -75,6 +73,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 		var upvotes int64
 		var downvotes int64
 		var commentCount int64
+		var resolveCount int64
 
 		db.DB.Model(&models.PostVote{}).
 			Where("post_id = ? AND vote_type = 1", post.ID).
@@ -88,15 +87,19 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 			Where("post_id = ?", post.ID).
 			Count(&commentCount)
 
+		db.DB.Model(&models.PostResolve{}).
+			Where("post_id = ?", post.ID).
+			Count(&resolveCount)
+
 		responsePosts = append(responsePosts, models.PostResponse{
-			Post:      post,
-			Upvotes:   upvotes,
-			Downvotes: downvotes,
-			Comments:  commentCount,
-			ShareURL:  "http://localhost:8080/public/post/" + post.ShareToken,
+			Post:         post,
+			Upvotes:      upvotes,
+			Downvotes:    downvotes,
+			Comments:     commentCount,
+			ResolveCount: resolveCount,
+			ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
 		})
 	}
-
 
 	response := map[string]interface{}{
 		"pagination": map[string]interface{}{
