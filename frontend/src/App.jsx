@@ -16,19 +16,19 @@ import GroupDetails from './pages/GroupDetails'
 function App() {
   return (
     <>
-    
-  <Routes>
-    <Route path="/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>}></Route>
-    <Route path="/group/register" element={<ProtectedRoute><GroupRegister/></ProtectedRoute>}></Route>
-    <Route path="/group/:id" element={<ProtectedRoute><GroupDetails/></ProtectedRoute>}></Route>
-    <Route path="/group/search" element={<ProtectedRoute><Search/></ProtectedRoute>}></Route>
-    <Route path="/group/mygroups" element={<ProtectedRoute><MyGroups/></ProtectedRoute>}></Route>
-    <Route path="/post/createpost" element={<ProtectedRoute><CreatePost/></ProtectedRoute>}></Route>
-    <Route path="/post/mypost" element={<ProtectedRoute><MyPosts/></ProtectedRoute>}></Route>
-    <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}></Route>
-    <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}></Route>
-    <Route path="/" element={<Home/>}></Route>
-  </Routes>
+
+      <Routes>
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}></Route>
+        <Route path="/group/register" element={<ProtectedRoute><GroupRegister /></ProtectedRoute>}></Route>
+        <Route path="/group/:id" element={<ProtectedRoute><GroupDetails /></ProtectedRoute>}></Route>
+        <Route path="/group/search" element={<ProtectedRoute><Search /></ProtectedRoute>}></Route>
+        <Route path="/group/mygroups" element={<ProtectedRoute><MyGroups /></ProtectedRoute>}></Route>
+        <Route path="/post/createpost" element={<ProtectedRoute><CreatePost /></ProtectedRoute>}></Route>
+        <Route path="/post/mypost" element={<ProtectedRoute><MyPosts /></ProtectedRoute>}></Route>
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>}></Route>
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>}></Route>
+        <Route path="/" element={<PublicRoute><Home /></PublicRoute>}></Route>
+      </Routes>
     </>
   )
 }
