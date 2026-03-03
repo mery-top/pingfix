@@ -4,29 +4,26 @@ import (
 	"backend/database/db"
 	"backend/models"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
-	"gorm.io/gorm"
 )
 
+type FeedResponse struct {
+	Posts      []models.PostResponse `json:"posts"`
+	NextCursor string                `json:"next_cursor,omitempty"`
+}
+
 func Feed(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Feed Endpoint")
-
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-
-	if page <= 0 {
-		page = 1
-	}
-	if limit <= 0 {
-		limit = 10
+	limit := 20
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 50 {
+			limit = parsed
+		}
 	}
 
-	offset := (page - 1) * limit
-
-	// Get session
+	cursor := r.URL.Query().Get("cursor") // ISO timestamp
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
 	if !ok {
@@ -34,83 +31,64 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var posts []models.Post
+	// Step 1: Get user's group IDs
+	var groupIDs []uint
+	db.DB.Model(&models.GroupData{}).
+		Where("user_id = ?", userID).
+		Pluck("group_id", &groupIDs)
 
-	baseQuery := db.DB.
-		Model(&models.Post{}).
+	if len(groupIDs) == 0 {
+		json.NewEncoder(w).Encode(FeedResponse{Posts: []models.PostResponse{}})
+		return
+	}
+
+	// Step 2: Fetch posts with cursor pagination
+	var posts []models.Post
+	query := db.DB.
 		Preload("User").
 		Preload("Group").
 		Preload("Images").
 		Preload("Links").
 		Preload("Tags").
-		Joins("LEFT JOIN group_data gd ON gd.group_id = posts.group_id").
-		Joins("LEFT JOIN groups g ON g.id = posts.group_id").
-		Where("(gd.user_id = ? OR g.creator_id = ?) AND g.deleted_at IS NULL", userID, userID).
-		Group("posts.id").
-		Order("posts.created_at DESC")
+		Where("group_id IN ?", groupIDs).
+		Order("created_at DESC").
+		Limit(limit)
 
-	// Count
-	var total int64
-	if err := baseQuery.Session(&gorm.Session{}).Count(&total).Error; err != nil {
-		http.Error(w, "Error counting feed", http.StatusInternalServerError)
-		return
+	if cursor != "" {
+		if t, err := time.Parse(time.RFC3339, cursor); err == nil {
+			query = query.Where("created_at < ?", t)
+		}
 	}
 
-	// Fetch
-	if err := baseQuery.Session(&gorm.Session{}).
-		Limit(limit).
-		Offset(offset).
-		Find(&posts).Error; err != nil {
-
+	if err := query.Find(&posts).Error; err != nil {
 		http.Error(w, "Error fetching feed", http.StatusInternalServerError)
 		return
 	}
 
+	// Step 3: Build response
 	var responsePosts []models.PostResponse
-
 	for _, post := range posts {
-
-		var upvotes int64
-		var downvotes int64
-		var commentCount int64
-		var resolveCount int64
-
-		db.DB.Model(&models.PostVote{}).
-			Where("post_id = ? AND vote_type = 1", post.ID).
-			Count(&upvotes)
-
-		db.DB.Model(&models.PostVote{}).
-			Where("post_id = ? AND vote_type = -1", post.ID).
-			Count(&downvotes)
-
-		db.DB.Model(&models.Comment{}).
-			Where("post_id = ?", post.ID).
-			Count(&commentCount)
-
-		db.DB.Model(&models.PostResolve{}).
-			Where("post_id = ?", post.ID).
-			Count(&resolveCount)
-
 		responsePosts = append(responsePosts, models.PostResponse{
 			Post:         post,
-			Upvotes:      upvotes,
-			Downvotes:    downvotes,
-			Comments:     commentCount,
-			ResolveCount: resolveCount,
+			Upvotes:      post.UpvoteCount,
+			Downvotes:    post.DownvoteCount,
+			Comments:     post.CommentCount,
+			ResolveCount: post.ResolveCount,
+			UserResolved: false, // Optional: can check if user resolved in batch query
 			ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
 		})
 	}
 
-	response := map[string]interface{}{
-		"pagination": map[string]interface{}{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-			"pages": (total + int64(limit) - 1) / int64(limit),
-		},
-		"posts": responsePosts,
+	nextCursor := ""
+	if len(posts) > 0 {
+		nextCursor = posts[len(posts)-1].CreatedAt.Format(time.RFC3339)
+	}
+
+	resp := FeedResponse{
+		Posts:      responsePosts,
+		NextCursor: nextCursor,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(resp)
 }
