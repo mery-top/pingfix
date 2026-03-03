@@ -488,49 +488,7 @@ func ResolvePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
-func MyResolvedPosts(w http.ResponseWriter, r *http.Request) {
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-
-	if page <= 0 {
-		page = 1
-	}
-	if limit <= 0 {
-		limit = 10
-	}
-
-	offset := (page - 1) * limit
-
-	session, _ := db.Store.Get(r, "session")
-	userID, ok := session.Values["user_id"].(uint)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	var posts []models.Post
-
-	query := db.DB.
-		Preload("User").
-		Preload("Group").
-		Preload("Images").
-		Preload("Links").
-		Preload("Tags").
-		Joins("JOIN groups ON posts.group_id = groups.id").
-		Where("groups.creator_id = ? AND posts.resolved = true AND groups.deleted_at IS NULL", userID).
-		Order("posts.updated_at DESC") // latest resolved first
-
-	var total int64
-	query.Model(&models.Post{}).Count(&total)
-
-	if err := query.Limit(limit).Offset(offset).Find(&posts).Error; err != nil {
-		http.Error(w, "Error fetching resolved posts", http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(posts)
-}
 
 func AddComment(w http.ResponseWriter, r *http.Request) {
 
