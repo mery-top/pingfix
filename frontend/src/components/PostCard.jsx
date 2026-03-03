@@ -1,4 +1,4 @@
-import React, { useState, memo } from "react";
+import React, { useState, memo , useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { VotePost, AddComment, DeleteComment, EditComment, GetComments, ResolvePost } from "../api/PostAPI";
 import SecureInput from "../wrapper/SecureInput";
@@ -22,21 +22,9 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
   const [hasMoreComments, setHasMoreComments] = useState(true);
   const COMMENTS_LIMIT = 5;
   const [userVote, setUserVote] = useState(0);
-  const [userResolved, setUserResolved] = useState(false); // Can track if we know it initially, but usually defaults to false
-
   const navigate = useNavigate();
 
-  // ---------------- Toggle Resolve ----------------
-  const handleResolve = async () => {
-    setUserResolved(!userResolved);
-    setResolves((prev) => (userResolved ? prev - 1 : prev + 1));
-    const ok = await ResolvePost(realPost.ID);
-    if (!ok) {
-      // Revert on failure
-      setUserResolved(userResolved);
-      setResolves((prev) => (userResolved ? prev + 1 : prev - 1));
-    }
-  };
+
 
   // ---------------- Toggle Comments ----------------
   const toggleComments = async () => {
@@ -176,9 +164,6 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
           </button>
           <button className="ig-action-btn" onClick={() => handleVote(-1)} disabled={userVote === 1} style={{ color: userVote === -1 ? "#F47D34" : "#fff" }}>
             <FiArrowDown size={24} />
-          </button>
-          <button className="ig-action-btn" onClick={handleResolve} style={{ color: userResolved ? "#F47D34" : "#fff" }}>
-            <FiCheckCircle size={24} />
           </button>
           <button className="ig-action-btn" onClick={toggleComments}>
             <FiMessageSquare size={24} />
