@@ -1,194 +1,87 @@
-import React, { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { MyGroupsAPI, LeaveGroupAPI, RequestDeleteGroupAPI, ConfirmDeleteGroupAPI } from '../api/GroupAPI'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  MyGroupsAPI,
+  LeaveGroupAPI,
+  RequestDeleteGroupAPI,
+  ConfirmDeleteGroupAPI
+} from '../api/GroupAPI'
 import Modal from "../components/Modal"
 
 function MyGroups() {
-  const navigate = useNavigate();
-  const [pagination, setPagination] = useState({})
-  const [message, setMessage] = useState("")
-  const [pages, setPage] = useState(1)
-  const [joinedGroups, setJoinedGroups] = useState([])
-  const [createdGroups, setCreatedGroups] = useState([])
-  const [totalJoined, setTotalJoined] = useState(1)
-  const [totalCreated, setTotalCreated] = useState(1)
-  const [modal, setModal] = useState({
-    isOpen: false,
-    type: null,   // leave | delete | otp | success | info
-    group: null,
-    message: ""
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const [page, setPage] = useState(1)
+  const [modal, setModal] = useState({ isOpen: false, type: null, group: null })
+  const [otpValue, setOtpValue] = useState("")
+
+  // 🔥 FETCH GROUPS WITH CACHE
+  const { data, isLoading } = useQuery({
+    queryKey: ['myGroups', page],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page, limit: 5 })
+      const res = await MyGroupsAPI(params)
+
+      if (!res.ok) throw new Error(await res.text())
+
+      return res.json()
+    }
   })
 
-  const [otpValue, setOtpValue] = useState("")
-  const [loading, setLoading] = useState(false)
-  const openLeaveModal = (group) => {
-    setModal({
-      isOpen: true,
-      type: "leave",
-      group
-    })
-  }
+  const createdGroups = data?.groups?.filter(g => g.is_creator) || []
+  const joinedGroups = data?.groups?.filter(g => !g.is_creator) || []
 
-  const openDeleteModal = (group) => {
-    setModal({
-      isOpen: true,
-      type: "delete",
-      group
-    })
-  }
-
-  const confirmLeave = async () => {
-    setLoading(true)
-
-    try {
-      const res = await LeaveGroupAPI(modal.group.id)
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text)
-      }
-
-      fetchGroups()
-
-      setModal({
-        isOpen: true,
-        type: "success",
-        message: "You left the group successfully."
-      })
-
-    } catch (error) {
-      setModal({
-        isOpen: true,
-        type: "info",
-        message: error.message
-      })
+  // 🔥 LEAVE GROUP (Optimistic)
+  const leaveMutation = useMutation({
+    mutationFn: (groupId) => LeaveGroupAPI(groupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroups'])
+      setModal({ isOpen: false })
     }
+  })
 
-    setLoading(false)
-  }
-
-  const confirmDeleteRequest = async () => {
-    setLoading(true)
-
-    try {
-      const res = await RequestDeleteGroupAPI(modal.group.id)
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text)
-      }
-
-      setModal({
-        isOpen: true,
-        type: "otp",
-        group: modal.group
-      })
-
-    } catch (error) {
-      setModal({
-        isOpen: true,
-        type: "info",
-        message: error.message
-      })
-    }
-
-    setLoading(false)
-  }
-
-  const confirmOTPDelete = async () => {
-    setLoading(true)
-
-    try {
-      const res = await ConfirmDeleteGroupAPI(
-        modal.group.id,
-        otpValue
-      )
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text)
-      }
-
-      fetchGroups()
-
-      setModal({
-        isOpen: true,
-        type: "success",
-        message: "Group deleted successfully."
-      })
-
+  // 🔥 DELETE GROUP CONFIRM
+  const deleteMutation = useMutation({
+    mutationFn: ({ id, otp }) => ConfirmDeleteGroupAPI(id, otp),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['myGroups'])
+      setModal({ isOpen: false })
       setOtpValue("")
-
-    } catch (error) {
-      setModal({
-        isOpen: true,
-        type: "info",
-        message: error.message
-      })
     }
+  })
 
-    setLoading(false)
-  }
-
-
-
-  const fetchGroups = async () => {
-    const params = new URLSearchParams({
-      page: pages,
-      limit: 5,
-    })
-
-    try {
-      const res = await MyGroupsAPI(params)
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text)
-      }
-
-      const data = await res.json()
-      setJoinedGroups(data.groups)
-      setCreatedGroups(data.created)
-      setTotalJoined(data.pagination.total_joined)
-      setTotalCreated(data.pagination.total_created)
-      setPagination(data.pagination)
-    } catch (error) {
-    }
-  }
-
-  useEffect(() => {
-    fetchGroups()
-  }, [pages])
+  if (isLoading) return <p style={{ padding: "20px" }}>Loading groups...</p>
 
   return (
     <div className="container">
       <div className="top-nav-bar">
-        <button className="btn-nav" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
+        <button className="btn-nav" onClick={() => navigate(-1)}>← Back</button>
         <h2>My Groups</h2>
       </div>
 
-      <h3 style={{ color: "#F47D34", marginTop: "30px", marginBottom: "15px" }}>Joined Groups: {totalJoined}</h3>
+      {/* JOINED */}
+      <h3 style={{ color: "#F47D34", marginTop: 30 }}>
+        Joined Groups: {data.pagination.total_joined}
+      </h3>
+
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {joinedGroups.map((group) => (
+        {joinedGroups.map(group => (
           <li key={group.id} className="tg-list-item">
-            <div className="tg-list-item-left">
-              <div className="tg-avatar">
-                {group.name ? group.name.charAt(0).toUpperCase() : "G"}
-              </div>
-              <div className="tg-list-item-info">
-                <h4>{group.name} <span style={{ fontSize: "0.8em", color: "#aaa", fontWeight: "normal" }}>({group.handle})</span></h4>
-                <p>{group.description}</p>
-                <p style={{ marginTop: "4px", fontSize: "0.8em", color: "#F47D34" }}>{group.country} • {group.subscriber_count} subscribers</p>
-              </div>
+            <div>
+              <h4>{group.name} ({group.handle})</h4>
+              <p>{group.description}</p>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => navigate(`/group/${group.id}`)}
-                style={{ backgroundColor: "#F47D34", border: "none", color: "#350E25", padding: "8px 16px", borderRadius: "20px", whiteSpace: "nowrap", cursor: "pointer", fontWeight: "bold" }}>
-                View Group
+            <div>
+              <button onClick={() => navigate(`/group/${group.id}`)}>
+                View
               </button>
-              <button style={{ backgroundColor: "transparent", border: "1px solid #F47D34", color: "#F47D34", padding: "8px 16px", borderRadius: "20px", whiteSpace: "nowrap", cursor: "pointer" }} onClick={() => openLeaveModal(group)}>
+              <button
+                onClick={() =>
+                  setModal({ isOpen: true, type: "leave", group })
+                }
+              >
                 Leave
               </button>
             </div>
@@ -196,92 +89,70 @@ function MyGroups() {
         ))}
       </ul>
 
-      <h3 style={{ color: "#F47D34", marginTop: "40px", marginBottom: "15px" }}>Created & Joined Groups: {totalCreated}</h3>
+      {/* CREATED */}
+      <h3 style={{ color: "#F47D34", marginTop: 40 }}>
+        Created Groups: {data.pagination.total_created}
+      </h3>
+
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {createdGroups.map((group) => (
+        {createdGroups.map(group => (
           <li key={group.id} className="tg-list-item">
-            <div className="tg-list-item-left">
-              <div className="tg-avatar">
-                {group.name ? group.name.charAt(0).toUpperCase() : "G"}
-              </div>
-              <div className="tg-list-item-info">
-                <h4>{group.name} <span style={{ fontSize: "0.8em", color: "#aaa", fontWeight: "normal" }}>({group.handle})</span></h4>
-                <p>{group.description}</p>
-                <p style={{ marginTop: "4px", fontSize: "0.8em", color: "#F47D34" }}>{group.country} • {group.subscriber_count} subscribers</p>
-              </div>
+            <div>
+              <h4>{group.name} ({group.handle})</h4>
+              <p>{group.description}</p>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => navigate(`/group/${group.id}`)}
-                style={{ backgroundColor: "#F47D34", border: "none", color: "#350E25", padding: "8px 16px", borderRadius: "20px", whiteSpace: "nowrap", cursor: "pointer", fontWeight: "bold" }}>
-                View Group
+            <div>
+              <button onClick={() => navigate(`/group/${group.id}`)}>
+                View
               </button>
-              <button style={{ backgroundColor: "transparent", border: "1px solid #ff4d4f", color: "#ff4d4f", padding: "8px 16px", borderRadius: "20px", whiteSpace: "nowrap", cursor: "pointer" }} onClick={() => openDeleteModal(group)}>
-                Delete Group
+              <button
+                onClick={() =>
+                  setModal({ isOpen: true, type: "otp", group })
+                }
+              >
+                Delete
               </button>
             </div>
           </li>
         ))}
       </ul>
 
+      {/* PAGINATION */}
       <div className="pagination-bar">
-        {pagination.page > 1 && (
-          <button className="btn-nav" onClick={() => setPage(pages - 1)}>Previous</button>
+        {data.pagination.page > 1 && (
+          <button onClick={() => setPage(prev => prev - 1)}>Previous</button>
         )}
-
-        {pagination.page < pagination.pages && (
-          <button className="btn-nav" onClick={() => setPage(pages + 1)}>Next</button>
+        {data.pagination.page < data.pagination.pages && (
+          <button onClick={() => setPage(prev => prev + 1)}>Next</button>
         )}
       </div>
 
+      {/* MODAL */}
       <Modal
         isOpen={modal.isOpen}
-        title={
-          modal.type === "leave"
-            ? "Leave Group"
-            : modal.type === "delete"
-              ? "Delete Group"
-              : modal.type === "otp"
-                ? "OTP Verification"
-                : modal.type === "success"
-                  ? "Success"
-                  : "Message"
-        }
+        title="Confirm"
         message={
           modal.type === "leave"
-            ? `Are you sure you want to leave "${modal.group?.name}"?`
-            : modal.type === "delete"
-              ? `This will permanently delete "${modal.group?.name}".`
-              : modal.type === "otp"
-                ? "Enter the OTP sent to your email."
-                : modal.message
+            ? `Leave ${modal.group?.name}?`
+            : "Enter OTP to delete group"
         }
         showInput={modal.type === "otp"}
         inputValue={otpValue}
         onInputChange={setOtpValue}
-        confirmText={
-          modal.type === "leave"
-            ? "Confirm"
-            : modal.type === "delete"
-              ? "Send OTP"
-              : modal.type === "otp"
-                ? "Confirm Delete"
-                : "OK"
-        }
-        loading={loading}
+        confirmText="Confirm"
         onConfirm={() => {
-          if (modal.type === "leave") confirmLeave()
-          if (modal.type === "delete") confirmDeleteRequest()
-          if (modal.type === "otp") confirmOTPDelete()
-          if (modal.type === "success" || modal.type === "info")
-            setModal({ isOpen: false })
+          if (modal.type === "leave")
+            leaveMutation.mutate(modal.group.id)
+
+          if (modal.type === "otp")
+            deleteMutation.mutate({
+              id: modal.group.id,
+              otp: otpValue
+            })
         }}
-        onClose={() =>
-          setModal({ isOpen: false, type: null, group: null })
-        }
+        onClose={() => setModal({ isOpen: false })}
       />
     </div>
-
   )
 }
 
