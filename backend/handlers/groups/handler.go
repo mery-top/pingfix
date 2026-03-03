@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"backend/utils"
+	"time"
 )
 
 func GroupRegister(w http.ResponseWriter, r *http.Request) {
@@ -471,6 +472,7 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ---------------- Session Check ----------------
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
 	if !ok {
@@ -478,133 +480,150 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ---------------- Fetch Group with Creator ----------------
-	var group models.Group
-	if err := db.DB.Preload("Creator").
-		Where("id = ? AND deleted_at IS NULL", groupID).
-		First(&group).Error; err != nil {
-		w.WriteHeader(http.StatusNoContent)
+	// ---------------- Pagination ----------------
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit := 20
+	offset := 0
+
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+		limit = l
+	}
+	if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+		offset = o
+	}
+
+	// ---------------- Fetch Group ----------------
+	var group struct {
+		ID              uint
+		Name            string
+		Handle          string
+		Description     string
+		Type            string
+		Country         string
+		State           string
+		City            string
+		AuthorityEmail  string
+		CreatorID       uint
+		SubscriberCount int64
+		CreatorName     string
+		CreatorEmail    string
+	}
+
+	err = db.DB.
+		Table("groups g").
+		Select(`
+			g.id,
+			g.name,
+			g.handle,
+			g.description,
+			g.type,
+			g.country,
+			g.state,
+			g.city,
+			g.authority_email,
+			g.creator_id,
+			g.subscriber_count,
+			u.name as creator_name,
+			u.email as creator_email
+		`).
+		Joins("LEFT JOIN users u ON u.id = g.creator_id").
+		Where("g.id = ? AND g.deleted_at IS NULL", groupID).
+		Scan(&group).Error
+
+	if err != nil || group.ID == 0 {
+		http.Error(w, "Group not found", http.StatusNotFound)
 		return
 	}
 
-	// ---------------- Check if Current User Joined ----------------
+	// ---------------- Check If Joined ----------------
 	var isJoined bool
-	var gd models.GroupData
-	if err := db.DB.Where("group_id = ? AND user_id = ?", groupID, userID).First(&gd).Error; err == nil {
+	var count int64
+	db.DB.
+		Table("group_data").
+		Where("group_id = ? AND user_id = ?", groupID, userID).
+		Count(&count)
+
+	if count > 0 {
 		isJoined = true
 	}
 
-	// ---------------- Fetch Subscribers ----------------
-	var subscribers []models.User
-	if err := db.DB.Model(&group).Association("Subscribers").Find(&subscribers); err != nil {
-		log.Println("Failed to fetch subscribers:", err)
+	// ---------------- Optimized Posts Query ----------------
+	type PostResponse struct {
+		ID           uint      `json:"id"`
+		Content      string    `json:"content"`
+		UserID       uint      `json:"user_id"`
+		UserName     string    `json:"user_name"`
+		GroupID      uint      `json:"group_id"`
+		CreatedAt    time.Time `json:"created_at"`
+		ShareToken   string    `json:"share_token"`
+		Upvotes      int64     `json:"upvotes"`
+		Downvotes    int64     `json:"downvotes"`
+		ResolveCount int64     `json:"resolve_count"`
+		CommentCount int64     `json:"comment_count"`
 	}
 
-	if len(subscribers) == 0 {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
+	var posts []PostResponse
 
-	// ---------------- Fetch Posts with All Preloads ----------------
-	var posts []models.Post
-	if err := db.DB.Preload("User").
-		Preload("Tags").
-		Preload("Images").
-		Preload("Links").
-		Preload("Votes").
-		Preload("Resolves").
-		Preload("Comments").
-		Preload("Comments.User").
-		Where("group_id = ? AND deleted_at IS NULL", groupID).
-		Order("created_at DESC").
-		Find(&posts).Error; err != nil {
+	err = db.DB.
+		Table("posts p").
+		Select(`
+			p.id,
+			p.content,
+			p.user_id,
+			p.group_id,
+			p.created_at,
+			p.share_token,
+			u.name as user_name,
+
+			COALESCE(SUM(CASE WHEN v.vote_type = 1 THEN 1 ELSE 0 END),0) as upvotes,
+			COALESCE(SUM(CASE WHEN v.vote_type = -1 THEN 1 ELSE 0 END),0) as downvotes,
+			COUNT(DISTINCT r.id) as resolve_count,
+			COUNT(DISTINCT c.id) as comment_count
+		`).
+		Joins("LEFT JOIN users u ON u.id = p.user_id").
+		Joins("LEFT JOIN votes v ON v.post_id = p.id").
+		Joins("LEFT JOIN resolves r ON r.post_id = p.id").
+		Joins("LEFT JOIN comments c ON c.post_id = p.id").
+		Where("p.group_id = ? AND p.deleted_at IS NULL", groupID).
+		Group("p.id, u.name").
+		Order("p.created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Scan(&posts).Error
+
+	if err != nil {
 		log.Println("Failed to fetch posts:", err)
-	}
-
-	if len(posts) == 0 {
-		w.WriteHeader(http.StatusNoContent)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	// ---------------- Prepare Post Responses ----------------
-	postResponses := make([]map[string]interface{}, len(posts))
-	for i, post := range posts {
-		upvotes, downvotes := int64(0), int64(0)
-		for _, v := range post.Votes {
-			if v.VoteType == 1 {
-				upvotes++
-			} else if v.VoteType == -1 {
-				downvotes++
-			}
-		}
-
-		resolves := int64(len(post.Resolves))
-
-		// Prepare comments
-		commentsResp := make([]map[string]interface{}, len(post.Comments))
-		for j, c := range post.Comments {
-			commentsResp[j] = map[string]interface{}{
-				"ID":      c.ID,
-				"Content": c.Content,
-				"UserID":  c.UserID,
-				"User": map[string]interface{}{
-					"ID":   c.User.ID,
-					"Name": c.User.Name,
-				},
-				"CreatedAt": c.CreatedAt,
-			}
-		}
-
-		postResponses[i] = map[string]interface{}{
-			"post": map[string]interface{}{
-				"ID":      post.ID,
-				"Content": post.Content,
-				"UserID":  post.UserID,
-				"User": map[string]interface{}{
-					"ID":   post.User.ID,
-					"Name": post.User.Name,
-				},
-				"GroupID": post.GroupID,
-				"Group": map[string]interface{}{
-					"ID":   group.ID,
-					"Name": group.Name,
-				},
-				"CreatedAt": post.CreatedAt,
-				"Tags":      post.Tags,
-				"Images":    post.Images,
-				"Links":     post.Links,
-			},
-			"upvotes":       upvotes,
-			"downvotes":     downvotes,
-			"resolve_count": resolves,
-			"comments":      len(post.Comments),
-			"commentsData":  commentsResp,
-			"share_url":     fmt.Sprintf("/share/%s", post.ShareToken),
-		}
-	}
-
-	// ---------------- Response JSON ----------------
+	// ---------------- Final Response ----------------
 	response := map[string]interface{}{
 		"group": map[string]interface{}{
-			"id":             group.ID,
-			"name":           group.Name,
-			"handle":         group.Handle,
-			"description":    group.Description,
-			"type":           group.Type,
-			"country":        group.Country,
-			"state":          group.State,
-			"city":           group.City,
-			"authorityEmail": group.AuthorityEmail,
-			"creator": map[string]interface{}{
-				"id":    group.Creator.ID,
-				"name":  group.Creator.Name,
-				"email": group.Creator.Email,
-			},
+			"id":              group.ID,
+			"name":            group.Name,
+			"handle":          group.Handle,
+			"description":     group.Description,
+			"type":            group.Type,
+			"country":         group.Country,
+			"state":           group.State,
+			"city":            group.City,
+			"authorityEmail":  group.AuthorityEmail,
 			"subscriberCount": group.SubscriberCount,
 			"isJoined":        isJoined,
+			"creator": map[string]interface{}{
+				"id":    group.CreatorID,
+				"name":  group.CreatorName,
+				"email": group.CreatorEmail,
+			},
 		},
-		"subscribers": subscribers,
-		"posts":       postResponses,
+		"posts": posts,
+		"pagination": map[string]interface{}{
+			"limit":  limit,
+			"offset": offset,
+		},
 	}
 
 	w.Header().Set("Content-Type", "application/json")
