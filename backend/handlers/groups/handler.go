@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"backend/utils"
 	"time"
+	"strings"
 )
 
 func GroupRegister(w http.ResponseWriter, r *http.Request) {
@@ -66,21 +67,17 @@ func SearchGroups(w http.ResponseWriter, r *http.Request) {
 	country := r.URL.Query().Get("country")
 	state := r.URL.Query().Get("state")
 	city := r.URL.Query().Get("city")
+	cursor := r.URL.Query().Get("cursor")
+	limit := 10
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-
-	if page <= 0 {
-		page = 1
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
-	if limit <= 0 {
-		limit = 10
-	}
-
-	offset := (page - 1) * limit
-
-	var groups []struct {
+	type GroupResponse struct {
 		ID              uint   `json:"ID"`
 		Name            string `json:"Name"`
 		Handle          string `json:"Handle"`
@@ -91,48 +88,88 @@ func SearchGroups(w http.ResponseWriter, r *http.Request) {
 		Type            string `json:"Type"`
 		SubscriberCount int    `json:"SubscriberCount"`
 		IsJoined        bool   `json:"isJoined"`
+		Rank            float64 `json:"-"`
 	}
 
-	session, _ := db.Store.Get(r, "session")
-	userID := session.Values["user_id"].(uint)
+	query := db.DB.Table("groups g").
+		Joins("LEFT JOIN group_data gd ON gd.group_id = g.id AND gd.user_id = ?", userID).
+		Where("g.deleted_at IS NULL")
 
-	query := db.DB.Table("groups").
-		Select(`groups.id, groups.name, groups.handle, groups.country, groups.state, groups.city, groups.description, groups.type, groups.subscriber_count,
-        CASE WHEN gd.user_id is NOT NULL THEN true ELSE false END AS is_joined`).
-		Joins("LEFT JOIN group_data as gd ON gd.group_id = groups.id AND gd.user_id = ?", userID).
-		Where("groups.deleted_at IS NULL")
-
+	// ---------- Search Ranking ----------
 	if handle != "" {
-		query = query.Where("handle LIKE ?", "%"+handle+"%")
+		query = query.
+			Select(`
+				g.id,
+				g.name,
+				g.handle,
+				g.country,
+				g.state,
+				g.city,
+				g.description,
+				g.type,
+				g.subscriber_count,
+				CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined,
+				similarity(g.handle, ?) as rank
+			`, handle).
+			Where("g.handle ILIKE ?", "%"+handle+"%").
+			Order("rank DESC, g.subscriber_count DESC")
+	} else {
+		query = query.
+			Select(`
+				g.id,
+				g.name,
+				g.handle,
+				g.country,
+				g.state,
+				g.city,
+				g.description,
+				g.type,
+				g.subscriber_count,
+				CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined
+			`).
+			Order("g.subscriber_count DESC")
 	}
+
 	if country != "" {
-		query = query.Where("country LIKE ?", "%"+country+"%")
+		query = query.Where("g.country ILIKE ?", "%"+country+"%")
 	}
 	if state != "" {
-		query = query.Where("state LIKE ?", "%"+state+"%")
+		query = query.Where("g.state ILIKE ?", "%"+state+"%")
 	}
 	if city != "" {
-		query = query.Where("city LIKE ?", "%"+city+"%")
+		query = query.Where("g.city ILIKE ?", "%"+city+"%")
 	}
 
-	var total int64
-	query.Count(&total)
+	// -------- Keyset Pagination --------
+	if cursor != "" {
+		parts := strings.Split(cursor, ",")
+		if len(parts) == 2 {
+			lastCount, _ := strconv.Atoi(parts[0])
+			lastID, _ := strconv.Atoi(parts[1])
+			query = query.Where("(g.subscriber_count, g.id) < (?, ?)", lastCount, lastID)
+		}
+	}
 
-	err := query.Offset(offset).Limit(limit).Find(&groups).Error
+	var groups []GroupResponse
+	err := query.
+		Limit(limit).
+		Scan(&groups).Error
 
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil {
 		http.Error(w, "Error fetching groups", http.StatusInternalServerError)
 		return
 	}
 
+	// ---------- Next Cursor ----------
+	var nextCursor string
+	if len(groups) == limit {
+		last := groups[len(groups)-1]
+		nextCursor = fmt.Sprintf("%d,%d", last.SubscriberCount, last.ID)
+	}
+
 	response := map[string]interface{}{
-		"data": groups,
-		"pagination": map[string]interface{}{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-			"pages": (total + int64(limit) - 1) / int64(limit),
-		},
+		"data":       groups,
+		"nextCursor": nextCursor,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
