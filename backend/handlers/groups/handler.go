@@ -177,11 +177,6 @@ func JoinGroup(w http.ResponseWriter, r *http.Request) {
 
 }
 
-/*
---------------------------------------------------
-NEED TO APPLY UNION HERE
-----------------------------------------------------
-*/
 func MyGroups(w http.ResponseWriter, r *http.Request) {
 
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -190,7 +185,6 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 	if page <= 0 {
 		page = 1
 	}
-
 	if limit <= 0 {
 		limit = 10
 	}
@@ -199,47 +193,79 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
-
 	if !ok {
-		http.Error(w, "Status Unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	createdGroups := []map[string]interface{}{}
-	if err := db.DB.Table("groups").
-		Where("creator_id = ? AND deleted_at IS NULL", userID).
-		Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
-				true AS is_joined`).
-		Limit(limit).Offset(offset).
-		Find(&createdGroups).Error; err != nil {
-		fmt.Println(err)
-		http.Error(w, "Error fetching created groups", http.StatusInternalServerError)
+	type GroupResponse struct {
+		ID              uint   `json:"id"`
+		Name            string `json:"name"`
+		Description     string `json:"description"`
+		Handle          string `json:"handle"`
+		Country         string `json:"country"`
+		State           string `json:"state"`
+		City            string `json:"city"`
+		SubscriberCount int    `json:"subscriber_count"`
+		IsJoined        bool   `json:"is_joined"`
+		IsCreator       bool   `json:"is_creator"`
+	}
+
+	var groups []GroupResponse
+
+	// ---------------- Combined Query ----------------
+	err := db.DB.Raw(`
+		SELECT 
+			g.id,
+			g.name,
+			g.description,
+			g.handle,
+			g.country,
+			g.state,
+			g.city,
+			g.subscriber_count,
+			true AS is_joined,
+			true AS is_creator
+		FROM groups g
+		WHERE g.creator_id = ? AND g.deleted_at IS NULL
+
+		UNION ALL
+
+		SELECT 
+			g.id,
+			g.name,
+			g.description,
+			g.handle,
+			g.country,
+			g.state,
+			g.city,
+			g.subscriber_count,
+			true AS is_joined,
+			false AS is_creator
+		FROM groups g
+		JOIN group_data gd ON gd.group_id = g.id
+		WHERE gd.user_id = ? 
+		  AND g.creator_id <> ?
+		  AND g.deleted_at IS NULL
+
+		ORDER BY id DESC
+		LIMIT ? OFFSET ?
+	`, userID, userID, userID, limit, offset).Scan(&groups).Error
+
+	if err != nil {
+		http.Error(w, "Error fetching groups", http.StatusInternalServerError)
 		return
 	}
 
-	joinedGroups := []map[string]interface{}{}
-	if err := db.DB.Table("groups").
-		Select(`groups.id, groups.name, groups.description, groups.handle, groups.country, groups.state, groups.city, groups.subscriber_count,
-				CASE WHEN gd.user_id IS NOT NULL THEN true ELSE false END AS is_joined`).
-		Joins("JOIN group_data gd on groups.id = gd.group_id").
-		Where("gd.user_id = ? AND groups.creator_id <> ? AND groups.deleted_at IS NULL", userID, userID).
-		Limit(limit).Offset(offset).
-		Find(&joinedGroups).Error; err != nil {
-		fmt.Println(err)
-		http.Error(w, "Error fetching joined groups", http.StatusInternalServerError)
-		return
-	}
-
+	// ---------------- Total Count (2 fast indexed counts) ----------------
 	var totalCreated int64
-
 	db.DB.Model(&models.Group{}).
 		Where("creator_id = ? AND deleted_at IS NULL", userID).
 		Count(&totalCreated)
 
 	var totalJoined int64
-	db.DB.Table("groups").
-		Joins("JOIN group_data gd ON gd.group_id = groups.id").
-		Where("gd.user_id = ? AND groups.creator_id <> ? AND groups.deleted_at IS NULL", userID, userID).
+	db.DB.Table("group_data").
+		Where("user_id = ?", userID).
 		Count(&totalJoined)
 
 	total := totalCreated + totalJoined
@@ -252,15 +278,11 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 			"total_joined":  totalJoined,
 			"pages":         (total + int64(limit) - 1) / int64(limit),
 		},
-		"groups":  joinedGroups,
-		"created": createdGroups,
+		"groups": groups,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func LeaveGroup(w http.ResponseWriter, r *http.Request) {
