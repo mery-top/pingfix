@@ -107,18 +107,20 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+
 	if page <= 0 {
 		page = 1
 	}
 	if limit <= 0 {
 		limit = 10
 	}
+
 	offset := (page - 1) * limit
 
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
 	if !ok {
-		http.Error(w, "Status Unauthorized", http.StatusUnauthorized)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -134,34 +136,118 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 		Where("groups.creator_id = ? AND groups.deleted_at IS NULL", userID).
 		Order("posts.created_at DESC")
 
-	// Count total
 	var total int64
 	query.Model(&models.Post{}).Count(&total)
 
-	// Fetch paginated
-	if err := query.
-		Limit(limit).
-		Offset(offset).
-		Find(&posts).Error; err != nil {
+	if err := query.Limit(limit).Offset(offset).Find(&posts).Error; err != nil {
 		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
 		return
 	}
 
-	var responsePosts []models.PostResponse
+	// No posts case
+	if len(posts) == 0 {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"pagination": map[string]interface{}{
+				"page":  page,
+				"limit": limit,
+				"total": total,
+				"pages": 0,
+			},
+			"posts": []models.PostResponse{},
+		})
+		return
+	}
+
+	// Collect Post IDs
+	var postIDs []uint
 	for _, post := range posts {
-		var upvotes, downvotes, commentCount, resolveCount int64
+		postIDs = append(postIDs, post.ID)
+	}
 
-		db.DB.Model(&models.PostVote{}).Where("post_id = ? AND vote_type = 1", post.ID).Count(&upvotes)
-		db.DB.Model(&models.PostVote{}).Where("post_id = ? AND vote_type = -1", post.ID).Count(&downvotes)
-		db.DB.Model(&models.Comment{}).Where("post_id = ?", post.ID).Count(&commentCount)
-		db.DB.Model(&models.PostResolve{}).Where("post_id = ?", post.ID).Count(&resolveCount)
+	type CountResult struct {
+		PostID uint
+		Count  int64
+	}
 
+	// =====================
+	// Batch Queries
+	// =====================
+
+	var upvoteResults, downvoteResults, commentResults, resolveResults []CountResult
+	var userResolvedPosts []uint
+
+	db.DB.Model(&models.PostVote{}).
+		Select("post_id, COUNT(*) as count").
+		Where("vote_type = 1 AND post_id IN ?", postIDs).
+		Group("post_id").
+		Scan(&upvoteResults)
+
+	db.DB.Model(&models.PostVote{}).
+		Select("post_id, COUNT(*) as count").
+		Where("vote_type = -1 AND post_id IN ?", postIDs).
+		Group("post_id").
+		Scan(&downvoteResults)
+
+	db.DB.Model(&models.Comment{}).
+		Select("post_id, COUNT(*) as count").
+		Where("post_id IN ?", postIDs).
+		Group("post_id").
+		Scan(&commentResults)
+
+	db.DB.Model(&models.PostResolve{}).
+		Select("post_id, COUNT(*) as count").
+		Where("post_id IN ?", postIDs).
+		Group("post_id").
+		Scan(&resolveResults)
+
+	db.DB.Model(&models.PostResolve{}).
+		Select("post_id").
+		Where("user_id = ? AND post_id IN ?", userID, postIDs).
+		Scan(&userResolvedPosts)
+
+	// =====================
+	// Convert to Maps
+	// =====================
+
+	upvoteMap := make(map[uint]int64)
+	for _, r := range upvoteResults {
+		upvoteMap[r.PostID] = r.Count
+	}
+
+	downvoteMap := make(map[uint]int64)
+	for _, r := range downvoteResults {
+		downvoteMap[r.PostID] = r.Count
+	}
+
+	commentMap := make(map[uint]int64)
+	for _, r := range commentResults {
+		commentMap[r.PostID] = r.Count
+	}
+
+	resolveMap := make(map[uint]int64)
+	for _, r := range resolveResults {
+		resolveMap[r.PostID] = r.Count
+	}
+
+	userResolvedMap := make(map[uint]bool)
+	for _, id := range userResolvedPosts {
+		userResolvedMap[id] = true
+	}
+
+	// =====================
+	// Build Response
+	// =====================
+
+	var responsePosts []models.PostResponse
+
+	for _, post := range posts {
 		responsePosts = append(responsePosts, models.PostResponse{
 			Post:         post,
-			Upvotes:      upvotes,
-			Downvotes:    downvotes,
-			Comments:     commentCount,
-			ResolveCount: resolveCount,
+			Upvotes:      upvoteMap[post.ID],
+			Downvotes:    downvoteMap[post.ID],
+			Comments:     commentMap[post.ID],
+			ResolveCount: resolveMap[post.ID],
+			UserResolved: userResolvedMap[post.ID],
 			ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
 		})
 	}
@@ -352,6 +438,42 @@ func ResolvePost(w http.ResponseWriter, r *http.Request) {
 		}
 		db.DB.Create(&newResolve)
 	}
+
+	// ============================
+	// 🔥 CHECK 65% RULE
+	// ============================
+
+	var post models.Post
+	if err := db.DB.Preload("Group").First(&post, req.PostID).Error; err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	// Total group members
+	var totalMembers int64
+	db.DB.Model(&models.GroupData{}).
+		Where("group_id = ?", post.GroupID).
+		Count(&totalMembers)
+
+	// Total resolves
+	var resolveCount int64
+	db.DB.Model(&models.PostResolve{}).
+		Where("post_id = ?", post.ID).
+		Count(&resolveCount)
+
+	// Calculate percentage
+	if totalMembers > 0 {
+		percentage := (float64(resolveCount) / float64(totalMembers)) * 100
+
+		if percentage >= 65 {
+			post.Resolved = true
+		} else {
+			post.Resolved = false
+		}
+
+		db.DB.Save(&post)
+	}
+
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
