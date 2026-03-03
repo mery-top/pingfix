@@ -1,64 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MyPostsAPI, DeletePostAPI } from '../api/PostAPI';
-import PostCardMemo from '../components/PostCard'; // memoized PostCard
+import PostCardMemo from '../components/PostCard';
 import { useNavigate } from 'react-router-dom';
 
 function MyPosts() {
-  const [pagination, setPagination] = useState({});
-  const [pages, setPage] = useState(1);
-  const [posts, setPosts] = useState([]);
-  const [message, setMessage] = useState("");
-  const [filter, setFilter] = useState("all"); 
-// "all" | "resolved" | "unresolved"
+  const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState("all");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const fetchPosts = async () => {
-    const params = new URLSearchParams({
-      page: pages,
-      limit: 5,
-    });
+  // ---------------- Fetch posts with TanStack Query ----------------
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['myPosts', page, filter],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page, limit: 5 });
+      if (filter === 'resolved') params.append('resolved', 'true');
+      if (filter === 'unresolved') params.append('resolved', 'false');
   
-    if (filter === "resolved") {
-      params.append("resolved", "true");
-    }
-  
-    if (filter === "unresolved") {
-      params.append("resolved", "false");
-    }
-  
-    try {
       const res = await MyPostsAPI(params);
-      const data = await res.json();
-      setPosts(data.posts);
-      setPagination(data.pagination);
-    } catch (error) {}
-  };
-
-  useEffect(() => {
-    setPage(1); // reset to page 1 when filter changes
-  }, [filter]);
-  
-  useEffect(() => {
-    fetchPosts();
-  }, [pages, filter]);
-
-  const handleDelete = async (postID) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this post?");
-    if (!confirmDelete) return;
-
-    try {
+      if (!res.ok) throw new Error('Failed to fetch posts');
+      return res.json();
+    },
+    keepPreviousData: true,
+    staleTime: 1000 * 60, // 1 minute
+  });
+  // ---------------- Delete post mutation ----------------
+  const deleteMutation = useMutation({
+    mutationFn: async (postID) => {
       const res = await DeletePostAPI(postID);
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text || "Failed to delete post");
+        throw new Error(text || 'Failed to delete post');
       }
-      fetchPosts(); // Refresh after deletion
-      setMessage("");
-    } catch (error) {
-      setMessage(error.message);
-    }
-  };
+      return postID;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['myPosts', page, filter] }),
+  });
 
+  // ---------------- Render ----------------
   return (
     <div className="container">
       <div className="top-nav-bar">
@@ -67,32 +47,43 @@ function MyPosts() {
         </button>
         <h2>My Posts</h2>
       </div>
-      <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
-      <button onClick={() => setFilter("all")}>All</button>
-      <button onClick={() => setFilter("resolved")}>Resolved</button>
-      <button onClick={() => setFilter("unresolved")}>Unresolved</button>
-    </div>
 
+      {/* Filter buttons */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+        {['all', 'resolved', 'unresolved'].map((f) => (
+          <button
+            key={f}
+            onClick={() => { setPage(1); setFilter(f); }}
+            style={{ fontWeight: filter === f ? 'bold' : 'normal' }}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Posts */}
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {message && <p style={{ color: "#ff4d4f", textAlign: "center", marginBottom: "10px" }}>{message}</p>}
-        {posts.map((post) => (
+        {isLoading && <p style={{ textAlign: "center" }}>Loading posts...</p>}
+        {isError && <p style={{ color: "#ff4d4f", textAlign: "center" }}>Error loading posts</p>}
+
+        {data?.posts?.map((post) => (
           <PostCardMemo
-            key={post.post.ID}
+            key={post.ID}
             post={post}
             hideViewGroup={false}
-            onVote={() => { }} // optional: handle votes if needed
-            onDelete={handleDelete}
+            onVote={() => {}}
+            onDelete={() => deleteMutation.mutate(post.ID)}
           />
         ))}
       </div>
 
       {/* Pagination */}
-      <div className="pagination-bar">
-        {pagination.page > 1 && (
-          <button className="btn-nav" onClick={() => setPage(pages - 1)}>Previous</button>
+      <div className="pagination-bar" style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+        {data?.pagination?.page > 1 && (
+          <button className="btn-nav" onClick={() => setPage(page - 1)}>Previous</button>
         )}
-        {pagination.page < pagination.pages && (
-          <button className="btn-nav" onClick={() => setPage(pages + 1)}>Next</button>
+        {data?.pagination?.page < data?.pagination?.pages && (
+          <button className="btn-nav" onClick={() => setPage(page + 1)}>Next</button>
         )}
       </div>
     </div>
