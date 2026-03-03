@@ -79,10 +79,14 @@ export const RequestDeleteGroupAPI = async (groupID) => {
   };
 
   export async function ViewGroupAPI(groupID) {
-    const url = `/api/group/view?groupID=${groupID}`;
-    const response = await fetch(url, {
+    const response = await fetch(`/api/groups/${groupID}`, {
       method: "GET",
-      credentials: "include", // include session/cookies
+      credentials: "include",
     });
-    return response;
+  
+    if (!response.ok) {
+      throw new Error("Failed to fetch group");
+    }
+  
+    return response.json();
   }
