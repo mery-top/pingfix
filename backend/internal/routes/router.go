@@ -43,6 +43,7 @@ func SetupRouter() *mux.Router {
 	r.HandleFunc("/api/post/delete", posts.DeletePost).Methods("DELETE")
 	r.HandleFunc("/api/post/vote", posts.VotePost).Methods("POST")
 	r.HandleFunc("/api/post/resolve", posts.ResolvePost).Methods("POST")
+	r.HandleFunc("/post/myresolved", posts.MyResolvedPosts).Methods("GET")
 	r.HandleFunc("/api/post/comment", posts.AddComment).Methods("POST")
 	r.HandleFunc("/api/post/comment/{id}", posts.DeleteComment).Methods("DELETE")
 	r.HandleFunc("/api/comment/edit/{id}", posts.EditComment).Methods("PUT")
