@@ -140,6 +140,7 @@ func SearchGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 func JoinGroup(w http.ResponseWriter, r *http.Request) {
+
 	var req struct {
 		GroupID uint `json:"groupID"`
 	}
@@ -149,23 +150,44 @@ func JoinGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session, _ := db.Store.Get(r, "session")
-	userID := session.Values["user_id"].(uint)
-
-	tx := db.DB.Begin()
-
-	if err := tx.Create(&models.GroupData{
-		UserID:  userID,
-		GroupID: req.GroupID,
-	}).Error; err != nil {
-		tx.Rollback()
-		http.Error(w, "Failed to Create Join Group", http.StatusInternalServerError)
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	if err := tx.Model(&models.Group{}).Where("id = ?", req.GroupID).UpdateColumn("subscriber_count", gorm.Expr("subscriber_count + ?", 1)).Error; err != nil {
+	tx := db.DB.Begin()
+
+	// --------------------------------------------------
+	// 1️ Insert with ON CONFLICT DO NOTHING
+	// --------------------------------------------------
+
+	result := tx.Exec(`
+		INSERT INTO group_data (group_id, user_id, joined_at)
+		VALUES (?, ?, NOW())
+		ON CONFLICT (group_id, user_id) DO NOTHING
+	`, req.GroupID, userID)
+
+	if result.Error != nil {
 		tx.Rollback()
-		http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
+		http.Error(w, "Failed to join group", http.StatusInternalServerError)
 		return
+	}
+
+	// --------------------------------------------------
+	// 2️ Only update count if new row inserted
+	// --------------------------------------------------
+
+	if result.RowsAffected > 0 {
+		if err := tx.Exec(`
+			UPDATE groups
+			SET subscriber_count = subscriber_count + 1
+			WHERE id = ?
+		`, req.GroupID).Error; err != nil {
+			tx.Rollback()
+			http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -174,7 +196,6 @@ func JoinGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-
 }
 
 func MyGroups(w http.ResponseWriter, r *http.Request) {
