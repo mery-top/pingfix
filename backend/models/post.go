@@ -63,6 +63,12 @@ type Post struct {
 
 	Content string `gorm:"type:text;not null"`
 
+	// Precomputed counters
+	UpvoteCount   int64 `gorm:"default:0"`
+	DownvoteCount int64 `gorm:"default:0"`
+	CommentCount  int64 `gorm:"default:0"`
+	ResolveCount  int64 `gorm:"default:0"`
+
 	Tags   []Tag       `gorm:"many2many:post_tags"`
 	Images []PostImage `gorm:"constraint:OnDelete:CASCADE"`
 	Links  []PostLink  `gorm:"constraint:OnDelete:CASCADE"`
