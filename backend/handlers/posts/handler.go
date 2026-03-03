@@ -135,6 +135,16 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 		Joins("JOIN groups ON posts.group_id = groups.id").
 		Where("groups.creator_id = ? AND groups.deleted_at IS NULL", userID).
 		Order("posts.created_at DESC")
+	
+	resolved := r.URL.Query().Get("resolved")
+
+	if resolved == "true" {
+		query = query.Where("posts.resolved = ?", true)
+	}
+		
+	if resolved == "false" {
+		query = query.Where("posts.resolved = ?", false)
+	}
 
 	var total int64
 	query.Model(&models.Post{}).Count(&total)
