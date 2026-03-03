@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	"gorm.io/gorm"
-
+	"github.com/gorilla/mux"
 	"backend/utils"
 	"time"
 )
@@ -482,19 +482,16 @@ func ConfirmDeleteGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func ViewGroup(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := r.URL.Query().Get("groupID")
-	if groupIDStr == "" {
-		http.Error(w, "groupID is required", http.StatusBadRequest)
-		return
-	}
 
-	groupID, err := strconv.Atoi(groupIDStr)
+	// ---------- Get Group ID ----------
+	vars := mux.Vars(r)
+	groupID, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, "Invalid groupID", http.StatusBadRequest)
+		http.Error(w, "Invalid group id", http.StatusBadRequest)
 		return
 	}
 
-	// ---------------- Session Check ----------------
+	// ---------- Session ----------
 	session, _ := db.Store.Get(r, "session")
 	userID, ok := session.Values["user_id"].(uint)
 	if !ok {
@@ -502,36 +499,44 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ---------------- Pagination ----------------
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
+	// ---------- Pagination ----------
 	limit := 20
 	offset := 0
 
-	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
-		limit = l
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
 	}
-	if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-		offset = o
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
 	}
 
-	// ---------------- Fetch Group ----------------
-	var group struct {
-		ID              uint
-		Name            string
-		Handle          string
-		Description     string
-		Type            string
-		Country         string
-		State           string
-		City            string
-		AuthorityEmail  string
-		CreatorID       uint
-		SubscriberCount int64
-		CreatorName     string
-		CreatorEmail    string
+	// ============================================================
+	// 1️GROUP QUERY (Fast + Flat)
+	// ============================================================
+
+	type GroupResponse struct {
+		ID              uint   `json:"id"`
+		Name            string `json:"name"`
+		Handle          string `json:"handle"`
+		Description     string `json:"description"`
+		Type            string `json:"type"`
+		Country         string `json:"country"`
+		State           string `json:"state"`
+		City            string `json:"city"`
+		AuthorityEmail  string `json:"authorityEmail"`
+		SubscriberCount int64  `json:"subscriberCount"`
+		IsJoined        bool   `json:"isJoined"`
+
+		CreatorID    uint   `json:"-"`
+		CreatorName  string `json:"-"`
+		CreatorEmail string `json:"-"`
 	}
+
+	var group GroupResponse
 
 	err = db.DB.
 		Table("groups g").
@@ -545,8 +550,8 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 			g.state,
 			g.city,
 			g.authority_email,
-			g.creator_id,
 			g.subscriber_count,
+			u.id   as creator_id,
 			u.name as creator_name,
 			u.email as creator_email
 		`).
@@ -559,19 +564,21 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ---------------- Check If Joined ----------------
-	var isJoined bool
-	var count int64
+	// ---------- Check Join (Index Fast) ----------
+	var exists bool
 	db.DB.
 		Table("group_data").
+		Select("1").
 		Where("group_id = ? AND user_id = ?", groupID, userID).
-		Count(&count)
+		Limit(1).
+		Scan(&exists)
 
-	if count > 0 {
-		isJoined = true
-	}
+	group.IsJoined = exists
 
-	// ---------------- Optimized Posts Query ----------------
+	// ============================================================
+	// 2️POSTS QUERY (NO MORE N+1 🔥)
+	// ============================================================
+
 	type PostResponse struct {
 		ID           uint      `json:"id"`
 		Content      string    `json:"content"`
@@ -605,9 +612,9 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 			COUNT(DISTINCT c.id) as comment_count
 		`).
 		Joins("LEFT JOIN users u ON u.id = p.user_id").
-		Joins("LEFT JOIN votes v ON v.post_id = p.id").
-		Joins("LEFT JOIN resolves r ON r.post_id = p.id").
-		Joins("LEFT JOIN comments c ON c.post_id = p.id").
+		Joins("LEFT JOIN post_votes v ON v.post_id = p.id AND v.deleted_at IS NULL").
+		Joins("LEFT JOIN post_resolves r ON r.post_id = p.id AND r.deleted_at IS NULL").
+		Joins("LEFT JOIN comments c ON c.post_id = p.id AND c.deleted_at IS NULL").
 		Where("p.group_id = ? AND p.deleted_at IS NULL", groupID).
 		Group("p.id, u.name").
 		Order("p.created_at DESC").
@@ -616,31 +623,17 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 		Scan(&posts).Error
 
 	if err != nil {
-		log.Println("Failed to fetch posts:", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		log.Println("Post fetch error:", err)
+		http.Error(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
 
-	// ---------------- Final Response ----------------
+	// ============================================================
+	// 3️ Final JSON
+	// ============================================================
+
 	response := map[string]interface{}{
-		"group": map[string]interface{}{
-			"id":              group.ID,
-			"name":            group.Name,
-			"handle":          group.Handle,
-			"description":     group.Description,
-			"type":            group.Type,
-			"country":         group.Country,
-			"state":           group.State,
-			"city":            group.City,
-			"authorityEmail":  group.AuthorityEmail,
-			"subscriberCount": group.SubscriberCount,
-			"isJoined":        isJoined,
-			"creator": map[string]interface{}{
-				"id":    group.CreatorID,
-				"name":  group.CreatorName,
-				"email": group.CreatorEmail,
-			},
-		},
+		"group": group,
 		"posts": posts,
 		"pagination": map[string]interface{}{
 			"limit":  limit,
