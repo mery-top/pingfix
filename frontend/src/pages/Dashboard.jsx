@@ -83,6 +83,7 @@ function Dashboard() {
           <button className="tg-menu-item" onClick={() => { goToRegisterGroup(); setIsSidebarOpen(false); }}>Register Group</button>
           <button className="tg-menu-item" onClick={() => { goToMyPosts(); setIsSidebarOpen(false); }}>My Posts</button>
           <hr style={{ borderColor: "rgba(255,255,255,0.05)", margin: "10px 0" }} />
+          <button className="tg-menu-item" onClick={() => { navigate('/post/resolved');setIsSidebarOpen(false);}}>Resolved Posts</button>
           <button className="tg-menu-item" style={{ color: "#ff4d4f" }} onClick={LogoutHandler}>Logout</button>
         </div>
       </div>
