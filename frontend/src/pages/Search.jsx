@@ -1,57 +1,73 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
-import SecureInput from '../wrapper/SecureInput';
-import { JoinGroupAPI, SearchGroupAPI } from '../api/GroupAPI';
+import React, { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import SecureInput from '../wrapper/SecureInput'
+import { JoinGroupAPI, SearchGroupAPI } from '../api/GroupAPI'
 import countries from '../assets/countries.json'
 
 function Search() {
-  const navigate = useNavigate();
-  const [groups, setGroups] = useState([])
-  const [selectedCountry, setSelectedCountry] = useState("");
-  const [selectedState, setSelectedState] = useState("");
-  const [groupCity, setCity] = useState("");
-  const [groupHandle, setHandle] = useState("");
-  const [pagination, setPagination] = useState({})
-  const [message, setMessage] = useState("")
-  const [pages, setPage] = useState(1)
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
-  const fetchGroups = async () => {
-    const params = new URLSearchParams({
-      handle: groupHandle,
-      country: selectedCountry,
-      state: selectedState,
-      city: groupCity,
-      page: pages,
-      limit: 5
-    })
+  const [selectedCountry, setSelectedCountry] = useState("")
+  const [selectedState, setSelectedState] = useState("")
+  const [groupCity, setCity] = useState("")
+  const [groupHandle, setHandle] = useState("")
+  const [page, setPage] = useState(1)
 
-    const res = await SearchGroupAPI(params)
-    const data = await res.json()
-    setGroups(data.data)
-    setPagination(data.pagination)
-  }
+  // 🔥 Build query params (memoized)
+  const queryParams = useMemo(() => ({
+    handle: groupHandle,
+    country: selectedCountry,
+    state: selectedState,
+    city: groupCity,
+    page,
+    limit: 5
+  }), [groupHandle, selectedCountry, selectedState, groupCity, page])
 
-  useEffect(() => {
-    fetchGroups()
-  }, [pages])
+  // 🚀 Search Query (cached & optimized)
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['groups', queryParams],
+    queryFn: async () => {
+      const params = new URLSearchParams(queryParams)
+      const res = await SearchGroupAPI(params)
+      if (!res.ok) throw new Error("Failed")
+      return res.json()
+    },
+    keepPreviousData: true, // smooth pagination
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  })
 
-  const handleJoinGroup = async (id) => {
-    try {
-      const res = await JoinGroupAPI(id)
-      if (res.status === 200) {
-        // Update only the joined group
-        setGroups(prevGroups =>
-          prevGroups.map(g => g.ID === id ? { ...g, isJoined: true } : g)
-        );
-        setMessage(""); // optional, clear message
-      } else {
-        setMessage("Fail to Join");
-      }
-    } catch (error) {
-      setMessage("Fail to Join");
-      console.error("Fail to Join error", error);
+  // 🚀 Join Mutation with Optimistic Update
+  const joinMutation = useMutation({
+    mutationFn: (id) => JoinGroupAPI(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries(['groups'])
+
+      const previousData = queryClient.getQueryData(['groups', queryParams])
+
+      queryClient.setQueryData(['groups', queryParams], old => {
+        if (!old) return old
+        return {
+          ...old,
+          data: old.data.map(g =>
+            g.ID === id ? { ...g, isJoined: true } : g
+          )
+        }
+      })
+
+      return { previousData }
+    },
+    onError: (err, id, context) => {
+      queryClient.setQueryData(['groups', queryParams], context.previousData)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['groups'])
     }
-  }
+  })
+
+  const groups = data?.data || []
+  const pagination = data?.pagination || {}
 
   return (
     <div className="container">
@@ -62,97 +78,88 @@ function Search() {
         <h2>Search Groups</h2>
       </div>
 
-      <div className="tg-card" style={{ display: "flex", flexWrap: "wrap", gap: "15px", alignItems: "flex-end", marginBottom: "30px", marginTop: "20px" }}>
-        <div style={{ flex: "1 1 200px" }}>
-          <label style={{ color: "#aaa", fontSize: "0.9em", marginBottom: "5px", display: "block" }}>Search by Handle</label>
-          <SecureInput value={groupHandle} onChange={setHandle} allowSpace={true} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", color: "#fff" }} />
-        </div>
+      {/* 🔍 Filters */}
+      <div className="tg-card" style={{ display: "flex", flexWrap: "wrap", gap: "15px", marginTop: "20px" }}>
 
-        <div style={{ flex: "1 1 200px" }}>
-          <label style={{ color: "#aaa", fontSize: "0.9em", marginBottom: "5px", display: "block" }}>Country</label>
-          <select
-            value={selectedCountry}
-            onChange={(e) => {
-              setSelectedCountry(e.target.value);
-              setSelectedState("");
-            }}
-            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", color: "#fff" }}
-          >
-            <option value="">Select a country</option>
-            {countries.map((country) => (
-              <option key={country.code2} value={country.name}>
-                {country.name}
-              </option>
+        <SecureInput value={groupHandle} onChange={setHandle} placeholder="Search by Handle" />
+
+        <select value={selectedCountry}
+          onChange={(e) => {
+            setSelectedCountry(e.target.value)
+            setSelectedState("")
+          }}>
+          <option value="">Country</option>
+          {countries.map((c) => (
+            <option key={c.code2} value={c.name}>{c.name}</option>
+          ))}
+        </select>
+
+        <select
+          value={selectedState}
+          onChange={(e) => setSelectedState(e.target.value)}
+          disabled={!selectedCountry}
+        >
+          <option value="">State</option>
+          {countries
+            .find((c) => c.name === selectedCountry)
+            ?.states?.map((s) => (
+              <option key={s.code} value={s.name}>{s.name}</option>
             ))}
-          </select>
-        </div>
+        </select>
 
-        <div style={{ flex: "1 1 200px" }}>
-          <label style={{ color: "#aaa", fontSize: "0.9em", marginBottom: "5px", display: "block" }}>State</label>
-          <select
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            disabled={!selectedCountry}
-            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", color: "#fff" }}
-          >
-            <option value="">Select a state</option>
-            {countries
-              .find((c) => c.name === selectedCountry)
-              ?.states?.map((state) => (
-                <option key={state.code} value={state.name}>
-                  {state.name}
-                </option>
-              ))}
-          </select>
-        </div>
+        <SecureInput value={groupCity} onChange={setCity} placeholder="City" />
 
-        <div style={{ flex: "1 1 200px" }}>
-          <label style={{ color: "#aaa", fontSize: "0.9em", marginBottom: "5px", display: "block" }}>City</label>
-          <SecureInput value={groupCity} onChange={setCity} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", color: "#fff" }} />
-        </div>
-
-        <div style={{ flex: "1 1 100%" }}>
-          <button className="ig-btn" style={{ padding: "10px", marginTop: "10px" }} onClick={() => { setPage(1); fetchGroups(); }}>Search</button>
-        </div>
+        <button onClick={() => setPage(1)}>
+          Search
+        </button>
       </div>
+
+      {/* 📦 Results */}
+      {isLoading && <p>Loading...</p>}
+      {isError && <p>Error loading groups</p>}
 
       <ul style={{ listStyle: "none", padding: 0 }}>
         {groups.map((group) => (
           <li key={group.ID} className="tg-list-item">
-            <div className="tg-list-item-left">
-              <div className="tg-avatar">
-                {group.Name ? group.Name.charAt(0).toUpperCase() : "G"}
-              </div>
-              <div className="tg-list-item-info">
-                <h4>{group.Name} <span style={{ fontSize: "0.8em", color: "#aaa", fontWeight: "normal" }}>({group.Handle})</span></h4>
-                <p>{group.Description}</p>
-                <p style={{ marginTop: "4px", fontSize: "0.8em", color: "#F47D34" }}>{group.Type} • {group.Country} • {group.SubscriberCount} subscribers</p>
-              </div>
+            <div>
+              <h4>
+                {group.Name} ({group.Handle})
+              </h4>
+              <p>{group.Description}</p>
+              <p>
+                {group.Type} • {group.Country} • {group.SubscriberCount} subscribers
+              </p>
             </div>
-            <div style={{ textAlign: "right", minWidth: "120px" }}>
+
+            <div>
               {group.isJoined ? (
-                <button disabled style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "none", color: "#aaa", padding: "8px 16px", borderRadius: "20px", cursor: "not-allowed", marginBottom: "5px", width: "100%" }}>✅ Joined</button>
+                <button disabled>Joined</button>
               ) : (
-                <button onClick={() => handleJoinGroup(group.ID)} style={{ backgroundColor: "#F47D34", border: "none", color: "#350E25", padding: "8px 16px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold", marginBottom: "5px", width: "100%" }}>JOIN</button>
+                <button onClick={() => joinMutation.mutate(group.ID)}>
+                  JOIN
+                </button>
               )}
-              <button
-                onClick={() => navigate(`/group/${group.ID}`)}
-                style={{ backgroundColor: "transparent", border: "1px solid #F47D34", color: "#F47D34", padding: "8px 16px", borderRadius: "20px", cursor: "pointer", width: "100%" }}>
-                View Group
+
+              <button onClick={() => navigate(`/group/${group.ID}`)}>
+                View
               </button>
-              {message && <p style={{ color: "#F47D34", fontSize: "0.8em", marginTop: "5px" }}>{message}</p>}
             </div>
           </li>
         ))}
       </ul>
 
+      {/* 📄 Pagination */}
       {groups.length > 0 && (
         <div className="pagination-bar">
           {pagination.page > 1 && (
-            <button className="btn-nav" onClick={() => setPage(pages - 1)}>Previous</button>
+            <button onClick={() => setPage(p => p - 1)}>
+              Previous
+            </button>
           )}
           {pagination.page < pagination.pages && (
-            <button className="btn-nav" onClick={() => setPage(pages + 1)}>Next</button>
+            <button onClick={() => setPage(p => p + 1)}>
+              Next
+            </button>
           )}
         </div>
       )}
