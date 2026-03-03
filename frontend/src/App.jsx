@@ -26,7 +26,6 @@ function App() {
         <Route path="/group/mygroups" element={<ProtectedRoute><MyGroups /></ProtectedRoute>}></Route>
         <Route path="/post/createpost" element={<ProtectedRoute><CreatePost /></ProtectedRoute>}></Route>
         <Route path="/post/mypost" element={<ProtectedRoute><MyPosts /></ProtectedRoute>}></Route>
-        <Route path="/post/resolved" element={<ProtectedRoute><ResolvePost /></ProtectedRoute>}></Route>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>}></Route>
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>}></Route>
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>}></Route>
