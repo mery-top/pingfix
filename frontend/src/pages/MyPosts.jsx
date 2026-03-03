@@ -8,6 +8,8 @@ function MyPosts() {
   const [pages, setPage] = useState(1);
   const [posts, setPosts] = useState([]);
   const [message, setMessage] = useState("");
+  const [filter, setFilter] = useState("all"); 
+// "all" | "resolved" | "unresolved"
   const navigate = useNavigate();
 
   const fetchPosts = async () => {
@@ -15,23 +17,30 @@ function MyPosts() {
       page: pages,
       limit: 5,
     });
-
+  
+    if (filter === "resolved") {
+      params.append("resolved", "true");
+    }
+  
+    if (filter === "unresolved") {
+      params.append("resolved", "false");
+    }
+  
     try {
       const res = await MyPostsAPI(params);
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
       const data = await res.json();
       setPosts(data.posts);
       setPagination(data.pagination);
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
+    setPage(1); // reset to page 1 when filter changes
+  }, [filter]);
+  
+  useEffect(() => {
     fetchPosts();
-  }, [pages]);
+  }, [pages, filter]);
 
   const handleDelete = async (postID) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this post?");
@@ -58,6 +67,11 @@ function MyPosts() {
         </button>
         <h2>My Posts</h2>
       </div>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+      <button onClick={() => setFilter("all")}>All</button>
+      <button onClick={() => setFilter("resolved")}>Resolved</button>
+      <button onClick={() => setFilter("unresolved")}>Unresolved</button>
+    </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {message && <p style={{ color: "#ff4d4f", textAlign: "center", marginBottom: "10px" }}>{message}</p>}
