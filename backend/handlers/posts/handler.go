@@ -8,113 +8,86 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
+
 	"strconv"
-	"strings"
+
 	"time"
-	"unicode"
 
 	"github.com/gorilla/mux"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-	session, _ := db.Store.Get(r, "session")
-	userID, ok := session.Values["user_id"].(uint)
+    session, _ := db.Store.Get(r, "session")
+    userID, ok := session.Values["user_id"].(uint)
+    if !ok {
+        http.Error(w, "Unauthorized", http.StatusUnauthorized)
+        return
+    }
 
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+    if err := r.ParseMultipartForm(20 << 20); err != nil { // 20MB
+        http.Error(w, "Cannot parse form: "+err.Error(), http.StatusBadRequest)
+        return
+    }
 
-	err := r.ParseMultipartForm(10 << 20) // 10MB
-	if err != nil {
-		http.Error(w, "Cannot parse form", http.StatusBadRequest)
-		return
-	}
+    groupIDs := r.Form["groupID"]
+    if len(groupIDs) == 0 {
+        http.Error(w, "No groups selected", http.StatusBadRequest)
+        return
+    }
 
-	groupIDs := r.Form["groupID"]
-	content := utils.Sanitize(r.FormValue("content"))
-	links := utils.SanitizeSlice(r.Form["links"])
-	tags := utils.SanitizeSlice(r.Form["tags"])
+    content := utils.Sanitize(r.FormValue("content"))
+    links := utils.SanitizeSlice(r.Form["links"])
+    tags := utils.SanitizeSlice(r.Form["tags"])
 
-	if len(groupIDs) == 0 {
-		http.Error(w, "No groups selected", http.StatusBadRequest)
-		return
-	}
+    // ----------------- Handle images -----------------
+    files := r.MultipartForm.File["images"]
+    imagePaths := []string{}
 
-	// Handle uploaded files
-	files := r.MultipartForm.File["images"]
-	imagePaths := []string{}
+    for _, fh := range files {
+        file, err := fh.Open()
+        if err != nil {
+            http.Error(w, "Failed to read image: "+fh.Filename, http.StatusBadRequest)
+            return
+        }
 
-	for _, fileHeader := range files {
-		file, err := fileHeader.Open()
-		if err != nil {
-			continue
-		}
+        safeName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), utils.SanitizeFileName(fh.Filename))
+        url, err := utils.UploadToS3(file, safeName)
+        file.Close()
+        if err != nil {
+            http.Error(w, "S3 upload failed: "+safeName, http.StatusInternalServerError)
+            return
+        }
+        imagePaths = append(imagePaths, url)
+    }
 
-		// Replace whitespace with underscore
-		safeFileName := strings.Map(func(r rune) rune {
-			if unicode.IsSpace(r) {
-				return '_'
-			}
-			return r
-		}, fileHeader.Filename)
+    shareToken := utils.GenerateShareToken()
 
-		// Remove unsafe characters
-		re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
-		safeFileName = re.ReplaceAllString(safeFileName, "")
+    for _, idStr := range groupIDs {
+        groupID, err := strconv.Atoi(idStr)
+        if err != nil {
+            http.Error(w, "Invalid group ID: "+idStr, http.StatusBadRequest)
+            return
+        }
 
-		// Add timestamp for uniqueness
-		safeFileName = fmt.Sprintf("%d_%s", time.Now().UnixNano(), safeFileName)
+        if err := dbhandler.CreatePost(uint(groupID), userID, content, imagePaths, links, tags, shareToken); err != nil {
+            http.Error(w, "Failed to create post: "+err.Error(), http.StatusInternalServerError)
+            return
+        }
+    }
 
-		url, err := utils.UploadToS3(file, safeFileName)
-		file.Close()
-
-		if err != nil {
-			fmt.Println("S3 upload failed for", safeFileName, err)
-			continue
-		}
-
-		imagePaths = append(imagePaths, url)
-	}
-
-	shareToken := utils.GenerateShareToken()
-
-	for _, idStr := range groupIDs {
-		groupID, _ := strconv.Atoi(idStr)
-
-		err := dbhandler.CreatePost(
-			uint(groupID),
-			userID,
-			content,
-			imagePaths,
-			links,
-			tags,
-			shareToken,
-		)
-
-		if err != nil {
-			http.Error(w, "Failed to create post", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusCreated)
-
+    w.WriteHeader(http.StatusCreated)
 }
 
-func MyPosts(w http.ResponseWriter, r *http.Request) {
 
+func MyPosts(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-
 	if page <= 0 {
 		page = 1
 	}
 	if limit <= 0 {
 		limit = 10
 	}
-
 	offset := (page - 1) * limit
 
 	session, _ := db.Store.Get(r, "session")
@@ -124,156 +97,94 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var posts []models.Post
+	resolved := r.URL.Query().Get("resolved")
+	resolvedFilter := ""
+	if resolved == "true" {
+		resolvedFilter = "AND posts.resolved = true"
+	} else if resolved == "false" {
+		resolvedFilter = "AND posts.resolved = false"
+	}
 
-	query := db.DB.
-		Preload("User").
-		Preload("Group").
-		Preload("Images").
-		Preload("Links").
-		Preload("Tags").
+	// -----------------------
+	// Single optimized query
+	// -----------------------
+	sql := fmt.Sprintf(`
+	SELECT 
+		posts.id, posts.content, posts.share_token, posts.resolved, posts.created_at,
+		json_build_object('id', users.id, 'name', users.name) AS user,
+		json_build_object('id', groups.id, 'name', groups.name) AS "group",
+		COALESCE(upvotes.count, 0) AS upvotes,
+		COALESCE(downvotes.count, 0) AS downvotes,
+		COALESCE(comments.count, 0) AS comments,
+		COALESCE(resolves.count, 0) AS resolve_count,
+		COALESCE(user_resolved.user_id IS NOT NULL, false) AS user_resolved,
+		COALESCE(imgs.images, '[]') AS images,
+		COALESCE(links.links, '[]') AS links,
+		COALESCE(tags.tags, '[]') AS tags
+	FROM posts
+	JOIN groups ON posts.group_id = groups.id
+	JOIN users ON posts.user_id = users.id
+	LEFT JOIN (
+		SELECT post_id, COUNT(*) AS count FROM post_votes WHERE vote_type=1 GROUP BY post_id
+	) AS upvotes ON upvotes.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, COUNT(*) AS count FROM post_votes WHERE vote_type=-1 GROUP BY post_id
+	) AS downvotes ON downvotes.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, COUNT(*) AS count FROM comments GROUP BY post_id
+	) AS comments ON comments.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, COUNT(*) AS count FROM post_resolves GROUP BY post_id
+	) AS resolves ON resolves.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, user_id FROM post_resolves WHERE user_id=? 
+	) AS user_resolved ON user_resolved.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, json_agg(url) AS images FROM post_images GROUP BY post_id
+	) AS imgs ON imgs.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, json_agg(url) AS links FROM post_links GROUP BY post_id
+	) AS links ON links.post_id = posts.id
+	LEFT JOIN (
+		SELECT post_id, json_agg(name) AS tags FROM post_tags GROUP BY post_id
+	) AS tags ON tags.post_id = posts.id
+	WHERE groups.creator_id=? AND groups.deleted_at IS NULL %s
+	ORDER BY posts.created_at DESC
+	LIMIT ? OFFSET ?;
+	`, resolvedFilter)
+
+	var posts []models.PostResponse
+
+	if err := db.DB.Raw(sql, userID, userID, limit, offset).Scan(&posts).Error; err != nil {
+		http.Error(w, "Error fetching posts: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Total posts count
+	var total int64
+	db.DB.Model(&models.Post{}).
 		Joins("JOIN groups ON posts.group_id = groups.id").
 		Where("groups.creator_id = ? AND groups.deleted_at IS NULL", userID).
-		Order("posts.created_at DESC")
-	
-	resolved := r.URL.Query().Get("resolved")
+		Count(&total)
 
-	if resolved == "true" {
-		query = query.Where("posts.resolved = ?", true)
-	}
-		
-	if resolved == "false" {
-		query = query.Where("posts.resolved = ?", false)
+	// Add share URL
+	for i := range posts {
+		posts[i].ShareURL = "http://localhost:8080/public/post/" 
 	}
 
-	var total int64
-	query.Model(&models.Post{}).Count(&total)
-
-	if err := query.Limit(limit).Offset(offset).Find(&posts).Error; err != nil {
-		http.Error(w, "Error fetching posts", http.StatusInternalServerError)
-		return
-	}
-
-	// No posts case
-	if len(posts) == 0 {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"pagination": map[string]interface{}{
-				"page":  page,
-				"limit": limit,
-				"total": total,
-				"pages": 0,
-			},
-			"posts": []models.PostResponse{},
-		})
-		return
-	}
-
-	// Collect Post IDs
-	var postIDs []uint
-	for _, post := range posts {
-		postIDs = append(postIDs, post.ID)
-	}
-
-	type CountResult struct {
-		PostID uint
-		Count  int64
-	}
-
-	// =====================
-	// Batch Queries
-	// =====================
-
-	var upvoteResults, downvoteResults, commentResults, resolveResults []CountResult
-	var userResolvedPosts []uint
-
-	db.DB.Model(&models.PostVote{}).
-		Select("post_id, COUNT(*) as count").
-		Where("vote_type = 1 AND post_id IN ?", postIDs).
-		Group("post_id").
-		Scan(&upvoteResults)
-
-	db.DB.Model(&models.PostVote{}).
-		Select("post_id, COUNT(*) as count").
-		Where("vote_type = -1 AND post_id IN ?", postIDs).
-		Group("post_id").
-		Scan(&downvoteResults)
-
-	db.DB.Model(&models.Comment{}).
-		Select("post_id, COUNT(*) as count").
-		Where("post_id IN ?", postIDs).
-		Group("post_id").
-		Scan(&commentResults)
-
-	db.DB.Model(&models.PostResolve{}).
-		Select("post_id, COUNT(*) as count").
-		Where("post_id IN ?", postIDs).
-		Group("post_id").
-		Scan(&resolveResults)
-
-	db.DB.Model(&models.PostResolve{}).
-		Select("post_id").
-		Where("user_id = ? AND post_id IN ?", userID, postIDs).
-		Scan(&userResolvedPosts)
-
-	// =====================
-	// Convert to Maps
-	// =====================
-
-	upvoteMap := make(map[uint]int64)
-	for _, r := range upvoteResults {
-		upvoteMap[r.PostID] = r.Count
-	}
-
-	downvoteMap := make(map[uint]int64)
-	for _, r := range downvoteResults {
-		downvoteMap[r.PostID] = r.Count
-	}
-
-	commentMap := make(map[uint]int64)
-	for _, r := range commentResults {
-		commentMap[r.PostID] = r.Count
-	}
-
-	resolveMap := make(map[uint]int64)
-	for _, r := range resolveResults {
-		resolveMap[r.PostID] = r.Count
-	}
-
-	userResolvedMap := make(map[uint]bool)
-	for _, id := range userResolvedPosts {
-		userResolvedMap[id] = true
-	}
-
-	// =====================
-	// Build Response
-	// =====================
-
-	var responsePosts []models.PostResponse
-
-	for _, post := range posts {
-		responsePosts = append(responsePosts, models.PostResponse{
-			Post:         post,
-			Upvotes:      upvoteMap[post.ID],
-			Downvotes:    downvoteMap[post.ID],
-			Comments:     commentMap[post.ID],
-			ResolveCount: resolveMap[post.ID],
-			UserResolved: userResolvedMap[post.ID],
-			ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
-		})
-	}
-
-	response := map[string]interface{}{
+	// Response
+	resp := map[string]interface{}{
 		"pagination": map[string]interface{}{
 			"page":  page,
 			"limit": limit,
 			"total": total,
 			"pages": (total + int64(limit) - 1) / int64(limit),
 		},
-		"posts": responsePosts,
+		"posts": posts,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func DeletePost(w http.ResponseWriter, r *http.Request) {
