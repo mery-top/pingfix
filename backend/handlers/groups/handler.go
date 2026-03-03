@@ -344,7 +344,6 @@ func MyGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 func LeaveGroup(w http.ResponseWriter, r *http.Request) {
-
 	var req struct {
 		GroupID uint `json:"groupID"`
 	}
@@ -361,35 +360,58 @@ func LeaveGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if group exists
-	var group models.Group
-	if err := db.DB.First(&group, req.GroupID).Error; err != nil {
+	tx := db.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Get only creator_id (no full struct load)
+	var creatorID uint
+	err := tx.Model(&models.Group{}).
+		Select("creator_id").
+		Where("id = ?", req.GroupID).
+		Take(&creatorID).Error
+
+	if err != nil {
+		tx.Rollback()
 		http.Error(w, "Group not found", http.StatusNotFound)
 		return
 	}
 
-	// Prevent creator from leaving
-	if group.CreatorID == userID {
+	// Prevent creator leaving
+	if creatorID == userID {
+		tx.Rollback()
 		http.Error(w, "Creator cannot leave their own group", http.StatusForbidden)
 		return
 	}
 
-	tx := db.DB.Begin()
+	// Delete membership (returns affected rows)
+	result := tx.
+		Where("user_id = ? AND group_id = ?", userID, req.GroupID).
+		Delete(&models.GroupData{})
 
-	// Delete from group_data
-	if err := tx.Where("user_id = ? AND group_id = ?", userID, req.GroupID).
-		Delete(&models.GroupData{}).Error; err != nil {
-
+	if result.Error != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to leave group", http.StatusInternalServerError)
 		return
 	}
 
-	// Decrement subscriber_count
-	if err := tx.Model(&models.Group{}).
-		Where("id = ?", req.GroupID).
-		UpdateColumn("subscriber_count", gorm.Expr("CASE WHEN subscriber_count > 0 THEN subscriber_count - 1 ELSE 0 END")).Error; err != nil {
+	// If user was not a member → do nothing
+	if result.RowsAffected == 0 {
+		tx.Rollback()
+		http.Error(w, "Not a member of this group", http.StatusBadRequest)
+		return
+	}
 
+	// Atomic decrement (no negative values)
+	err = tx.Model(&models.Group{}).
+		Where("id = ?", req.GroupID).
+		UpdateColumn("subscriber_count",
+			gorm.Expr("GREATEST(subscriber_count - 1, 0)")).Error
+
+	if err != nil {
 		tx.Rollback()
 		http.Error(w, "Failed to update subscriber count", http.StatusInternalServerError)
 		return
