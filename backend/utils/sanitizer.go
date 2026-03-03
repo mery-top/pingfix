@@ -3,6 +3,7 @@ package utils
 import (
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 // Sanitize strips HTML tags and potentially dangerous characters from a string.
@@ -48,4 +49,17 @@ func SanitizeSlice(inputs []string) []string {
 		sanitized[i] = Sanitize(input)
 	}
 	return sanitized
+}
+
+
+// sanitizeFileName replaces spaces and removes unsafe chars
+func SanitizeFileName(name string) string {
+    name = strings.Map(func(r rune) rune {
+        if unicode.IsSpace(r) {
+            return '_'
+        }
+        return r
+    }, name)
+    re := regexp.MustCompile(`[^a-zA-Z0-9._-]`)
+    return re.ReplaceAllString(name, "")
 }
