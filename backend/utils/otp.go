@@ -76,7 +76,7 @@ func SendOTP( w http.ResponseWriter, r *http.Request){
 	otpStore.Values[body.Email] = otp
 	otpStore.Save(r,w)
 
-	otp_err:= SendEmail(body.Email, "Your OTP Code", "Your OTP is"+otp)
+	otp_err:= SendEmail(body.Email, "Your OTP Code", "Your OTP is: "+otp)
 
 	if otp_err != nil {
 		log.Println("Error sending OTP:", err)
