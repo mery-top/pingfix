@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home/base.css";
 import "../styles/home/components.css";
@@ -10,7 +10,6 @@ import h4 from "../assets/home/h4.png";
 
 function Home() {
   const navigate = useNavigate()
-  const [activeReview, setActiveReview] = useState(0);
 
   const reviews = [
     {
@@ -32,13 +31,6 @@ function Home() {
       role: "Resident Member",
     },
   ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveReview((prev) => (prev + 1) % reviews.length);
-    }, 3800);
-    return () => clearInterval(timer);
-  }, [reviews.length]);
 
   const goToRegister = () => {
     navigate('/register')
@@ -145,50 +137,18 @@ function Home() {
             <h2>Trusted by moderators and residents</h2>
           </div>
 
-          <div className="reviews-carousel">
-            <button
-              className="carousel-btn"
-              onClick={() => setActiveReview((activeReview - 1 + reviews.length) % reviews.length)}
-              aria-label="Previous review"
-            >
-              ‹
-            </button>
-            <div className="reviews-window">
-              <div
-                className="reviews-track"
-                style={{ transform: `translateX(-${activeReview * 100}%)` }}
-              >
-                {reviews.map((review, idx) => (
-                  <article className="review-card" key={idx}>
-                    <div className="review-stars" aria-label="5 star rating">
-                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                    </div>
-                    <p>“{review.quote}”</p>
-                    <div className="review-meta">
-                      <strong>{review.name}</strong>
-                      <span>{review.role}</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-            <button
-              className="carousel-btn"
-              onClick={() => setActiveReview((activeReview + 1) % reviews.length)}
-              aria-label="Next review"
-            >
-              ›
-            </button>
-          </div>
-
-          <div className="carousel-dots">
-            {reviews.map((_, idx) => (
-              <button
-                key={idx}
-                className={`dot ${idx === activeReview ? "active" : ""}`}
-                onClick={() => setActiveReview(idx)}
-                aria-label={`Go to review ${idx + 1}`}
-              />
+          <div className="reviews-orbit">
+            {reviews.map((review, idx) => (
+              <article className="review-card" key={idx}>
+                <div className="review-stars" aria-label="5 star rating">
+                  <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                </div>
+                <p>“{review.quote}”</p>
+                <div className="review-meta">
+                  <strong>{review.name}</strong>
+                  <span>{review.role}</span>
+                </div>
+              </article>
             ))}
           </div>
 
