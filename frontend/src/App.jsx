@@ -12,6 +12,7 @@ import MyGroups from './pages/MyGroups'
 import CreatePost from './pages/CreatePost'
 import MyPosts from './pages/MyPosts'
 import GroupDetails from './pages/GroupDetails'
+import PublicPost from './pages/PublicPost'
 import { ResolvePost } from './api/PostAPI'
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         <Route path="/group/mygroups" element={<ProtectedRoute><MyGroups /></ProtectedRoute>}></Route>
         <Route path="/post/createpost" element={<ProtectedRoute><CreatePost /></ProtectedRoute>}></Route>
         <Route path="/post/mypost" element={<ProtectedRoute><MyPosts /></ProtectedRoute>}></Route>
+        <Route path="/public/post/:token" element={<PublicPost />}></Route>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>}></Route>
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>}></Route>
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>}></Route>
