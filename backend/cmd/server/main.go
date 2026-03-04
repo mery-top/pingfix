@@ -11,7 +11,7 @@ import (
 
 func main(){
 	config.LoadEnv()
-	db.StoreInit()
+	db.InitRedis()
 	db.DBInit()
 	//migrate.Migrate()
 	r:= routes.SetupRouter()
