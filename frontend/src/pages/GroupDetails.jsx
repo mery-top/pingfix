@@ -1,5 +1,6 @@
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { ViewGroupAPI } from "../api/GroupAPI";
 import PostCardMemo from "../components/PostCard";
 
@@ -7,19 +8,40 @@ function GroupDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data, isLoading, error } = useQuery({
+  // Fetch group info (single fetch)
+  const { data: groupData, isLoading: groupLoading, error: groupError } = useQuery({
     queryKey: ["group", id],
     queryFn: () => ViewGroupAPI(id),
     enabled: !!id,
+    staleTime: 1000 * 60 * 5, // cache 5 min
   });
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Failed to load group</p>;
-  if (!data?.group) return <p>Group not found</p>;
+  // Infinite query for posts
+  const {
+    data: postsPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["groupPosts", id],
+    queryFn: async ({ pageParam = 0 }) => {
+      const limit = 20;
+      const response = await ViewGroupAPI(id + `?limit=${limit}&offset=${pageParam}`);
+      return response.posts;
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === 20 ? allPages.flat().length : undefined, // if 20 posts fetched, fetch next
+    enabled: !!id,
+    staleTime: 1000 * 60 * 2, // cache posts 2 min
+  });
 
-  const group = data.group;
-  const subscribers = data.subscribers || [];
-  const posts = data.posts || [];
+  if (groupLoading) return <p>Loading group...</p>;
+  if (groupError) return <p>Failed to load group</p>;
+  if (!groupData?.group) return <p>Group not found</p>;
+
+  const group = groupData.group;
+  const subscribers = groupData.subscribers || [];
+  const posts = postsPages ? postsPages.pages.flat() : [];
 
   return (
     <div className="container" style={{ maxWidth: "700px", margin: "40px auto" }}>
@@ -51,21 +73,33 @@ function GroupDetails() {
         </p>
 
         <h3 style={{ color: "#F47D34" }}>
-          Subscribers ({subscribers.length})
+          Subscribers: {group.subscriberCount || subscribers.length}
         </h3>
       </div>
 
-      <h3 style={{ color: "#fff", margin: "30px 0 20px" }}>
-        Posts ({posts.length})
-      </h3>
+      <h3 style={{ color: "#fff", margin: "30px 0 20px" }}>Posts</h3>
 
       {posts.length === 0 && <p>No posts yet.</p>}
 
-      {posts.map((post) => (
-        <PostCardMemo key={post.ID} post={{ post }} hideViewGroup />
-      ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {posts.map((post) => (
+          <PostCardMemo key={post.ID} post={post} hideViewGroup />
+        ))}
+      </div>
+
+      {hasNextPage && (
+        <div style={{ textAlign: "center", margin: "20px 0" }}>
+          <button
+            className="ig-btn"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? "Loading..." : "Load More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export default GroupDetails;
+export default GroupDetails; 
