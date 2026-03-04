@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { LoginAPI, LoginWithGoogle } from '../api/AuthAPI'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { sanitizeInput } from '../utils/sanitizer'
 
 function Login() {
@@ -9,6 +9,13 @@ function Login() {
   const [message, setMessage] = useState("")
   const [isAuthenticated, setAuthenticated] = useState("")
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  React.useEffect(() => {
+    if (searchParams.get("oauth_error") === "1") {
+      setMessage("Google login failed. Please try again.")
+    }
+  }, [searchParams])
 
   const HandleLogin = async () => {
     if (!email.trim()) {

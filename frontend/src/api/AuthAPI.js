@@ -34,7 +34,7 @@ export async function RegisterAPI(name,email, password){
 }
 
 export function LoginWithGoogle(){
-    window.location.href = `${API_BASE_URL}/auth/google`
+    window.location.href = "/auth/google"
 }
 
 export async function CheckStatusAPI(){
@@ -67,4 +67,3 @@ export async function VerifyOTPAPI(email, otp){
     });
     return response
 }
-
