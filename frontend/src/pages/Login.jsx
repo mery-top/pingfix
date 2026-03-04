@@ -10,6 +10,7 @@ function Login() {
   const [isAuthenticated, setAuthenticated] = useState("")
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const nextPath = searchParams.get("next")
 
   React.useEffect(() => {
     if (searchParams.get("oauth_error") === "1") {
@@ -38,7 +39,7 @@ function Login() {
       if (res.status === 200) {
         setMessage("")
         setAuthenticated("Login Success")
-        navigate("/dashboard")
+        navigate(nextPath || "/dashboard")
       } else {
         const errText = await res.text()
         setMessage(errText || "Enter Correct Details, Login Failed")
