@@ -52,16 +52,19 @@ func InitRedis() {
 	log.Println("Connected to Redis (go-redis v9)")
 
 	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
-	secureCookies := appEnv == "production"
+	secureCookies := true
+	if appEnv == "development" || appEnv == "local" {
+		secureCookies = false
+	}
 	if secureOverride := strings.TrimSpace(os.Getenv("COOKIE_SECURE")); secureOverride != "" {
 		if parsed, err := strconv.ParseBool(secureOverride); err == nil {
 			secureCookies = parsed
 		}
 	}
 
-	sameSite := http.SameSiteLaxMode
-	if appEnv == "production" {
-		sameSite = http.SameSiteNoneMode
+	sameSite := http.SameSiteNoneMode
+	if appEnv == "development" || appEnv == "local" {
+		sameSite = http.SameSiteLaxMode
 	}
 	switch strings.ToLower(strings.TrimSpace(os.Getenv("COOKIE_SAMESITE"))) {
 	case "none":
@@ -70,6 +73,9 @@ func InitRedis() {
 		sameSite = http.SameSiteLaxMode
 	case "strict":
 		sameSite = http.SameSiteStrictMode
+	}
+	if !secureCookies && sameSite == http.SameSiteNoneMode {
+		sameSite = http.SameSiteLaxMode
 	}
 
 	cookieDomain := strings.TrimSpace(os.Getenv("COOKIE_DOMAIN"))
