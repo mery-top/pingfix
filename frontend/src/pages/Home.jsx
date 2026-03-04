@@ -95,12 +95,6 @@ function Home() {
               PingFix combines reporting, moderation, and verification into a single
               stream so local teams can move from complaint to closure without noise.
             </p>
-            <div className="showcase-tags">
-              <span>Incident Reporting</span>
-              <span>Moderation</span>
-              <span>Resolution Tracking</span>
-              <span>Community Voting</span>
-            </div>
             <button className="showcase-cta" onClick={goToRegister}>
               Explore PingFix
             </button>
@@ -156,6 +150,29 @@ function Home() {
             <button onClick={goToRegister}>Start Building Your Community Feed</button>
           </div>
         </section>
+
+        <footer className="home-footer">
+          <div className="home-footer-inner">
+            <h3>Fund Us</h3>
+            <p>
+              Support PingFix and help us expand transparent community issue resolution
+              across more neighborhoods.
+            </p>
+
+            <h4>Join This Social Movement</h4>
+            <p>
+              Be part of a citizen-first platform where reporting, accountability,
+              and collaboration create measurable local impact.
+            </p>
+
+            <h4>Contact Us</h4>
+            <p>
+              <a href="mailto:vircsamenterprises@gmail.com">
+                vircsamenterprises@gmail.com
+              </a>
+            </p>
+          </div>
+        </footer>
 
 
       

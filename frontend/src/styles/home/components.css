@@ -531,6 +531,49 @@
   margin-top: 10px;
 }
 
+.home-footer {
+  width: 100%;
+  background: #000000;
+  margin-top: 60px;
+  padding: 54px 20px;
+}
+
+.home-footer-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: center;
+  background: #000000;
+}
+
+.home-footer h3,
+.home-footer h4 {
+  color: #ffffff;
+  background: #000000;
+  margin-bottom: 10px;
+}
+
+.home-footer h3 {
+  font-size: 30px;
+}
+
+.home-footer h4 {
+  margin-top: 24px;
+  font-size: 22px;
+}
+
+.home-footer p {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 16px;
+  line-height: 1.7;
+  background: #000000;
+}
+
+.home-footer a {
+  color: #f47d34;
+  font-weight: 700;
+  background: #000000;
+}
+
 @media (max-width: 900px) {
   .showcase-section {
     grid-template-columns: 1fr;
@@ -561,5 +604,13 @@
   .review-card p {
     font-size: 15px;
     max-width: 100%;
+  }
+
+  .home-footer h3 {
+    font-size: 24px;
+  }
+
+  .home-footer h4 {
+    font-size: 19px;
   }
 }
