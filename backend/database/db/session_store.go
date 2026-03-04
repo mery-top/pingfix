@@ -55,7 +55,7 @@ func InitRedis() {
 		Path:     "/",
 		MaxAge:   172800,
 		HttpOnly: true,
-		Secure:   false,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	}
 
