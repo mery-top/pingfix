@@ -33,4 +33,4 @@ func DBInit() {
 	}
 
 	fmt.Println("Connected DB Gorm")
-}
+} 
