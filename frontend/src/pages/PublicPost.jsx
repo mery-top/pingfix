@@ -74,7 +74,7 @@ function PublicPost() {
     <div style={{ minHeight: "100vh", background: "#0f1116", padding: "24px" }}>
       <div style={{ maxWidth: "640px", margin: "30px auto", background: "#1a1d25", borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", position: "relative" }}>
       <div style={{ display: "flex", justifyContent: "center", padding: "18px 0 8px" }}>
-          <img src={logo} alt="PingFix" style={{ height: "70px", width: "auto", opacity: 0.95 }} />
+          <img src={logo} alt="PingFix" style={{ height: "150px", width: "auto", opacity: 0.95 }} />
         </div>
         <div style={{ padding: "18px 18px 8px", color: "#fff" }}>
           <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
