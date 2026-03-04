@@ -3,6 +3,7 @@ package feed
 import (
 	"backend/database/db"
 	"backend/models"
+	"backend/utils"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -75,7 +76,7 @@ func Feed(w http.ResponseWriter, r *http.Request) {
 			Comments:     post.CommentCount,
 			ResolveCount: post.ResolveCount,
 			UserResolved: false, // Optional: can check if user resolved in batch query
-			ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
+			ShareURL:     utils.BuildShareURL(post.ShareToken),
 		})
 	}
 
