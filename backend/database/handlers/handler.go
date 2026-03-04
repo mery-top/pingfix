@@ -5,16 +5,18 @@ import (
 	"backend/database/db"
 )
 
-func CreateUser(name, email, hashedPassword string){
+func CreateUser(name, email, hashedPassword, provider, oauthID string) models.User {
 	newUser := models.User{
-		Name:     name,
-		Email:    email,
-		Password: hashedPassword,
+		Name:         name,
+		Email:        email,
+		Password:     hashedPassword, // empty for OAuth users
+		AuthProvider: provider,       // "local" or "google"
+		OAuthID:      oauthID,        // Google user ID, empty for local
 	}
-	
-	db.DB.Create(&newUser)
-}
 
+	db.DB.Create(&newUser)
+	return newUser
+}
 func CreateGroup(name, description, handle,groupType, country, state, city , authorityEmail string, userID int){
 	newGroup:= models.Group{
 		Name: name,
