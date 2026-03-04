@@ -14,6 +14,7 @@ function ProtectedRoute({ children }) {
           setAuthenticated(false)
         }
       } catch (error) {
+        setAuthenticated(false)
       }
     }
 
