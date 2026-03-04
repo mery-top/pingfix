@@ -1,5 +1,7 @@
+import { apiUrl } from "./client";
+
 export async function CreatePostAPI(formData) {
-  const response = await fetch("/api/post/create", {
+  const response = await fetch(apiUrl("/api/post/create"), {
     method: "POST",
     credentials: "include",
     body: formData, // NO Content-Type header!
@@ -9,7 +11,7 @@ export async function CreatePostAPI(formData) {
 
 export async function MyPostsAPI(params) {
   const queryString = params.toString();
-  const url = queryString ? `/api/post/myposts?${queryString}` : `/api/post/myposts`;
+  const url = queryString ? apiUrl(`/api/post/myposts?${queryString}`) : apiUrl("/api/post/myposts");
   const response = await fetch(url, {
     credentials: "include"
   });
@@ -17,7 +19,7 @@ export async function MyPostsAPI(params) {
 }
 
 export async function DeletePostAPI(postID) {
-  const response = await fetch(`/api/post/delete?id=${postID}`, {
+  const response = await fetch(apiUrl(`/api/post/delete?id=${postID}`), {
     method: "DELETE",
     credentials: "include"
   })
@@ -25,7 +27,7 @@ export async function DeletePostAPI(postID) {
 }
 
 export async function VotePost(post_id, vote_type) {
-  const res = await fetch("/api/post/vote", {
+  const res = await fetch(apiUrl("/api/post/vote"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -39,7 +41,7 @@ export async function VotePost(post_id, vote_type) {
 }
 
 export async function ResolvePost(post_id) {
-  const res = await fetch("/api/post/resolve", {
+  const res = await fetch(apiUrl("/api/post/resolve"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -49,7 +51,7 @@ export async function ResolvePost(post_id) {
 }
 
 export async function AddComment(post_id, content) {
-  const res = await fetch("/api/post/comment", {
+  const res = await fetch(apiUrl("/api/post/comment"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -59,7 +61,7 @@ export async function AddComment(post_id, content) {
 }
 
 export async function DeleteComment(comment_id) {
-  const res = await fetch(`/api/post/comment/${comment_id}`, {
+  const res = await fetch(apiUrl(`/api/post/comment/${comment_id}`), {
     method: "DELETE",
     credentials: "include",
   });
@@ -67,7 +69,7 @@ export async function DeleteComment(comment_id) {
 }
 
 export async function EditComment(comment_id, content) {
-  const res = await fetch(`/api/comment/edit/${comment_id}`, {
+  const res = await fetch(apiUrl(`/api/comment/edit/${comment_id}`), {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -77,7 +79,7 @@ export async function EditComment(comment_id, content) {
 }
 
 export async function GetComments(post_id) {
-  const res = await fetch(`/api/post/comments/${post_id}`, {
+  const res = await fetch(apiUrl(`/api/post/comments/${post_id}`), {
     credentials: "include"
   });
   return res.json(); // should return an array of comments

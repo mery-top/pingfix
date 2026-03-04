@@ -1,5 +1,7 @@
+import { apiUrl } from "./client";
+
 export async function GroupRegisterAPI(payload){
-    const response = await fetch("/api/group/register", {
+    const response = await fetch(apiUrl("/api/group/register"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -13,7 +15,7 @@ export async function GroupRegisterAPI(payload){
 
 export async function SearchGroupAPI(params){
     const queryString = params.toString();
-    const url = queryString ? `/api/group/search?${queryString}` : `/api/group/search`;
+    const url = queryString ? apiUrl(`/api/group/search?${queryString}`) : apiUrl("/api/group/search");
     const response = await fetch(url, {
         credentials: "include"
     });
@@ -21,7 +23,7 @@ export async function SearchGroupAPI(params){
 }
 
 export async function JoinGroupAPI(groupID){
-    const response = await fetch("/api/group/join", {
+    const response = await fetch(apiUrl("/api/group/join"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -36,7 +38,7 @@ export async function JoinGroupAPI(groupID){
 
 export async function MyGroupsAPI(params){
     const queryString = params.toString();
-    const url = queryString ? `/api/group/mygroups?${queryString}` : `/api/group/mygroups`;
+    const url = queryString ? apiUrl(`/api/group/mygroups?${queryString}`) : apiUrl("/api/group/mygroups");
     const response = await fetch(url, {
         credentials: "include"
     });
@@ -44,7 +46,7 @@ export async function MyGroupsAPI(params){
 }
 
 export async function LeaveGroupAPI(groupID){
-    const response = await fetch("/api/group/leave", {
+    const response = await fetch(apiUrl("/api/group/leave"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -57,7 +59,7 @@ export async function LeaveGroupAPI(groupID){
 
 
 export const RequestDeleteGroupAPI = async (groupID) => {
-    return await fetch("/api/group/delete/request", {
+    return await fetch(apiUrl("/api/group/delete/request"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -68,7 +70,7 @@ export const RequestDeleteGroupAPI = async (groupID) => {
   };
   
   export const ConfirmDeleteGroupAPI = async (groupID, otp) => {
-    return await fetch("/api/group/delete/confirm", {
+    return await fetch(apiUrl("/api/group/delete/confirm"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,7 +81,7 @@ export const RequestDeleteGroupAPI = async (groupID) => {
   };
 
   export async function ViewGroupAPI(groupID) {
-    const response = await fetch(`/api/groups/${groupID}`, {
+    const response = await fetch(apiUrl(`/api/groups/${groupID}`), {
       method: "GET",
       credentials: "include",
     });
