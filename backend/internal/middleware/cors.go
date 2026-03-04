@@ -6,15 +6,31 @@ import (
 	"strings"
 )
 
+func allowedOrigins() map[string]struct{} {
+	origins := map[string]struct{}{
+		"http://localhost:5173":      {},
+		"https://pingfix.vercel.app": {},
+	}
+
+	raw := strings.TrimSpace(os.Getenv("FRONTEND_URL"))
+	if raw == "" {
+		return origins
+	}
+
+	for _, origin := range strings.Split(raw, ",") {
+		origin = strings.TrimSpace(origin)
+		if origin != "" {
+			origins[origin] = struct{}{}
+		}
+	}
+
+	return origins
+}
+
 func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		frontendURL := strings.TrimSpace(os.Getenv("FRONTEND_URL"))
-		if frontendURL == "" {
-			frontendURL = "http://localhost:5173"
-		}
-
 		origin := strings.TrimSpace(r.Header.Get("Origin"))
-		if origin != "" && origin == frontendURL {
+		if _, ok := allowedOrigins()[origin]; origin != "" && ok {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
