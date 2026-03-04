@@ -438,8 +438,12 @@
 
 .reviews-window {
   overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(244, 125, 52, 0.2), transparent 36%),
+    radial-gradient(circle at 88% 82%, rgba(229, 220, 138, 0.14), transparent 30%),
+    #1f0d19;
 }
 
 .reviews-track {
@@ -450,39 +454,60 @@
 .review-card {
   min-width: 100%;
   border: none;
-  border-radius: 14px;
-  padding: 30px;
-  background: #24111d;
-  min-height: 240px;
+  border-radius: 50%;
+  width: min(520px, 78vw);
+  aspect-ratio: 1 / 1;
+  margin: 18px auto;
+  padding: 44px;
+  background:
+    radial-gradient(circle at 22% 22%, rgba(255, 255, 255, 0.08), transparent 36%),
+    #2a1120;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   animation: reviewFadeIn 420ms ease;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 .review-card p {
   color: rgba(255, 255, 255, 0.92);
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 17px;
+  line-height: 1.65;
   background: #24111d;
+  max-width: 90%;
 }
 
 .review-meta {
-  margin-top: 20px;
-  background: #24111d;
+  margin-top: 16px;
+  background: transparent;
 }
 
 .review-meta strong {
   display: block;
   color: #fff;
   font-size: 16px;
-  background: #24111d;
+  background: transparent;
 }
 
 .review-meta span {
   color: rgba(255, 255, 255, 0.68);
   font-size: 13px;
-  background: #24111d;
+  background: transparent;
+}
+
+.review-stars {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  color: #f6c453;
+  font-size: 14px;
+  letter-spacing: 1px;
+  background: transparent;
 }
 
 .carousel-btn {
@@ -602,11 +627,12 @@
   }
 
   .review-card {
-    min-height: 0;
-    padding: 20px;
+    width: min(420px, 90vw);
+    padding: 28px;
   }
 
   .review-card p {
     font-size: 15px;
+    max-width: 100%;
   }
 }

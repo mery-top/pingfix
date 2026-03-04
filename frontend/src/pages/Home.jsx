@@ -160,6 +160,9 @@ function Home() {
               >
                 {reviews.map((review, idx) => (
                   <article className="review-card" key={idx}>
+                    <div className="review-stars" aria-label="5 star rating">
+                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
                     <p>“{review.quote}”</p>
                     <div className="review-meta">
                       <strong>{review.name}</strong>
