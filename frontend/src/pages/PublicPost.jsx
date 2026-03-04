@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CheckStatusAPI } from "../api/AuthAPI";
 import { GetPublicPostAPI } from "../api/PostAPI";
+import logo from "../assets/logo.png";
 
 function truncateHalf(text = "") {
   if (!text) return "";
@@ -72,6 +73,9 @@ function PublicPost() {
   return (
     <div style={{ minHeight: "100vh", background: "#0f1116", padding: "24px" }}>
       <div style={{ maxWidth: "640px", margin: "30px auto", background: "#1a1d25", borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", position: "relative" }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "18px 0 8px" }}>
+          <img src={logo} alt="PingFix" style={{ height: "70px", width: "auto", opacity: 0.95 }} />
+        </div>
         <div style={{ padding: "18px 18px 8px", color: "#fff" }}>
           <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
             {post.User?.Name || "Anonymous"} in {post.Group?.Name || "Community"}
