@@ -116,14 +116,17 @@ function Register() {
           onChange={e => setEmail(sanitizeInput(e.target.value))}
         />
 
-        <input type="password"
+        <input
+          type="password"
           className="ig-input"
           placeholder='Password'
           value={password}
           onChange={e => setPassword(e.target.value)}
         />
 
-        <input type="password"
+
+        <input
+          type="password"
           className="ig-input"
           placeholder='Confirm Password'
           value={confirmPassword}
