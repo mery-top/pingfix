@@ -49,12 +49,13 @@ function MyPosts() {
       </div>
 
       {/* Filter buttons */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "15px", justifyContent: "center" }}>
         {['all', 'resolved', 'unresolved'].map((f) => (
           <button
             key={f}
+            className={filter === f ? "ig-btn" : "ig-btn-outline"}
+            style={{ margin: 0, padding: "8px 16px" }}
             onClick={() => { setPage(1); setFilter(f); }}
-            style={{ fontWeight: filter === f ? 'bold' : 'normal' }}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
           </button>
@@ -63,8 +64,18 @@ function MyPosts() {
 
       {/* Posts */}
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        {isLoading && <p style={{ textAlign: "center" }}>Loading posts...</p>}
+        {isLoading && <p style={{ textAlign: "center", color: "rgba(255,255,255,0.6)" }}>Loading posts...</p>}
         {isError && <p style={{ color: "#ff4d4f", textAlign: "center" }}>Error loading posts</p>}
+
+        {!isLoading && !isError && data?.posts?.length === 0 && (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: "rgba(255,255,255,0.5)" }}>
+            {filter === 'resolved'
+              ? "No resolved posts found."
+              : filter === 'unresolved'
+                ? "No unresolved posts found."
+                : "No posts found."}
+          </div>
+        )}
 
         {data?.posts?.map((post) => (
           <PostCardMemo
