@@ -3,7 +3,7 @@ package main
 import (
 	"backend/config"
 	"backend/database/db"
-
+	//"backend/database/migrate"
 	"backend/internal/routes"
 	"log"
 	"net/http"
