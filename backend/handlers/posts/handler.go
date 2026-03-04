@@ -14,70 +14,70 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-    session, _ := db.Store.Get(r, "session")
-    userID, ok := session.Values["user_id"].(uint)
-    if !ok {
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	session, _ := db.Store.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    if err := r.ParseMultipartForm(20 << 20); err != nil { // 20MB
-        http.Error(w, "Cannot parse form: "+err.Error(), http.StatusBadRequest)
-        return
-    }
+	if err := r.ParseMultipartForm(20 << 20); err != nil { // 20MB
+		http.Error(w, "Cannot parse form: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    groupIDs := r.Form["groupID"]
-    if len(groupIDs) == 0 {
-        http.Error(w, "No groups selected", http.StatusBadRequest)
-        return
-    }
+	groupIDs := r.Form["groupID"]
+	if len(groupIDs) == 0 {
+		http.Error(w, "No groups selected", http.StatusBadRequest)
+		return
+	}
 
-    content := utils.Sanitize(r.FormValue("content"))
-    links := utils.SanitizeSlice(r.Form["links"])
-    tags := utils.SanitizeSlice(r.Form["tags"])
+	content := utils.Sanitize(r.FormValue("content"))
+	links := utils.SanitizeSlice(r.Form["links"])
+	tags := utils.SanitizeSlice(r.Form["tags"])
 
-    // ----------------- Handle images -----------------
-    files := r.MultipartForm.File["images"]
-    imagePaths := []string{}
+	// ----------------- Handle images -----------------
+	files := r.MultipartForm.File["images"]
+	imagePaths := []string{}
 
-    for _, fh := range files {
-        file, err := fh.Open()
-        if err != nil {
-            http.Error(w, "Failed to read image: "+fh.Filename, http.StatusBadRequest)
-            return
-        }
+	for _, fh := range files {
+		file, err := fh.Open()
+		if err != nil {
+			http.Error(w, "Failed to read image: "+fh.Filename, http.StatusBadRequest)
+			return
+		}
 
-        safeName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), utils.SanitizeFileName(fh.Filename))
-        url, err := utils.UploadToS3(file, safeName)
-        file.Close()
-        if err != nil {
-            http.Error(w, "S3 upload failed: "+safeName, http.StatusInternalServerError)
-            return
-        }
-        imagePaths = append(imagePaths, url)
-    }
+		safeName := fmt.Sprintf("%d_%s", time.Now().UnixNano(), utils.SanitizeFileName(fh.Filename))
+		url, err := utils.UploadToS3(file, safeName)
+		file.Close()
+		if err != nil {
+			http.Error(w, "S3 upload failed: "+safeName, http.StatusInternalServerError)
+			return
+		}
+		imagePaths = append(imagePaths, url)
+	}
 
-    shareToken := utils.GenerateShareToken()
+	shareToken := utils.GenerateShareToken()
 
-    for _, idStr := range groupIDs {
-        groupID, err := strconv.Atoi(idStr)
-        if err != nil {
-            http.Error(w, "Invalid group ID: "+idStr, http.StatusBadRequest)
-            return
-        }
+	for _, idStr := range groupIDs {
+		groupID, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid group ID: "+idStr, http.StatusBadRequest)
+			return
+		}
 
-        if err := dbhandler.CreatePost(uint(groupID), userID, content, imagePaths, links, tags, shareToken); err != nil {
-            http.Error(w, "Failed to create post: "+err.Error(), http.StatusInternalServerError)
-            return
-        }
-    }
+		if err := dbhandler.CreatePost(uint(groupID), userID, content, imagePaths, links, tags, shareToken); err != nil {
+			http.Error(w, "Failed to create post: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 
-    w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 }
-
 
 func MyPosts(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
@@ -169,7 +169,7 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 
 	// Add share URL
 	for i := range posts {
-		posts[i].ShareURL = "http://localhost:8080/public/post/" 
+		posts[i].ShareURL = "http://localhost:8080/public/post/"
 	}
 
 	// Response
@@ -395,11 +395,9 @@ func ResolvePost(w http.ResponseWriter, r *http.Request) {
 		db.DB.Save(&post)
 	}
 
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
-
 
 func AddComment(w http.ResponseWriter, r *http.Request) {
 
@@ -435,6 +433,9 @@ func AddComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error adding comment", http.StatusInternalServerError)
 		return
 	}
+
+	// Increment Post CommentCount
+	db.DB.Model(&models.Post{}).Where("id = ?", req.PostID).UpdateColumn("comment_count", gorm.Expr("comment_count + 1"))
 
 	// Preload User for the response
 	db.DB.Preload("User").First(&comment, comment.ID)
@@ -473,6 +474,9 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Decrement Post CommentCount
+	db.DB.Model(&models.Post{}).Where("id = ?", comment.PostID).UpdateColumn("comment_count", gorm.Expr("GREATEST(comment_count - 1, 0)"))
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
@@ -509,7 +513,7 @@ func EditComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Comment content cannot be empty", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Find the comment
 	var comment models.Comment
 	if err := db.DB.First(&comment, commentID).Error; err != nil {
