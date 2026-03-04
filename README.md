@@ -2,14 +2,20 @@
 
 PingFix is a community-driven issue resolution and social interaction platform. It empowers users to report issues, collaborate within community groups, and track the progress of resolutions through a democratic voting and verification system.
 
+## Live Deployment
+
+- (Vercel): [https://pingfix.vercel.app](https://pingfix.vercel.app)
+
 ## 🌟 Core Features
 
 - **🔐 User Authentication**: Secure login and registration for users and group administrators.
 - **👥 Community Groups**: Join or create groups focused on specific locations or interests.
 - **📝 Post Creation & Feed**: Share updates, report issues, and view a dynamic feed of community activities.
+- **🗜️ Image Compression (100KB)**: Uploaded images are compressed to around **100KB** for faster loading and reduced bandwidth usage.
 - **👍 Vote & Comment System**: Engage with posts through upvotes, downvotes, and detailed discussions.
 - **✅ Smart Resolution Logic**: Posts are automatically marked as "Resolved" once a **65% community threshold** is reached, ensuring verified outcomes.
 - **🔍 Search Functionality**: Easily find groups, posts, and users across the platform.
+- **⚡ Optimized Data Access**: Query flow is optimized for faster feed/search access with efficient SQL patterns (filtering, pagination, and reduced heavy lookups).
 
 ## 🛠️ Tech Stack
 
@@ -24,10 +30,13 @@ PingFix is a community-driven issue resolution and social interaction platform. 
 - **ORM**: [GORM](https://gorm.io/)
 - **Web Toolkit**: [Gorilla Mux](https://github.com/gorilla/mux) & [Gorilla Sessions](https://github.com/gorilla/sessions)
 - **Caching**: [Redis](https://redis.io/)
+- **Query Optimization**: SQL query optimization for feed/search performance (optimized filters, pagination, and leaner DB access paths)
 
 ### Infrastructure
-- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **Database**: Supabase
 - **Storage**: [AWS S3](https://aws.amazon.com/s3/)
+- **Frontend Hosting**: [Vercel](https://vercel.com/)
+- **Backend Hosting**: Linux server with Nginx reverse proxy + HTTPS (Certbot)
 
 ### Demo Video
 
@@ -72,7 +81,7 @@ Stay connected on the go with our fully responsive mobile design.
 2. Create a `.env` file with your configuration.
 3. Run the server:
    ```bash
-   go run main.go
+   go run cmd/server/main.go
    ```
 
 ### Frontend Setup
@@ -86,6 +95,5 @@ Stay connected on the go with our fully responsive mobile design.
    npm run dev
    ```
 
----
 
 Built with ❤️ for better communities.
