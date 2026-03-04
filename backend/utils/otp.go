@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"strings"
 )
 
 func GenerateOTP() string{
@@ -29,6 +30,12 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request){
 		http.Error(w,"Invalid Request" ,http.StatusBadRequest)
 		return 
 	}
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+	req.OTP = strings.TrimSpace(req.OTP)
+	if req.Email == "" || req.OTP == "" {
+		http.Error(w, "Email and OTP are required", http.StatusBadRequest)
+		return
+	}
 
 	otpStore, err:= db.Store.Get(r, "otp")
 	if err!=nil{
@@ -36,7 +43,7 @@ func VerifyOTP(w http.ResponseWriter, r *http.Request){
 		return 
 	}
 
-	storedOTP, ok:= otpStore.Values[req.Email]
+	storedOTP, ok:= otpStore.Values[req.Email].(string)
 
 	if !ok{
 		http.Error(w, "Invalid Session", http.StatusUnauthorized)
@@ -67,6 +74,11 @@ func SendOTP( w http.ResponseWriter, r *http.Request){
 		http.Error(w, "Invalid Reuqest", http.StatusBadRequest)
 		return 
 	}
+	body.Email = strings.ToLower(strings.TrimSpace(body.Email))
+	if body.Email == "" {
+		http.Error(w, "Email is required", http.StatusBadRequest)
+		return
+	}
 
 	otp:= GenerateOTP()
 	otpStore, err := db.Store.Get(r,"otp")
@@ -79,11 +91,12 @@ func SendOTP( w http.ResponseWriter, r *http.Request){
 	otp_err:= SendEmail(body.Email, "Your OTP Code", "Your OTP is: "+otp)
 
 	if otp_err != nil {
-		log.Println("Error sending OTP:", err)
+		log.Println("Error sending OTP:", otp_err)
 		http.Error(w, "Failed to send OTP", http.StatusInternalServerError)
 		return 
 	}
 
+	w.WriteHeader(http.StatusOK)
 	return 
 }
 
