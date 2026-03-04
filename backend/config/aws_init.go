@@ -1,26 +1,13 @@
 package config
 
-import (
-	"log"
-	"os"
-
-	"github.com/joho/godotenv"
-)
+import "os"
 
 var (
 	AWSRegion string
 	S3Bucket  string
 )
 
-func init() {
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		err = godotenv.Load(".env")
-		if err != nil {
-			log.Println("Error loading .env file")
-		}
-	}
-
+func Init() {
 	AWSRegion = os.Getenv("AWS_REGION")
 	S3Bucket = os.Getenv("AWS_S3_BUCKET")
 }
