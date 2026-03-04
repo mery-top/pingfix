@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://www.pingfix.xyz/api/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://www.pingfix.xyz/auth/:path*"
+    },
+    {
+      "source": "/glogout",
+      "destination": "https://www.pingfix.xyz/glogout"
+    },
+    {
+      "source": "/public/:path*",
+      "destination": "https://www.pingfix.xyz/public/:path*"
+    }
+  ]
+}
