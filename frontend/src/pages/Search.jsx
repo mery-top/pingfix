@@ -79,11 +79,11 @@ function Search() {
       </div>
 
       {/* 🔍 Filters */}
-      <div className="tg-card" style={{ display: "flex", flexWrap: "wrap", gap: "15px", marginTop: "20px" }}>
+      <div className="tg-card" style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "20px", alignItems: "center" }}>
 
-        <SecureInput value={groupHandle} onChange={setHandle} placeholder="Search by Handle" />
+        <SecureInput className="ig-input" style={{ margin: 0, flex: "1 1 150px" }} value={groupHandle} onChange={setHandle} placeholder="Search by Handle" />
 
-        <select value={selectedCountry}
+        <select className="ig-input" style={{ margin: 0, flex: "1 1 120px" }} value={selectedCountry}
           onChange={(e) => {
             setSelectedCountry(e.target.value)
             setSelectedState("")
@@ -95,6 +95,7 @@ function Search() {
         </select>
 
         <select
+          className="ig-input" style={{ margin: 0, flex: "1 1 120px" }}
           value={selectedState}
           onChange={(e) => setSelectedState(e.target.value)}
           disabled={!selectedCountry}
@@ -107,9 +108,9 @@ function Search() {
             ))}
         </select>
 
-        <SecureInput value={groupCity} onChange={setCity} placeholder="City" />
+        <SecureInput className="ig-input" style={{ margin: 0, flex: "1 1 120px" }} value={groupCity} onChange={setCity} placeholder="City" />
 
-        <button onClick={() => setPage(1)}>
+        <button className="ig-btn" style={{ margin: 0, flex: "1 1 100px", padding: "10px 15px" }} onClick={() => setPage(1)}>
           Search
         </button>
       </div>
@@ -131,16 +132,16 @@ function Search() {
               </p>
             </div>
 
-            <div>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               {group.isJoined ? (
-                <button disabled>Joined</button>
+                <button className="ig-btn-outline" style={{ margin: 0 }} disabled>Joined</button>
               ) : (
-                <button onClick={() => joinMutation.mutate(group.ID)}>
+                <button className="ig-btn" style={{ margin: 0 }} onClick={() => joinMutation.mutate(group.ID)}>
                   JOIN
                 </button>
               )}
 
-              <button onClick={() => navigate(`/group/${group.ID}`)}>
+              <button className="ig-btn-outline" style={{ margin: 0 }} onClick={() => navigate(`/group/${group.ID}`)}>
                 View
               </button>
             </div>
@@ -150,14 +151,14 @@ function Search() {
 
       {/* 📄 Pagination */}
       {groups.length > 0 && (
-        <div className="pagination-bar">
+        <div className="pagination-bar" style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
           {pagination.page > 1 && (
-            <button onClick={() => setPage(p => p - 1)}>
+            <button className="btn-nav" onClick={() => setPage(p => p - 1)}>
               Previous
             </button>
           )}
           {pagination.page < pagination.pages && (
-            <button onClick={() => setPage(p => p + 1)}>
+            <button className="btn-nav" onClick={() => setPage(p => p + 1)}>
               Next
             </button>
           )}
