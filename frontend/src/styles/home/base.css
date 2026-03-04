@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 /* Titles */
-*{
+* {
     background-color: #350E25;
     margin: 0;
     padding: 0;
@@ -9,25 +9,33 @@
     text-decoration: none;
 }
 
-.slogan{
+.slogan {
     display: flex;
     justify-content: center;
     text-align: center;
     font-family: 'Montserrat', sans-serif;
-    font-size: 10px;
+    font-size: 32px;
+    /* Increased from 10px for desktop */
+    margin: 40px 0;
+    /* Add some spacing around */
 }
 
-.slogan .comm{
+.slogan .comm {
     color: #F47D34;
-    font-size: 22px;
+    font-size: 56px;
+    /* Increased from 22px */
     font-style: italic;
-    font-weight: 500;
+    font-weight: 700;
 }
 
 
 @media (max-width: 480px) {
-    .slogan{
-        font-size: 10px;
+    .slogan {
+        font-size: 14px;
+        margin: 20px 0;
     }
-  }
 
+    .slogan .comm {
+        font-size: 24px;
+    }
+}
