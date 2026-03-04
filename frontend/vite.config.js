@@ -1,14 +1,19 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    proxy: {
-      '/auth': 'http://localhost:8080',
-      '/api': 'http://localhost:8080',
-      '/groups': 'http://localhost:8080',
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const targetUrl = env.VITE_API_URL || 'http://localhost:8080';
+
+  return {
+    plugins: [react()],
+    server: {
+      proxy: {
+        '/auth': targetUrl,
+        '/api': targetUrl,
+        '/groups': targetUrl,
+      },
     },
-  },
+  };
 })
