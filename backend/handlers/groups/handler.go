@@ -691,7 +691,7 @@ func ViewGroup(w http.ResponseWriter, r *http.Request) {
 			Comments:     p.CommentCount,
 			ResolveCount: p.ResolveCount,
 			UserResolved: false,
-			ShareURL:     "http://localhost:8080/public/post/" + p.ShareToken,
+			ShareURL:     utils.BuildShareURL(p.ShareToken),
 		})
 	}
 
