@@ -1,8 +1,10 @@
+import { apiUrl } from "./client";
+
 export async function FeedAPI(params) {
     const queryString = params.toString();
     const url = queryString
-      ? `/api/post/feed?${queryString}`
-      : `/api/post/feed`;
+      ? apiUrl(`/api/post/feed?${queryString}`)
+      : apiUrl("/api/post/feed");
   
     const response = await fetch(url, {
       credentials: "include",
