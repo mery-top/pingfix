@@ -95,36 +95,45 @@ function Home() {
         <span className="divider-text">Spot it. Ping it. Share it.</span>
         </div>
 
-        <section className="demo-section">
-          <div className="demo-header">
-            <p className="demo-kicker">App Demonstration</p>
-            <h2>How teams use PingFix to close issues faster</h2>
+        <section className="showcase-section">
+          <div className="showcase-copy">
+            <p className="demo-kicker">Product Walkthrough</p>
+            <h2>Community operations in one focused workspace</h2>
             <p>
-              A simple flow that helps residents report, coordinate, and resolve
-              local problems with clear accountability.
+              PingFix combines reporting, moderation, and verification into a single
+              stream so local teams can move from complaint to closure without noise.
             </p>
+            <div className="showcase-tags">
+              <span>Incident Reporting</span>
+              <span>Moderation</span>
+              <span>Resolution Tracking</span>
+              <span>Community Voting</span>
+            </div>
+            <button className="showcase-cta" onClick={goToRegister}>
+              Explore PingFix
+            </button>
           </div>
 
-          <div className="demo-grid">
-            <article className="demo-card">
-              <img src={h2} alt="Report issue" />
+          <div className="showcase-visual">
+            <article className="showcase-card main">
+              <img src={h2} alt="Issue reporting feed" />
               <div>
-                <h3>1. Report in minutes</h3>
-                <p>Upload evidence, location context, and details so the right group can act quickly.</p>
+                <h3>Post and route issues in minutes</h3>
+                <p>Evidence-first reports with images, tags, and context for fast action.</p>
               </div>
             </article>
-            <article className="demo-card">
-              <img src={h3} alt="Coordinate in groups" />
+            <article className="showcase-card floating top">
+              <img src={h3} alt="Group collaboration" />
               <div>
-                <h3>2. Coordinate in groups</h3>
-                <p>Residents and moderators discuss updates, add comments, and keep one shared thread.</p>
+                <h4>Group coordination</h4>
+                <p>One thread. Clear owners.</p>
               </div>
             </article>
-            <article className="demo-card">
-              <img src={h1} alt="Resolve transparently" />
+            <article className="showcase-card floating bottom">
+              <img src={h1} alt="Resolution workflow" />
               <div>
-                <h3>3. Verify resolution</h3>
-                <p>Community voting and progress signals help confirm when the issue is truly fixed.</p>
+                <h4>Verified closure</h4>
+                <p>Community-backed resolution signal.</p>
               </div>
             </article>
           </div>
@@ -132,8 +141,8 @@ function Home() {
 
         <section className="reviews-section">
           <div className="demo-header">
-            <p className="demo-kicker">User Reviews</p>
-            <h2>What communities are saying</h2>
+            <p className="demo-kicker">Community Feedback</p>
+            <h2>Trusted by moderators and residents</h2>
           </div>
 
           <div className="reviews-carousel">
