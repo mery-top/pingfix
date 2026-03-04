@@ -24,12 +24,15 @@
 .navbar a {
   margin-right: 20px;
   color: #F47D34;
-  font-size: 24px;
+  font-size: 32px;
+  /* Increased */
+  font-weight: bold;
 }
 
 .navbar button {
-  padding: 12px 30px;
-  font-size: 20px;
+  padding: 16px 40px;
+  font-size: 28px;
+  /* Increased */
   border: none;
   font-weight: bold;
   border-radius: 8px;
@@ -63,6 +66,10 @@
   .features img {
     width: 30px;
     gap: 5px;
+  }
+
+  .navbar a {
+    font-size: 14px;
   }
 }
 
@@ -210,6 +217,20 @@
     font-size: 16px;
     padding: 10px 20px;
   }
+
+  .divider-text {
+    font-size: 20px;
+  }
+
+  .divider-with-text::before,
+  .divider-with-text::after {
+    height: 12px;
+    background: repeating-linear-gradient(to right,
+        #F47D34 0,
+        #F47D34 5px,
+        transparent 5px,
+        transparent 10px);
+  }
 }
 
 
@@ -243,7 +264,8 @@
 
 .divider-text {
   font-weight: bold;
-  font-size: 40px;
+  font-size: 64px;
+  /* Increased */
   color: #e5dc8a;
   font-family: 'Montserrat', sans-serif;
 }
