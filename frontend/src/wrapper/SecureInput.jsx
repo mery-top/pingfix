@@ -1,6 +1,6 @@
 import React from 'react'
 
-function SecureInput({ value, onChange, allowSpace = false, maxLength = 150, style, isTextArea = false }) {
+function SecureInput({ value, onChange, allowSpace = false, maxLength = 150, style, isTextArea = false, className, placeholder }) {
   const sanitizedInput = (value) => {
     let sanitized = value
       // Remove <script>...</script>
@@ -41,6 +41,8 @@ function SecureInput({ value, onChange, allowSpace = false, maxLength = 150, sty
         value={value}
         onChange={handleChange}
         style={style}
+        className={className}
+        placeholder={placeholder}
       />
     );
   }
@@ -52,6 +54,8 @@ function SecureInput({ value, onChange, allowSpace = false, maxLength = 150, sty
       onChange={handleChange}
       autoComplete="off"
       style={style}
+      className={className}
+      placeholder={placeholder}
     />
   )
 }
