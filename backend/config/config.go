@@ -8,12 +8,11 @@ import (
 )
 
 func LoadEnv() {
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		// Try current directory for Docker environment
-		err = godotenv.Load(".env")
+	// Only try loading .env if running locally (optional)
+	if os.Getenv("DOCKER_ENV") == "" {
+		err := godotenv.Load()
 		if err != nil {
-			log.Println("Error Loading env")
+			log.Println("No .env file found, using system environment variables")
 		}
 	}
 }
