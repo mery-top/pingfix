@@ -143,7 +143,7 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
         <p style={{ margin: '0 0 10px 0', fontSize: '0.95em', lineHeight: '1.5' }}>{realPost.Content || ""}</p>
 
         {Array.isArray(realPost.Images) && realPost.Images.map((img) => {
-          const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+          const baseUrl = import.meta.env.VITE_API_URL || "https://www.pingfix.xyz";
           const imgSrc = img.URL.startsWith("https") ? img.URL : `${baseUrl}/${img.URL}`;
           return (
             <img
