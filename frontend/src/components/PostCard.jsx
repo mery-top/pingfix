@@ -143,16 +143,26 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
         <p style={{ margin: '0 0 10px 0', fontSize: '0.95em', lineHeight: '1.5' }}>{realPost.Content || ""}</p>
 
         {Array.isArray(realPost.Images) && realPost.Images.map((img) => {
-          const imgSrc = img.URL.startsWith("https") ? img.URL : `http://localhost:8080/${img.URL}`;
-          return (
-            <img
-              key={img.ID}
-              src={imgSrc}
-              alt=""
-              style={{ width: "100%", borderRadius: "4px", marginTop: "10px", objectFit: 'cover' }}
-            />
-          );
-        })}
+        const imgSrc = img.URL.startsWith("https") ? img.URL : `http://localhost:8080/${img.URL}`;
+        return (
+          <img
+            key={img.ID}
+            src={imgSrc}
+            alt=""
+            style={{
+              width: "100%",           // fill container width
+              maxWidth: "600px",       // optional max width
+              maxHeight: "400px",      // optional max height
+              borderRadius: "8px",     // rounded corners
+              marginTop: "10px",
+              objectFit: "cover",      // maintain aspect ratio, crop if necessary
+              display: "block",        // avoids inline spacing issues
+              marginLeft: "auto",      // center image
+              marginRight: "auto"
+            }}
+          />
+        );
+      })}
 
         <div style={{ marginTop: "10px" }}>
           {Array.isArray(realPost.Tags) && realPost.Tags.map((tag) => (
