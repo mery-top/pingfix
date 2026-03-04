@@ -153,24 +153,45 @@ function Home() {
 
         <footer className="home-footer">
           <div className="home-footer-inner">
-            <h3>Fund Us</h3>
-            <p>
-              Support PingFix and help us expand transparent community issue resolution
-              across more neighborhoods.
-            </p>
+            <div className="footer-top">
+              <img src={logo} alt="PingFix" className="footer-logo" />
+              <p>Citizen-first platform for transparent community issue resolution.</p>
+            </div>
 
-            <h4>Join This Social Movement</h4>
-            <p>
-              Be part of a citizen-first platform where reporting, accountability,
-              and collaboration create measurable local impact.
-            </p>
+            <div className="footer-grid">
+              <div className="footer-col">
+                <h4>Initiatives</h4>
+                <a href="#fund">Fund Us</a>
+                <a href="#movement">Join This Social Movement</a>
+                <a href="/register">Volunteer With Us</a>
+              </div>
 
-            <h4>Contact Us</h4>
-            <p>
-              <a href="mailto:vircsamenterprises@gmail.com">
-                vircsamenterprises@gmail.com
-              </a>
-            </p>
+              <div className="footer-col">
+                <h4>Platform</h4>
+                <a href="/register">Post an Issue</a>
+                <a href="/register">Join Groups</a>
+                <a href="/register">Track Resolution</a>
+              </div>
+
+              <div className="footer-col">
+                <h4>Community</h4>
+                <a href="/register">Success Stories</a>
+                <a href="/register">Moderator Network</a>
+                <p className="footer-love">Wall of love <span>❤</span></p>
+              </div>
+
+              <div className="footer-col">
+                <h4>Contact Us</h4>
+                <p>vircsamenterprises@gmail.com</p>
+                <a href="mailto:vircsamenterprises@gmail.com">
+                  Write to us
+                </a>
+              </div>
+            </div>
+
+            <div className="footer-bottom">
+              <p>Copyright © 2026 PingFix. All rights reserved.</p>
+            </div>
           </div>
         </footer>
 

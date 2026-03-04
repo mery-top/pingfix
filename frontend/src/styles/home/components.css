@@ -535,43 +535,95 @@
   width: 100%;
   background: #000000;
   margin-top: 60px;
-  padding: 54px 20px;
+  padding: 44px 20px 22px;
 }
 
 .home-footer-inner {
-  max-width: 860px;
+  max-width: 1120px;
   margin: 0 auto;
+  background: #000000;
+}
+
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  margin-bottom: 24px;
+  background: #000000;
+}
+
+.footer-logo {
+  width: 170px;
+  height: auto;
+  background: #000000;
+}
+
+.footer-top p {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  max-width: 460px;
+  text-align: right;
+  background: #000000;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+  background: #000000;
+}
+
+.footer-col {
+  background: #000000;
+}
+
+.footer-col h4 {
+  color: #fff;
+  margin-bottom: 12px;
+  font-size: 20px;
+  background: #000000;
+}
+
+.footer-col a,
+.footer-col p {
+  display: block;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 15px;
+  margin-bottom: 10px;
+  background: #000000;
+}
+
+.footer-col a:hover {
+  color: #f47d34;
+}
+
+.footer-love {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.footer-love span {
+  color: #f47d34;
+  font-size: 18px;
+  margin-left: 6px;
+  background: #000000;
+}
+
+.footer-bottom {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
   text-align: center;
   background: #000000;
 }
 
-.home-footer h3,
-.home-footer h4 {
-  color: #ffffff;
-  background: #000000;
-  margin-bottom: 10px;
-}
-
-.home-footer h3 {
-  font-size: 30px;
-}
-
-.home-footer h4 {
-  margin-top: 24px;
-  font-size: 22px;
-}
-
-.home-footer p {
+.footer-bottom p {
   color: rgba(255, 255, 255, 0.82);
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 14px;
   background: #000000;
-}
-
-.home-footer a {
-  color: #f47d34;
-  font-weight: 700;
-  background: #000000;
+  margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -606,11 +658,23 @@
     max-width: 100%;
   }
 
-  .home-footer h3 {
-    font-size: 24px;
+  .footer-top {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .home-footer h4 {
-    font-size: 19px;
+  .footer-top p {
+    text-align: left;
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
   }
 }
