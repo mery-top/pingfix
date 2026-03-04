@@ -98,79 +98,59 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resolved := r.URL.Query().Get("resolved")
-	resolvedFilter := ""
+
+	// -----------------------
+	// GORM preloaded query
+	// -----------------------
+	var rawPosts []models.Post
+	query := db.DB.
+		Joins("JOIN groups ON groups.id = posts.group_id").
+		Preload("User").
+		Preload("Group").
+		Preload("Images").
+		Preload("Links").
+		Preload("Tags").
+		Where("posts.user_id = ? AND groups.deleted_at IS NULL", userID).
+		Order("posts.created_at DESC").
+		Limit(limit).
+		Offset(offset)
+
 	if resolved == "true" {
-		resolvedFilter = "AND posts.resolved = true"
+		query = query.Where("posts.resolved = ?", true)
 	} else if resolved == "false" {
-		resolvedFilter = "AND posts.resolved = false"
+		query = query.Where("posts.resolved = ?", false)
 	}
 
-	// -----------------------
-	// Single optimized query
-	// -----------------------
-	sql := fmt.Sprintf(`
-	SELECT 
-		posts.id, posts.content, posts.share_token, posts.resolved, posts.created_at,
-		json_build_object('id', users.id, 'name', users.name) AS user,
-		json_build_object('id', groups.id, 'name', groups.name) AS "group",
-		COALESCE(upvotes.count, 0) AS upvotes,
-		COALESCE(downvotes.count, 0) AS downvotes,
-		COALESCE(comments.count, 0) AS comments,
-		COALESCE(resolves.count, 0) AS resolve_count,
-		COALESCE(user_resolved.user_id IS NOT NULL, false) AS user_resolved,
-		COALESCE(imgs.images, '[]') AS images,
-		COALESCE(links.links, '[]') AS links,
-		COALESCE(tags.tags, '[]') AS tags
-	FROM posts
-	JOIN groups ON posts.group_id = groups.id
-	JOIN users ON posts.user_id = users.id
-	LEFT JOIN (
-		SELECT post_id, COUNT(*) AS count FROM post_votes WHERE vote_type=1 GROUP BY post_id
-	) AS upvotes ON upvotes.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, COUNT(*) AS count FROM post_votes WHERE vote_type=-1 GROUP BY post_id
-	) AS downvotes ON downvotes.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, COUNT(*) AS count FROM comments GROUP BY post_id
-	) AS comments ON comments.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, COUNT(*) AS count FROM post_resolves GROUP BY post_id
-	) AS resolves ON resolves.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, user_id FROM post_resolves WHERE user_id=? 
-	) AS user_resolved ON user_resolved.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, json_agg(url) AS images FROM post_images GROUP BY post_id
-	) AS imgs ON imgs.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, json_agg(url) AS links FROM post_links GROUP BY post_id
-	) AS links ON links.post_id = posts.id
-	LEFT JOIN (
-		SELECT post_id, json_agg(name) AS tags FROM post_tags GROUP BY post_id
-	) AS tags ON tags.post_id = posts.id
-	WHERE groups.creator_id=? AND groups.deleted_at IS NULL %s
-	ORDER BY posts.created_at DESC
-	LIMIT ? OFFSET ?;
-	`, resolvedFilter)
-
-	var posts []models.PostResponse
-
-	if err := db.DB.Raw(sql, userID, userID, limit, offset).Scan(&posts).Error; err != nil {
+	if err := query.Find(&rawPosts).Error; err != nil {
 		http.Error(w, "Error fetching posts: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	var posts []models.PostResponse
+	for _, p := range rawPosts {
+		posts = append(posts, models.PostResponse{
+			Post:         p,
+			Upvotes:      p.UpvoteCount,
+			Downvotes:    p.DownvoteCount,
+			Comments:     p.CommentCount,
+			ResolveCount: p.ResolveCount,
+			UserResolved: false,
+			ShareURL:     "http://localhost:8080/public/post/" + p.ShareToken,
+		})
+	}
+
 	// Total posts count
 	var total int64
-	db.DB.Model(&models.Post{}).
+	countQuery := db.DB.Model(&models.Post{}).
 		Joins("JOIN groups ON posts.group_id = groups.id").
-		Where("groups.creator_id = ? AND groups.deleted_at IS NULL", userID).
-		Count(&total)
+		Where("posts.user_id = ? AND groups.deleted_at IS NULL", userID)
 
-	// Add share URL
-	for i := range posts {
-		posts[i].ShareURL = "http://localhost:8080/public/post/"
+	if resolved == "true" {
+		countQuery = countQuery.Where("posts.resolved = ?", true)
+	} else if resolved == "false" {
+		countQuery = countQuery.Where("posts.resolved = ?", false)
 	}
+	countQuery.Count(&total)
 
 	// Response
 	resp := map[string]interface{}{
