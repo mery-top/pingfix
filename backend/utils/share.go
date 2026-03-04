@@ -17,7 +17,10 @@ func GenerateShareToken() string {
 func BuildShareURL(token string) string {
 	baseURL := strings.TrimSpace(os.Getenv("PUBLIC_BASE_URL"))
 	if baseURL == "" {
-		baseURL = "https://www.pingfix.vercel.app"
+		baseURL = "https://pingfix.vercel.app"
+	}
+	if strings.EqualFold(baseURL, "https://www.pingfix.vercel.app") {
+		baseURL = "https://pingfix.vercel.app"
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
 	return baseURL + "/public/post/" + token
