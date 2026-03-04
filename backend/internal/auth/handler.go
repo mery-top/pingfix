@@ -7,7 +7,6 @@ import (
 	"backend/utils"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -24,127 +23,119 @@ var (
 	loginLock     sync.Mutex
 )
 
+// -------------------- Google OAuth --------------------
 func BeginAuth(w http.ResponseWriter, r *http.Request) {
 	gothic.BeginAuthHandler(w, r)
 }
 
 func Callback(w http.ResponseWriter, r *http.Request) {
-	user, err := gothic.CompleteUserAuth(w, r)
-
+	oauthUser, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
 		log.Println("Google auth error:", err)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	var LogUser models.User
-	result := db.DB.First(&LogUser, "email=?", user.Email)
+	email := strings.TrimSpace(oauthUser.Email)
+	googleID := oauthUser.UserID // unique Google ID
+	name := oauthUser.Name
 
-	//signup
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("Google2025#"), bcrypt.DefaultCost)
-			dbhandler.CreateUser(user.Name, user.Email, string(hashedPassword))
+	var dbUser models.User
+	result := db.DB.First(&dbUser, "email = ? OR oauth_id = ?", email, googleID)
 
-			session, _ := db.Store.Get(r, "session")
-			session.Options.MaxAge = -1
-			session.Save(r, w)
-
-			newSession, _ := db.Store.New(r, "session")
-			newSession.Values["authenticated"] = true
-			newSession.Values["user_id"] = LogUser.ID
-			newSession.Save(r, w)
-
-			http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusTemporaryRedirect)
-			return
-		} else {
-			http.Error(w, "Something went wrong", http.StatusInternalServerError)
-			return
-		}
-		//login
-	} else if result.Error == nil {
-		session, _ := db.Store.Get(r, "session")
-		session.Options.MaxAge = -1
-		session.Save(r, w)
-
-		newSession, _ := db.Store.New(r, "session")
-		newSession.Values["authenticated"] = true
-		newSession.Values["user_id"] = LogUser.ID
-		newSession.Save(r, w)
-
-		http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusTemporaryRedirect)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		// Create new OAuth user WITHOUT password
+		dbUser = dbhandler.CreateUser(name, email, "", "google", googleID)
+	} else if result.Error != nil {
+		log.Println("DB error:", result.Error)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "http://localhost:5173/home", http.StatusTemporaryRedirect)
+	// Create session
+	session, _ := db.Store.New(r, "session")
+	session.Values["authenticated"] = true
+	session.Values["user_id"] = dbUser.ID
+	session.Save(r, w)
+
+	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusTemporaryRedirect)
 }
 
+func GLogout(w http.ResponseWriter, r *http.Request) {
+	gothic.Logout(w, r)
+	w.Write([]byte("Successfully Logged Out"))
+}
+
+// -------------------- Local registration/login --------------------
 func Register(w http.ResponseWriter, r *http.Request) {
-	var user struct {
+	var req struct {
 		Name     string `json:"name"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	log.Println("Register endpoint hit")
 
-	json.NewDecoder(r.Body).Decode(&user)
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-
-	var existingUser models.User
-
-	result := db.DB.First(&existingUser, "email = ?", user.Email)
-
-	if result.Error == nil {
-		http.Error(w, "User Already Exists", http.StatusConflict)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	dbhandler.CreateUser(user.Name, user.Email, string(hashedPassword))
+	req.Email = strings.TrimSpace(req.Email)
+	req.Password = strings.TrimSpace(req.Password)
 
+	if !utils.ValidEmail(req.Email) {
+		http.Error(w, "Invalid email", http.StatusBadRequest)
+		return
+	}
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+
+	var existing models.User
+	if err := db.DB.First(&existing, "email = ?", req.Email).Error; err == nil {
+		http.Error(w, "User already exists", http.StatusConflict)
+		return
+	}
+
+	dbhandler.CreateUser(req.Name, req.Email, string(hashedPassword), "local", "")
 	w.WriteHeader(http.StatusCreated)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Login Endpoint hit")
-	var body struct {
+	var req struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
-	errr := json.NewDecoder(r.Body).Decode(&body)
-	if errr != nil {
-		fmt.Println("Error parsing JSON")
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	email := strings.TrimSpace(req.Email)
+	password := strings.TrimSpace(req.Password)
+
+	if !utils.ValidEmail(email) {
+		http.Error(w, "Invalid email", http.StatusBadRequest)
+		return
 	}
 
 	var user models.User
-
-	if !utils.ValidEmail(body.Email) {
-		fmt.Println("Email Missmatch")
-		http.Error(w, "Invalid Email", http.StatusUnauthorized)
-		return
-	}
-	email := strings.TrimSpace(body.Email)
-	password := strings.TrimSpace(body.Password)
-	result := db.DB.First(&user, "email = ?", email)
-
-	if result.Error != nil {
+	if err := db.DB.First(&user, "email = ? AND auth_provider = ?", email, "local").Error; err != nil {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
+	// Rate limiting
 	loginLock.Lock()
 	if loginAttempts[email] >= 5 {
 		loginLock.Unlock()
-		http.Error(w, "Too many login attempts. Please try again later.", http.StatusTooManyRequests)
+		http.Error(w, "Too many login attempts. Try later", http.StatusTooManyRequests)
 		return
 	}
 	loginLock.Unlock()
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		loginLock.Lock()
 		loginAttempts[email]++
-		// Simple window reset after 10 minutes
 		go func(e string) {
 			time.Sleep(10 * time.Minute)
 			loginLock.Lock()
@@ -153,58 +144,45 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}(email)
 		loginLock.Unlock()
 
-		fmt.Println("PASSWORD NOT MATCH")
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
+	// Reset login attempts on success
 	loginLock.Lock()
 	delete(loginAttempts, email)
 	loginLock.Unlock()
 
-	session, _ := db.Store.Get(r, "session")
-	session.Options.MaxAge = -1
+	session, _ := db.Store.New(r, "session")
+	session.Values["authenticated"] = true
+	session.Values["user_id"] = user.ID
 	session.Save(r, w)
 
-	newSession, _ := db.Store.New(r, "session")
-	newSession.Values["authenticated"] = true
-	newSession.Values["user_id"] = user.ID
-	newSession.Save(r, w)
-
 	w.WriteHeader(http.StatusOK)
-
 }
 
-func GLogout(w http.ResponseWriter, r *http.Request) {
-	gothic.Logout(w, r)
-	w.Write([]byte("Successfully Logged Out"))
-}
-
+// -------------------- Logout / Session check --------------------
 func Logout(w http.ResponseWriter, r *http.Request) {
 	session, _ := db.Store.Get(r, "session")
 	session.Options.MaxAge = -1
-
 	delete(session.Values, "user_id")
 	session.Save(r, w)
 	w.Write([]byte("Logged OUT"))
 }
 
 func CheckAuthStatus(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Check Status Endpoint Hit")
 	session, err := db.Store.Get(r, "session")
 	if err != nil {
-		log.Fatal("Session Error", err)
+		http.Error(w, "Session error", http.StatusInternalServerError)
 		return
 	}
-	auth, ok := session.Values["authenticated"].(bool)
-	fmt.Println("Session authenticated:", auth, "ok:", ok)
 
+	auth, ok := session.Values["authenticated"].(bool)
 	if auth && ok {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Authenticated"))
-	} else {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
+	http.Error(w, "Unauthorized", http.StatusUnauthorized)
 }
