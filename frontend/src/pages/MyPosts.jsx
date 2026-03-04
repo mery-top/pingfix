@@ -67,7 +67,7 @@ function MyPosts() {
         {isLoading && <p style={{ textAlign: "center", color: "rgba(255,255,255,0.6)" }}>Loading posts...</p>}
         {isError && <p style={{ color: "#ff4d4f", textAlign: "center" }}>Error loading posts</p>}
 
-        {!isLoading && !isError && data?.posts?.length === 0 && (
+        {!isLoading && !isError && (!data?.posts || data.posts.length === 0) && (
           <div style={{ textAlign: "center", padding: "40px 20px", color: "rgba(255,255,255,0.5)" }}>
             {filter === 'resolved'
               ? "No resolved posts found."
