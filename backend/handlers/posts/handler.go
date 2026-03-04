@@ -243,12 +243,79 @@ func GetSharedPost(w http.ResponseWriter, r *http.Request) {
 	db.DB.Model(&models.Comment{}).Where("post_id = ?", post.ID).Count(&commentCount)
 	db.DB.Model(&models.PostResolve{}).Where("post_id = ?", post.ID).Count(&resolveCount)
 
-	response := models.PostResponse{
-		Post:         post,
+	type publicUser struct {
+		ID   uint   `json:"ID"`
+		Name string `json:"Name"`
+	}
+	type publicGroup struct {
+		ID          uint   `json:"ID"`
+		Name        string `json:"Name"`
+		Handle      string `json:"Handle"`
+		Type        string `json:"Type"`
+		Country     string `json:"Country"`
+		State       string `json:"State"`
+		City        string `json:"City"`
+		Description string `json:"Description"`
+	}
+	type publicPost struct {
+		ID          uint               `json:"ID"`
+		CreatedAt   time.Time          `json:"CreatedAt"`
+		GroupID     uint               `json:"GroupID"`
+		Group       publicGroup        `json:"Group"`
+		UserID      uint               `json:"UserID"`
+		User        publicUser         `json:"User"`
+		Content     string             `json:"Content"`
+		UpvoteCount int64              `json:"UpvoteCount"`
+		DownvoteCount int64            `json:"DownvoteCount"`
+		CommentCount int64             `json:"CommentCount"`
+		ResolveCount int64             `json:"ResolveCount"`
+		Tags        []models.Tag       `json:"Tags"`
+		Images      []models.PostImage `json:"Images"`
+		Links       []models.PostLink  `json:"Links"`
+		Resolved    bool               `json:"Resolved"`
+	}
+	type publicPostResponse struct {
+		Post         publicPost `json:"post"`
+		Upvotes      int64      `json:"upvotes"`
+		Downvotes    int64      `json:"downvotes"`
+		Comments     int64      `json:"comments"`
+		ResolveCount int64      `json:"resolve_count"`
+		UserResolved bool       `json:"user_resolved"`
+		ShareURL     string     `json:"share_url"`
+	}
+
+	response := publicPostResponse{
+		Post: publicPost{
+			ID:            post.ID,
+			CreatedAt:     post.CreatedAt,
+			GroupID:       post.GroupID,
+			Group: publicGroup{
+				ID:          post.Group.ID,
+				Name:        post.Group.Name,
+				Handle:      post.Group.Handle,
+				Type:        post.Group.Type,
+				Country:     post.Group.Country,
+				State:       post.Group.State,
+				City:        post.Group.City,
+				Description: post.Group.Description,
+			},
+			UserID:       post.UserID,
+			User:         publicUser{ID: post.User.ID, Name: post.User.Name},
+			Content:      post.Content,
+			UpvoteCount:  upvotes,
+			DownvoteCount: downvotes,
+			CommentCount: commentCount,
+			ResolveCount: resolveCount,
+			Tags:         post.Tags,
+			Images:       post.Images,
+			Links:        post.Links,
+			Resolved:     post.Resolved,
+		},
 		Upvotes:      upvotes,
 		Downvotes:    downvotes,
 		Comments:     commentCount,
 		ResolveCount: resolveCount,
+		UserResolved: false,
 		ShareURL:     utils.BuildShareURL(post.ShareToken),
 	}
 
