@@ -67,7 +67,7 @@ export async function DeleteComment(comment_id) {
 }
 
 export async function EditComment(comment_id, content) {
-  const res = await fetch(`/api/post/comment/edit/${comment_id}`, {
+  const res = await fetch(`/api/comment/edit/${comment_id}`, {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
