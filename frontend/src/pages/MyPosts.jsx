@@ -17,7 +17,7 @@ function MyPosts() {
       const params = new URLSearchParams({ page, limit: 5 });
       if (filter === 'resolved') params.append('resolved', 'true');
       if (filter === 'unresolved') params.append('resolved', 'false');
-  
+
       const res = await MyPostsAPI(params);
       if (!res.ok) throw new Error('Failed to fetch posts');
       return res.json();
@@ -68,11 +68,11 @@ function MyPosts() {
 
         {data?.posts?.map((post) => (
           <PostCardMemo
-            key={post.ID}
+            key={post?.post?.ID}
             post={post}
             hideViewGroup={false}
-            onVote={() => {}}
-            onDelete={() => deleteMutation.mutate(post.ID)}
+            onVote={() => { }}
+            onDelete={() => deleteMutation.mutate(post?.post?.ID)}
           />
         ))}
       </div>
