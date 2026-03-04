@@ -6,16 +6,17 @@
   /* push items to far ends */
   align-items: center;
   /* vertical centering */
-  padding: 0 60px;
+  padding: 0 40px;
   /* horizontal padding */
-  height: 120px;
+  height: 90px;
   /* navbar height */
   background-color: #350E25;
   /* optional */
 }
 
 .navbar .logo {
-  height: 160px;
+  margin-top: 10px;
+  height: 200px;
   /* adjust as needed */
   width: auto;
   /* keep aspect ratio */
@@ -24,14 +25,14 @@
 .navbar a {
   margin-right: 20px;
   color: #F47D34;
-  font-size: 32px;
+  font-size: 20px;
   /* Increased */
   font-weight: bold;
 }
 
 .navbar button {
-  padding: 16px 40px;
-  font-size: 28px;
+  padding: 10px 24px;
+  font-size: 18px;
   /* Increased */
   border: none;
   font-weight: bold;
@@ -81,11 +82,11 @@
   /* responsive wrapping */
   justify-content: center;
   /* center horizontally */
-  gap: 50px;
+  gap: 30px;
   /* Increased spacing between cards */
   margin-top: 60px;
   /* Increased margin */
-  max-width: 1800px;
+  max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -101,8 +102,8 @@
   background-color: #F47D34;
   font-family: 'Montserrat', sans-serif;
   font-weight: bolder;
-  font-size: 32px;
-  padding: 20px 60px;
+  font-size: 24px;
+  padding: 15px 40px;
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -127,14 +128,14 @@
   cursor: pointer;
   flex: 0 1 calc(25% - 50px);
   /* 4 cards on a large screen */
-  min-width: 350px;
+  min-width: 250px;
   /* minimum width before wrapping */
 }
 
 .card img {
   width: 100%;
   /* Responsive width */
-  height: 450px;
+  height: 320px;
   /* Fixed larger height */
   object-fit: cover;
   /* Ensures image is not distorted */
@@ -174,7 +175,7 @@
   align-items: center;
   text-align: center;
 
-  font-size: 40px;
+  font-size: 28px;
   /* Increased overlay font size */
   font-weight: bold;
   font-family: 'Montserrat', sans-serif;
@@ -245,7 +246,7 @@
 .divider-with-text::after {
   content: '';
   flex: 1;
-  height: 24px;
+  height: 16px;
   /* height of spikes */
   background: repeating-linear-gradient(to right,
       #F47D34 0,
@@ -264,7 +265,7 @@
 
 .divider-text {
   font-weight: bold;
-  font-size: 64px;
+  font-size: 36px;
   /* Increased */
   color: #e5dc8a;
   font-family: 'Montserrat', sans-serif;
