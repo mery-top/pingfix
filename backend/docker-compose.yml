@@ -2,13 +2,12 @@ version: "3.9"
 
 services:
   backend:
-    build: ./backend
+    build: .
     container_name: backend
     ports:
       - "8080:8080"
     env_file:
       - .env
-      - backend/.env
     environment:
       - DOCKER_ENV=true
       - REDIS_HOST=redis:6379
