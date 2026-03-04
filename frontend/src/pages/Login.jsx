@@ -29,10 +29,13 @@ function Login() {
     try {
       const res = await LoginAPI(email, password)
       if (res.status === 200) {
+        setMessage("")
         setAuthenticated("Login Success")
         navigate("/dashboard")
       } else {
-        setAuthenticated("Enter Correct Details, Login Failed")
+        const errText = await res.text()
+        setMessage(errText || "Enter Correct Details, Login Failed")
+        setAuthenticated("")
       }
 
     } catch (error) {
