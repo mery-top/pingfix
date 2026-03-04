@@ -1,5 +1,7 @@
-import React, { useState, memo , useEffect} from "react";
+import React, { useState, memo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { GetCurrentUserAPI } from "../api/UserAPI";
 import { VotePost, AddComment, DeleteComment, EditComment, GetComments, ResolvePost } from "../api/PostAPI";
 import SecureInput from "../wrapper/SecureInput";
 import { FiArrowUp, FiArrowDown, FiCheckCircle, FiMessageSquare, FiShare2 } from 'react-icons/fi';
@@ -11,7 +13,17 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
   const [upvotes, setUpvotes] = useState(post?.upvotes || 0);
   const [downvotes, setDownvotes] = useState(post?.downvotes || 0);
   const [resolves, setResolves] = useState(post?.resolve_count || 0);
-  const [commentsCount, setCommentsCount] = useState(post?.comments || 0);
+  const [commentsCount, setCommentsCount] = useState(post?.comment_count !== undefined ? post.comment_count : post?.comments || 0);
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const res = await GetCurrentUserAPI();
+      if (!res.ok) throw new Error("Not logged in");
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
   const [commentText, setCommentText] = useState("");
   const [commentList, setCommentList] = useState([]);
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -212,7 +224,7 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
                 ) : (
                   <>
                     <span style={{ color: 'rgba(255,255,255,0.9)' }}>{c.Content}</span>
-                    {c.UserID === realPost.UserID && (
+                    {c.UserID === currentUser?.id && (
                       <div style={{ marginTop: '4px' }}>
                         <button style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '0.8em', cursor: 'pointer', padding: 0, marginRight: '10px' }} onClick={() => { setEditingCommentId(c.ID); setEditingText(c.Content); }}>Edit</button>
                         <button style={{ background: 'none', border: 'none', color: '#ff4d4f', fontSize: '0.8em', cursor: 'pointer', padding: 0 }} onClick={() => handleDeleteComment(c.ID)}>Delete</button>
