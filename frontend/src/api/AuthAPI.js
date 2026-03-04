@@ -1,5 +1,7 @@
+import { API_BASE_URL, apiUrl } from "./client";
+
 export async function LoginAPI(email, password){
-    const response = await fetch("/api/login", {
+    const response = await fetch(apiUrl("/api/login"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -12,14 +14,14 @@ export async function LoginAPI(email, password){
 }
 
 export async function LogoutAPI(){
-    const res = await fetch("/api/logout",{
+    const res = await fetch(apiUrl("/api/logout"),{
         method: "POST",
         credentials: "include",
     });
 }
 
 export async function RegisterAPI(name,email, password){
-    const response = await fetch("/api/register", {
+    const response = await fetch(apiUrl("/api/register"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -32,18 +34,18 @@ export async function RegisterAPI(name,email, password){
 }
 
 export function LoginWithGoogle(){
-    window.location.href = "/auth/google"
+    window.location.href = `${API_BASE_URL}/auth/google`
 }
 
 export async function CheckStatusAPI(){
-    const response = await fetch("/api/status",{
+    const response = await fetch(apiUrl("/api/status"),{
         credentials: "include"
     });
     return response
 }
 
 export async function SendOTPAPI(email){
-    const response = await fetch("/api/send-otp",{
+    const response = await fetch(apiUrl("/api/send-otp"),{
         method: "POST",
         credentials: "include",
         headers: {
@@ -55,7 +57,7 @@ export async function SendOTPAPI(email){
 }
 
 export async function VerifyOTPAPI(email, otp){
-    const response = await fetch("/api/verify-otp",{
+    const response = await fetch(apiUrl("/api/verify-otp"),{
         method: "POST",
         credentials: "include",
         headers: {
@@ -65,5 +67,4 @@ export async function VerifyOTPAPI(email, otp){
     });
     return response
 }
-
 
