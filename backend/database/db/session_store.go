@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	"github.com/redis/go-redis/v9"
@@ -49,14 +51,38 @@ func InitRedis() {
 
 	log.Println("Connected to Redis (go-redis v9)")
 
+	appEnv := strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
+	secureCookies := appEnv == "production"
+	if secureOverride := strings.TrimSpace(os.Getenv("COOKIE_SECURE")); secureOverride != "" {
+		if parsed, err := strconv.ParseBool(secureOverride); err == nil {
+			secureCookies = parsed
+		}
+	}
+
+	sameSite := http.SameSiteLaxMode
+	if appEnv == "production" {
+		sameSite = http.SameSiteNoneMode
+	}
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("COOKIE_SAMESITE"))) {
+	case "none":
+		sameSite = http.SameSiteNoneMode
+	case "lax":
+		sameSite = http.SameSiteLaxMode
+	case "strict":
+		sameSite = http.SameSiteStrictMode
+	}
+
+	cookieDomain := strings.TrimSpace(os.Getenv("COOKIE_DOMAIN"))
+
 	// Cookie store for signing only
 	Store = sessions.NewCookieStore([]byte(sessionSecret))
 	Store.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   172800,
+		Domain:   cookieDomain,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secureCookies,
+		SameSite: sameSite,
 	}
 
 	gothic.Store = Store
