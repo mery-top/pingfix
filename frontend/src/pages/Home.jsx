@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/home/base.css";
 import "../styles/home/components.css";
@@ -10,6 +10,36 @@ import h4 from "../assets/home/h4.png";
 
 function Home() {
   const navigate = useNavigate()
+  const [activeReview, setActiveReview] = useState(0);
+
+  const reviews = [
+    {
+      quote:
+        "PingFix made our ward-level reporting structured. We no longer lose updates in random chats.",
+      name: "Asha Menon",
+      role: "Community Lead, Ward 12",
+    },
+    {
+      quote:
+        "The photo-first workflow and status tracking helped us close recurring drainage complaints faster.",
+      name: "Rahul Verma",
+      role: "Volunteer Moderator",
+    },
+    {
+      quote:
+        "Clean, practical, and transparent. Residents can actually see which issues moved to resolved.",
+      name: "Neha Krishnan",
+      role: "Resident Member",
+    },
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveReview((prev) => (prev + 1) % reviews.length);
+    }, 3800);
+    return () => clearInterval(timer);
+  }, [reviews.length]);
+
   const goToRegister = () => {
     navigate('/register')
   }
@@ -106,34 +136,48 @@ function Home() {
             <h2>What communities are saying</h2>
           </div>
 
-          <div className="reviews-grid">
-            <article className="review-card">
-              <p>
-                “PingFix made our ward-level reporting structured. We no longer lose updates in random chats.”
-              </p>
-              <div className="review-meta">
-                <strong>Asha Menon</strong>
-                <span>Community Lead, Ward 12</span>
+          <div className="reviews-carousel">
+            <button
+              className="carousel-btn"
+              onClick={() => setActiveReview((activeReview - 1 + reviews.length) % reviews.length)}
+              aria-label="Previous review"
+            >
+              ‹
+            </button>
+            <div className="reviews-window">
+              <div
+                className="reviews-track"
+                style={{ transform: `translateX(-${activeReview * 100}%)` }}
+              >
+                {reviews.map((review, idx) => (
+                  <article className="review-card" key={idx}>
+                    <p>“{review.quote}”</p>
+                    <div className="review-meta">
+                      <strong>{review.name}</strong>
+                      <span>{review.role}</span>
+                    </div>
+                  </article>
+                ))}
               </div>
-            </article>
-            <article className="review-card">
-              <p>
-                “The photo-first workflow and status tracking helped us close recurring drainage complaints faster.”
-              </p>
-              <div className="review-meta">
-                <strong>Rahul Verma</strong>
-                <span>Volunteer Moderator</span>
-              </div>
-            </article>
-            <article className="review-card">
-              <p>
-                “Clean, practical, and transparent. Residents can actually see which issues moved to resolved.”
-              </p>
-              <div className="review-meta">
-                <strong>Neha Krishnan</strong>
-                <span>Resident Member</span>
-              </div>
-            </article>
+            </div>
+            <button
+              className="carousel-btn"
+              onClick={() => setActiveReview((activeReview + 1) % reviews.length)}
+              aria-label="Next review"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="carousel-dots">
+            {reviews.map((_, idx) => (
+              <button
+                key={idx}
+                className={`dot ${idx === activeReview ? "active" : ""}`}
+                onClick={() => setActiveReview(idx)}
+                aria-label={`Go to review ${idx + 1}`}
+              />
+            ))}
           </div>
 
           <div className="signup">

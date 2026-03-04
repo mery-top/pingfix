@@ -347,27 +347,40 @@
   background: #2a1120;
 }
 
-.reviews-grid {
+.reviews-carousel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+  gap: 12px;
   margin-top: 10px;
 }
 
-.review-card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.reviews-window {
+  overflow: hidden;
   border-radius: 14px;
-  padding: 18px;
+}
+
+.reviews-track {
+  display: flex;
+  transition: transform 560ms cubic-bezier(0.2, 0.75, 0.35, 1);
+}
+
+.review-card {
+  min-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 26px;
   background: #2a1120;
-  min-height: 210px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  animation: reviewFadeIn 420ms ease;
 }
 
 .review-card p {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.65;
   background: #2a1120;
 }
@@ -389,13 +402,72 @@
   background: #2a1120;
 }
 
+.carousel-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 125, 52, 0.8);
+  color: #f47d34;
+  background: #2a1120;
+  font-size: 30px;
+  line-height: 0.9;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.carousel-btn:hover {
+  transform: scale(1.06);
+  background: #3d162b;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+
+.dot.active {
+  background: #f47d34;
+  transform: scale(1.18);
+}
+
+@keyframes reviewFadeIn {
+  from {
+    opacity: 0.2;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 900px) {
   .demo-grid,
   .reviews-grid {
     grid-template-columns: 1fr;
   }
 
+  .reviews-carousel {
+    grid-template-columns: 1fr;
+  }
+
+  .carousel-btn {
+    display: none;
+  }
+
   .review-card {
     min-height: 0;
+    padding: 20px;
   }
 }
