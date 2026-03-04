@@ -15,6 +15,10 @@
     {
       "source": "/public/:path*",
       "destination": "https://www.pingfix.xyz/public/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }
