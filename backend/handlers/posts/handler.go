@@ -135,7 +135,7 @@ func MyPosts(w http.ResponseWriter, r *http.Request) {
 			Comments:     p.CommentCount,
 			ResolveCount: p.ResolveCount,
 			UserResolved: false,
-			ShareURL:     "http://localhost:8080/public/post/" + p.ShareToken,
+			ShareURL:     utils.BuildShareURL(p.ShareToken),
 		})
 	}
 
@@ -249,7 +249,7 @@ func GetSharedPost(w http.ResponseWriter, r *http.Request) {
 		Downvotes:    downvotes,
 		Comments:     commentCount,
 		ResolveCount: resolveCount,
-		ShareURL:     "http://localhost:8080/public/post/" + post.ShareToken,
+		ShareURL:     utils.BuildShareURL(post.ShareToken),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
