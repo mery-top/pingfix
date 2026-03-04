@@ -9,6 +9,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -58,7 +59,11 @@ func Callback(w http.ResponseWriter, r *http.Request) {
 	session.Values["user_id"] = dbUser.ID
 	session.Save(r, w)
 
-	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusTemporaryRedirect)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173" // fallback
+	}
+	http.Redirect(w, r, frontendURL+"/dashboard", http.StatusTemporaryRedirect)
 }
 
 func GLogout(w http.ResponseWriter, r *http.Request) {
