@@ -14,16 +14,16 @@
     justify-content: center;
     text-align: center;
     font-family: 'Montserrat', sans-serif;
-    font-size: 32px;
-    /* Increased from 10px for desktop */
-    margin: 40px 0;
+    font-size: 64px;
+    /* Increased from 32px for desktop */
+    margin: 80px 0;
     /* Add some spacing around */
 }
 
 .slogan .comm {
     color: #F47D34;
-    font-size: 56px;
-    /* Increased from 22px */
+    font-size: 96px;
+    /* Increased from 56px */
     font-style: italic;
     font-weight: 700;
 }
