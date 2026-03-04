@@ -132,9 +132,9 @@ function MyGroups() {
       </div>
 
       {/* Stats */}
-      <div style={{ marginTop: 20 }}>
-        <h4>Created: {pagination.total_created}</h4>
-        <h4>Joined: {pagination.total_joined}</h4>
+      <div style={{ marginTop: 20, display: "flex", justifyContent: "center", gap: "20px" }}>
+        <h4 style={{ margin: 0 }}>Created: {pagination.total_created}</h4>
+        <h4 style={{ margin: 0 }}>Joined: {pagination.total_joined}</h4>
       </div>
 
       {/* Unified List */}
@@ -149,13 +149,14 @@ function MyGroups() {
               </small>
             </div>
 
-            <div>
-              <button onClick={() => navigate(`/group/${group.id}`)}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button className="ig-btn" style={{ margin: 0 }} onClick={() => navigate(`/group/${group.id}`)}>
                 View
               </button>
 
               {group.is_creator ? (
                 <button
+                  className="ig-btn-outline" style={{ margin: 0 }}
                   onClick={() => {
                     setModal({ isOpen: true, type: "request-delete", group })
                     requestDeleteMutation.mutate(group.id)
@@ -165,6 +166,7 @@ function MyGroups() {
                 </button>
               ) : (
                 <button
+                  className="ig-btn-outline" style={{ margin: 0 }}
                   onClick={() =>
                     setModal({ isOpen: true, type: "leave", group })
                   }
@@ -178,12 +180,12 @@ function MyGroups() {
       </ul>
 
       {/* Pagination */}
-      <div className="pagination-bar">
+      <div className="pagination-bar" style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
         {pagination.page > 1 && (
-          <button onClick={() => setPage(p => p - 1)}>Previous</button>
+          <button className="btn-nav" onClick={() => setPage(p => p - 1)}>Previous</button>
         )}
         {pagination.page < pagination.pages && (
-          <button onClick={() => setPage(p => p + 1)}>Next</button>
+          <button className="btn-nav" onClick={() => setPage(p => p + 1)}>Next</button>
         )}
       </div>
 
