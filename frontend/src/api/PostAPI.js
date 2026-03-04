@@ -78,6 +78,13 @@ export async function EditComment(comment_id, content) {
   return res.json();
 }
 
+export async function GetPublicPostAPI(token) {
+  return fetch(apiUrl(`/api/public/post/${token}`), {
+    method: "GET",
+    credentials: "include",
+  });
+}
+
 export async function GetComments(post_id) {
   const res = await fetch(apiUrl(`/api/post/comments/${post_id}`), {
     credentials: "include"
