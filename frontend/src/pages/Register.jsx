@@ -133,6 +133,21 @@ function Register() {
           onChange={e => setConfirmPassword(e.target.value)}
         />
 
+        <ul style={{
+                fontSize: '0.6em',       // readable size
+                color: '#555',   // indent bullets
+                lineHeight: '1.4',
+                listStylePosition: 'inside', // align bullets with text
+                textAlign: 'left',
+                marginBottom: '5px',        // ensures left alignment
+              }}>
+                <li>8 characters long</li>
+                <li>One uppercase letter</li>
+                <li>One number</li>
+                <li>One special character (e.g., !@#$%^&*)</li>
+              </ul>
+
+
         <input type="text"
           className="ig-input"
           placeholder='OTP'
