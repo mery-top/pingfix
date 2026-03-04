@@ -9,5 +9,7 @@ type User struct{
 	Name     string `gorm:"not null"`
 	Email    string `gorm:"unique"`
 	Password string
+	AuthProvider string // "local" or "google"
+	OAuthID      string `gorm:"uniqueIndex;null"`
 	Groups   []Group `gorm:"many2many:group_data"`
 }
