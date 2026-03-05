@@ -9,10 +9,18 @@ import { FiArrowUp, FiArrowDown, FiCheckCircle, FiMessageSquare, FiShare2 } from
 // ---------------- PostCard Component ----------------
 function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
   const realPost = post?.post || {};
+  const initialResolveCount =
+    post?.resolve_count ??
+    post?.ResolveCount ??
+    realPost?.ResolveCount ??
+    realPost?.resolve_count ??
+    0;
+  const initialUserResolved = post?.user_resolved ?? post?.userResolved ?? false;
 
   const [upvotes, setUpvotes] = useState(post?.upvotes || 0);
   const [downvotes, setDownvotes] = useState(post?.downvotes || 0);
-  const [resolves, setResolves] = useState(post?.resolve_count || 0);
+  const [resolves, setResolves] = useState(initialResolveCount);
+  const [userResolved, setUserResolved] = useState(initialUserResolved);
   const [commentsCount, setCommentsCount] = useState(post?.comment_count !== undefined ? post.comment_count : post?.comments || 0);
 
   const { data: currentUser } = useQuery({
@@ -36,6 +44,10 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
   const [userVote, setUserVote] = useState(0);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setResolves(initialResolveCount);
+    setUserResolved(initialUserResolved);
+  }, [initialResolveCount, initialUserResolved]);
 
 
   // ---------------- Toggle Comments ----------------
@@ -109,6 +121,28 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
     if (post?.share_url) {
       navigator.clipboard.writeText(post.share_url);
       alert("Share link copied!");
+    }
+  };
+
+  // ---------------- Resolve ----------------
+  const handleResolve = async () => {
+    const previousUserResolved = userResolved;
+    const previousResolveCount = resolves;
+    const nextResolved = !previousUserResolved;
+
+    setUserResolved(nextResolved);
+    setResolves((prev) => Math.max(0, prev + (nextResolved ? 1 : -1)));
+
+    try {
+      const ok = await ResolvePost(realPost.ID);
+      if (!ok) {
+        setUserResolved(previousUserResolved);
+        setResolves(previousResolveCount);
+      }
+    } catch (err) {
+      console.error("Resolve failed:", err);
+      setUserResolved(previousUserResolved);
+      setResolves(previousResolveCount);
     }
   };
 
@@ -190,6 +224,14 @@ function PostCard({ post, onVote, onDelete, hideViewGroup = false }) {
           </button>
           <button className="ig-action-btn" onClick={toggleComments}>
             <FiMessageSquare size={24} />
+          </button>
+          <button
+            className="ig-action-btn"
+            onClick={handleResolve}
+            style={{ color: userResolved ? "#22c55e" : "#fff" }}
+            title={userResolved ? "Marked as resolved" : "Mark as resolved"}
+          >
+            <FiCheckCircle size={24} />
           </button>
         </div>
         <button className="ig-action-btn" onClick={handleShare}>
